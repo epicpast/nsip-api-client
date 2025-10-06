@@ -3,8 +3,7 @@ Data models for NSIP API responses
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Any
-from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -19,11 +18,12 @@ class SearchCriteria:
     proven_only: Optional[bool] = None
     status: Optional[str] = None  # "CURRENT", "SOLD", "DEAD", etc.
     flock_id: Optional[str] = None
-    trait_ranges: Optional[Dict[str, Dict[str, float]]] = None  # {"BWT": {"min": -1.0, "max": 1.0}}
+    # {"BWT": {"min": -1.0, "max": 1.0}}
+    trait_ranges: Optional[Dict[str, Dict[str, float]]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API request"""
-        data = {}
+        data: Dict[str, Any] = {}
         if self.breed_group_id is not None:
             data["breedGroupId"] = self.breed_group_id
         if self.breed_id is not None:

@@ -3,13 +3,11 @@ Tests for data models
 """
 
 import pytest
+
 from nsip_client.models import (
-    SearchCriteria,
     AnimalDetails,
     Progeny,
-    ProgenyAnimal,
-    Trait,
-    ContactInfo,
+    SearchCriteria,
     SearchResults,
 )
 
