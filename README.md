@@ -13,6 +13,9 @@ This client provides programmatic access to sheep breeding data including:
 
 ## Installation
 
+> **⚠️ Important:** This package is **NOT** published to PyPI. It is only available through GitHub Releases.
+> See [DISTRIBUTION.md](DISTRIBUTION.md) for our distribution policy.
+
 ### From GitHub Release (Recommended)
 
 Download the latest release from the [releases page](https://github.com/epicpast/nsip-api-client/releases):

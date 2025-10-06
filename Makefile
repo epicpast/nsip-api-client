@@ -56,11 +56,12 @@ clean:  ## Clean build artifacts and cache files
 build:  ## Build distribution packages
 	python -m build
 
-publish:  ## Publish to PyPI (requires credentials)
-	python -m twine upload dist/*
-
-publish-test:  ## Publish to Test PyPI
-	python -m twine upload --repository testpypi dist/*
+check-package:  ## Validate package without publishing
+	python -m build
+	twine check dist/*
+	@echo "✅ Package is valid and ready for GitHub release"
+	@echo "⚠️  This project does NOT publish to PyPI"
+	@echo "📦 Users install from GitHub releases"
 
 docs:  ## Build documentation
 	cd docs && make html
