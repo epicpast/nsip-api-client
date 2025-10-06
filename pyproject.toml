@@ -51,10 +51,11 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/nsip-api-client"
-Documentation = "https://github.com/yourusername/nsip-api-client#readme"
-Repository = "https://github.com/yourusername/nsip-api-client.git"
-"Bug Tracker" = "https://github.com/yourusername/nsip-api-client/issues"
+Homepage = "https://github.com/epicpast/nsip-api-client"
+Documentation = "https://github.com/epicpast/nsip-api-client#readme"
+Repository = "https://github.com/epicpast/nsip-api-client.git"
+"Bug Tracker" = "https://github.com/epicpast/nsip-api-client/issues"
+Releases = "https://github.com/epicpast/nsip-api-client/releases"
 
 [project.scripts]
 nsip-search = "nsip_client.cli:main"
