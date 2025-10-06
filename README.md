@@ -13,8 +13,34 @@ This client provides programmatic access to sheep breeding data including:
 
 ## Installation
 
+### From GitHub Release (Recommended)
+
+Download the latest release from the [releases page](https://github.com/epicpast/nsip-api-client/releases):
+
 ```bash
-pip install requests
+# Install from wheel (recommended)
+pip install https://github.com/epicpast/nsip-api-client/releases/latest/download/nsip_client-1.0.0-py3-none-any.whl
+
+# Or install from source distribution
+pip install https://github.com/epicpast/nsip-api-client/releases/download/v1.0.0/nsip-client-1.0.0.tar.gz
+```
+
+### From Git
+
+```bash
+# Install latest from main branch
+pip install git+https://github.com/epicpast/nsip-api-client.git
+
+# Install specific version tag
+pip install git+https://github.com/epicpast/nsip-api-client.git@v1.0.0
+```
+
+### From Source
+
+```bash
+git clone https://github.com/epicpast/nsip-api-client.git
+cd nsip-api-client
+pip install -e .
 ```
 
 ## API Endpoints Discovered
