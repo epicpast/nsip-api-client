@@ -18,9 +18,7 @@ def main(args: Optional[list] = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument(
-        "--version", action="store_true", help="Show version and exit"
-    )
+    parser.add_argument("--version", action="store_true", help="Show version and exit")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -32,7 +30,7 @@ def main(args: Optional[list] = None) -> int:
     )
 
     # List breed groups
-    list_parser = subparsers.add_parser("breeds", help="List available breed groups")
+    subparsers.add_parser("breeds", help="List available breed groups")
 
     # Search animals
     find_parser = subparsers.add_parser("find", help="Search for animals")
@@ -45,6 +43,7 @@ def main(args: Optional[list] = None) -> int:
 
     if parsed_args.version:
         from . import __version__
+
         print(f"nsip-client version {__version__}")
         return 0
 
@@ -58,17 +57,22 @@ def main(args: Optional[list] = None) -> int:
         if parsed_args.command == "search":
             if parsed_args.full:
                 result = client.search_by_lpn(parsed_args.lpn_id)
-                print(json.dumps({
-                    "details": result["details"].raw_data,
-                    "lineage": result["lineage"].raw_data,
-                    "progeny": {
-                        "total_count": result["progeny"].total_count,
-                        "animals": [
-                            {"lpn_id": a.lpn_id, "sex": a.sex, "dob": a.date_of_birth}
-                            for a in result["progeny"].animals
-                        ]
-                    }
-                }, indent=2))
+                print(
+                    json.dumps(
+                        {
+                            "details": result["details"].raw_data,
+                            "lineage": result["lineage"].raw_data,
+                            "progeny": {
+                                "total_count": result["progeny"].total_count,
+                                "animals": [
+                                    {"lpn_id": a.lpn_id, "sex": a.sex, "dob": a.date_of_birth}
+                                    for a in result["progeny"].animals
+                                ],
+                            },
+                        },
+                        indent=2,
+                    )
+                )
             else:
                 details = client.get_animal_details(parsed_args.lpn_id)
                 print(json.dumps(details.raw_data, indent=2))

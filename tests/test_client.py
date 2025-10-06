@@ -3,10 +3,13 @@ Tests for the NSIP API client
 """
 
 import pytest
+import requests
 import requests_mock
+
 from nsip_client import NSIPClient
 from nsip_client.exceptions import (
     NSIPAPIError,
+    NSIPConnectionError,
     NSIPNotFoundError,
     NSIPTimeoutError,
     NSIPValidationError,
@@ -236,7 +239,7 @@ class TestNSIPClient:
                 "http://nsipsearch.nsip.org/api/search/getDateLastUpdated",
                 exc=requests.exceptions.ConnectionError,
             )
-            with pytest.raises(NSIPAPIError):
+            with pytest.raises(NSIPConnectionError):
                 client.get_date_last_updated()
 
     def test_api_error_with_response(self, client):

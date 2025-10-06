@@ -8,24 +8,25 @@ API Base URL: http://nsipsearch.nsip.org/api
 Authentication: None required (public API)
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import requests
-from typing import Optional, Dict, List, Any, Union
 from requests.exceptions import RequestException, Timeout
 
-from .models import (
-    SearchCriteria,
-    AnimalDetails,
-    Progeny,
-    Lineage,
-    SearchResults,
-    BreedGroup,
-)
 from .exceptions import (
     NSIPAPIError,
-    NSIPNotFoundError,
     NSIPConnectionError,
+    NSIPNotFoundError,
     NSIPTimeoutError,
     NSIPValidationError,
+)
+from .models import (
+    AnimalDetails,
+    BreedGroup,
+    Lineage,
+    Progeny,
+    SearchCriteria,
+    SearchResults,
 )
 
 
@@ -45,10 +46,9 @@ class NSIPClient:
         self.timeout = timeout
         self.base_url = base_url or self.BASE_URL
         self.session = requests.Session()
-        self.session.headers.update({
-            'Accept': 'application/json, text/plain, */*',
-            'User-Agent': 'NSIP-Python-Client/1.0'
-        })
+        self.session.headers.update(
+            {"Accept": "application/json, text/plain, */*", "User-Agent": "NSIP-Python-Client/1.0"}
+        )
 
     def _make_request(
         self,
@@ -104,7 +104,7 @@ class NSIPClient:
                 raise NSIPAPIError(
                     f"API request failed: {e}",
                     status_code=e.response.status_code,
-                    response=e.response.text,
+                    response={"text": e.response.text},
                 )
             raise NSIPConnectionError(f"Failed to connect to API: {e}")
 
@@ -140,7 +140,9 @@ class NSIPClient:
             69: Terminal
         """
         data = self._make_request("GET", "search/getAvailableBreedGroups")
-        return [BreedGroup(id=g["Id"], name=g["Name"]) for g in data]
+        # API returns a list, not a dict
+        breed_list: List[Dict[str, Any]] = data  # type: ignore
+        return [BreedGroup(id=int(g["Id"]), name=str(g["Name"])) for g in breed_list]
 
     def get_statuses_by_breed_group(self) -> List[str]:
         """
@@ -154,7 +156,10 @@ class NSIPClient:
             >>> client.get_statuses_by_breed_group()
             ['CURRENT', 'SOLD', 'DEAD', 'COMMERCIAL', 'CULL', ...]
         """
-        return self._make_request("GET", "search/getStatusesByBreedGroup")
+        result = self._make_request("GET", "search/getStatusesByBreedGroup")
+        if isinstance(result, list):
+            return [str(item) for item in result]
+        return []
 
     def get_trait_ranges_by_breed(self, breed_id: int) -> Dict[str, Any]:
         """
@@ -285,9 +290,7 @@ class NSIPClient:
         data = self._make_request("GET", "details/getLineage", params={"lpnId": lpn_id})
         return Lineage.from_api_response(data)
 
-    def get_progeny(
-        self, lpn_id: str, page: int = 0, page_size: int = 10
-    ) -> Progeny:
+    def get_progeny(self, lpn_id: str, page: int = 0, page_size: int = 10) -> Progeny:
         """
         Get progeny (offspring) for a specific animal
 
@@ -349,10 +352,10 @@ class NSIPClient:
         """Close the session"""
         self.session.close()
 
-    def __enter__(self):
+    def __enter__(self) -> "NSIPClient":
         """Context manager entry"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit"""
         self.close()

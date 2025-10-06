@@ -100,8 +100,8 @@ def main():
     # Display first few
     for trait_name, trait_range in list(ranges.items())[:3]:
         if isinstance(trait_range, dict):
-            min_val = trait_range.get('min', 'N/A')
-            max_val = trait_range.get('max', 'N/A')
+            min_val = trait_range.get("min", "N/A")
+            max_val = trait_range.get("max", "N/A")
             print(f"   {trait_name}: {min_val} to {max_val}")
     print()
 

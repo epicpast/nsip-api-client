@@ -33,9 +33,7 @@ def search_by_criteria():
 
     # Perform search
     results = client.search_animals(
-        breed_id=criteria.breed_id,
-        search_criteria=criteria,
-        page_size=10
+        breed_id=criteria.breed_id, search_criteria=criteria, page_size=10
     )
 
     print(f"Results: Found {results.total_count} animals")
@@ -58,11 +56,7 @@ def paginate_results():
     max_pages = 3  # Limit for demo
 
     for page in range(max_pages):
-        results = client.search_animals(
-            breed_id=breed_id,
-            page=page,
-            page_size=page_size
-        )
+        results = client.search_animals(breed_id=breed_id, page=page, page_size=page_size)
 
         print(f"Page {page + 1}/{(results.total_count + page_size - 1) // page_size}")
         print(f"Showing {len(results.results)} of {results.total_count} total")
@@ -110,11 +104,7 @@ def get_complete_family_tree():
 
     # Display top traits
     print("Top Traits:")
-    sorted_traits = sorted(
-        details.traits.items(),
-        key=lambda x: abs(x[1].value),
-        reverse=True
-    )[:5]
+    sorted_traits = sorted(details.traits.items(), key=lambda x: abs(x[1].value), reverse=True)[:5]
     for trait_name, trait in sorted_traits:
         print(f"  {trait_name}: {trait.value:.3f} ({trait.accuracy}% accuracy)")
 
@@ -183,6 +173,7 @@ def main():
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 

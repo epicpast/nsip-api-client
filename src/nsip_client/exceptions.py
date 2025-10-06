@@ -5,6 +5,7 @@ Custom exceptions for the NSIP API client
 
 class NSIPError(Exception):
     """Base exception for all NSIP client errors"""
+
     pass
 
 
@@ -27,14 +28,17 @@ class NSIPNotFoundError(NSIPAPIError):
 
 class NSIPConnectionError(NSIPError):
     """Raised when connection to the API fails"""
+
     pass
 
 
 class NSIPTimeoutError(NSIPError):
     """Raised when a request times out"""
+
     pass
 
 
 class NSIPValidationError(NSIPError):
     """Raised when request parameters are invalid"""
+
     pass
