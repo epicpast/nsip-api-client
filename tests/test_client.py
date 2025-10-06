@@ -14,7 +14,7 @@ from nsip_client.exceptions import (
     NSIPTimeoutError,
     NSIPValidationError,
 )
-from nsip_client.models import AnimalDetails, Progeny, SearchResults
+from nsip_client.models import AnimalDetails, Lineage, Progeny, SearchCriteria, SearchResults
 
 
 class TestNSIPClient:
@@ -276,3 +276,187 @@ class TestNSIPClient:
             assert "progeny" in profile
             assert isinstance(profile["details"], AnimalDetails)
             assert isinstance(profile["progeny"], Progeny)
+
+    # NEW TESTS TO COVER MISSING LINES
+
+    def test_get_trait_ranges_by_breed(self, client):
+        """Test getting trait ranges for a breed - covers lines 159-162"""
+        mock_trait_ranges = {
+            "BWT": {"min": -0.713, "max": 0.0},
+            "WWT": {"min": -5.0, "max": 5.0},
+            "PWWT": {"min": -3.0, "max": 3.0},
+        }
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://nsipsearch.nsip.org/api/search/getTraitRangesByBreed",
+                json=mock_trait_ranges,
+            )
+
+            # Test with valid breed_id
+            ranges = client.get_trait_ranges_by_breed(486)
+            assert ranges["BWT"]["min"] == -0.713
+            assert ranges["BWT"]["max"] == 0.0
+            assert "WWT" in ranges
+            assert "PWWT" in ranges
+
+    def test_get_statuses_by_breed_group(self, client):
+        """Test getting statuses - covers lines 159-162 branch"""
+        mock_statuses = ["CURRENT", "SOLD", "DEAD", "COMMERCIAL", "CULL"]
+
+        with requests_mock.Mocker() as m:
+            # Test when API returns a list
+            m.get(
+                "http://nsipsearch.nsip.org/api/search/getStatusesByBreedGroup",
+                json=mock_statuses,
+            )
+
+            statuses = client.get_statuses_by_breed_group()
+            assert isinstance(statuses, list)
+            assert len(statuses) == 5
+            assert "CURRENT" in statuses
+            assert "SOLD" in statuses
+
+    def test_get_statuses_by_breed_group_non_list_response(self, client):
+        """Test getting statuses when API returns non-list - covers line 162"""
+        with requests_mock.Mocker() as m:
+            # Test when API returns a dict instead of list
+            m.get(
+                "http://nsipsearch.nsip.org/api/search/getStatusesByBreedGroup",
+                json={"error": "Invalid response"},
+            )
+
+            statuses = client.get_statuses_by_breed_group()
+            assert statuses == []
+
+    def test_search_animals_with_search_criteria_object(self, client, mock_search_results):
+        """Test search with SearchCriteria object - covers lines 233-236"""
+        criteria = SearchCriteria(
+            breed_id=486,
+            gender="Male",
+            status="CURRENT",
+            born_after="2020-01-01",
+            born_before="2023-12-31",
+        )
+
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://nsipsearch.nsip.org/api/search/getPageOfSearchResults",
+                json=mock_search_results,
+            )
+
+            results = client.search_animals(search_criteria=criteria)
+            assert isinstance(results, SearchResults)
+            assert results.total_count == 100
+
+            # Verify the request was made with the criteria
+            request_json = m.last_request.json()
+            assert "breedId" in request_json
+            assert request_json["breedId"] == 486
+
+    def test_search_animals_with_dict_criteria(self, client, mock_search_results):
+        """Test search with dict criteria - covers lines 233-236 else branch"""
+        criteria_dict = {
+            "breedId": 486,
+            "gender": "Female",
+            "status": "CURRENT",
+        }
+
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://nsipsearch.nsip.org/api/search/getPageOfSearchResults",
+                json=mock_search_results,
+            )
+
+            results = client.search_animals(search_criteria=criteria_dict)
+            assert isinstance(results, SearchResults)
+            assert results.total_count == 100
+
+    def test_get_lineage(self, client):
+        """Test getting lineage information - covers line 288"""
+        mock_lineage = {
+            "Subject": {"LpnId": "6####92020###249", "FarmName": "Test Farm"},
+            "Sire": {"LpnId": "SIRE123", "FarmName": "Sire Farm"},
+            "Dam": {"LpnId": "DAM456", "FarmName": "Dam Farm"},
+        }
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://nsipsearch.nsip.org/api/details/getLineage",
+                json=mock_lineage,
+            )
+
+            lineage = client.get_lineage("6####92020###249")
+            assert isinstance(lineage, Lineage)
+            assert lineage.raw_data == mock_lineage
+
+    def test_get_lineage_validation(self, client):
+        """Test lineage validation - covers line 288 validation"""
+        with pytest.raises(NSIPValidationError):
+            client.get_lineage("")
+
+        with pytest.raises(NSIPValidationError):
+            client.get_lineage("   ")
+
+    def test_search_animals_with_all_parameters(self, client, mock_search_results):
+        """Test search with all optional parameters"""
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://nsipsearch.nsip.org/api/search/getPageOfSearchResults",
+                json=mock_search_results,
+            )
+
+            results = client.search_animals(
+                page=1,
+                page_size=20,
+                breed_id=486,
+                sorted_trait="BWT",
+                reverse=True,
+            )
+
+            assert isinstance(results, SearchResults)
+
+            # Verify the request params (lowercase in query string)
+            assert m.last_request.qs["page"] == ["1"]
+            assert m.last_request.qs["pagesize"] == ["20"]
+            assert m.last_request.qs["breedid"] == ["486"]
+            assert m.last_request.qs["sortedbreedtrait"] == ["bwt"]  # Lowercase in URL
+            assert m.last_request.qs["reverse"] == ["true"]
+
+    def test_search_animals_without_optional_parameters(self, client, mock_search_results):
+        """Test search with None optional parameters"""
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://nsipsearch.nsip.org/api/search/getPageOfSearchResults",
+                json=mock_search_results,
+            )
+
+            # Call with no optional parameters
+            results = client.search_animals()
+
+            assert isinstance(results, SearchResults)
+
+            # Verify undefined parameters are sent as "undefined"
+            assert m.last_request.qs["breedid"] == ["undefined"]
+            assert m.last_request.qs["sortedbreedtrait"] == ["undefined"]
+            assert m.last_request.qs["reverse"] == ["undefined"]
+
+    def test_custom_base_url(self):
+        """Test client with custom base URL"""
+        custom_url = "http://custom-api.example.com/api"
+        client = NSIPClient(base_url=custom_url)
+        assert client.base_url == custom_url
+
+    def test_not_found_error_includes_search_string(self, client):
+        """Test NSIPNotFoundError includes search string"""
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://nsipsearch.nsip.org/api/details/getAnimalDetails",
+                status_code=404,
+            )
+
+            with pytest.raises(NSIPNotFoundError) as exc_info:
+                client.get_animal_details("TESTLPN123")
+
+            # The error should be raised (search_string is passed in params)
+            assert exc_info.value is not None
