@@ -59,7 +59,7 @@ jobs:
 
     - name: Comment PR with results
       if: always()
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const output = `#### Quality Checks ${{ job.status == 'success' && '✅' || '❌' }}
