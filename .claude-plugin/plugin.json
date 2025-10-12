@@ -1,0 +1,12 @@
+{
+  "name": "nsip-api-client",
+  "mcpServers": {
+    "nsip-api-client": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/../../.venv/bin/python",
+      "args": ["-m", "nsip_mcp.server"],
+      "env": {
+        "NSIP_BASE_URL": "${NSIP_BASE_URL}"
+      }
+    }
+  }
+}

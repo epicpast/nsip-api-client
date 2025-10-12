@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nsip-api-client.github.io/schemas/marketplace.json",
+  "title": "Claude Code Plugin Marketplace Schema",
+  "description": "Schema for .claude-plugin/marketplace.json file",
+  "type": "object",
+  "required": ["name", "version", "description", "owner", "plugins"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Marketplace identifier (typically GitHub repo name)",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-zA-Z0-9-_]+$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Marketplace version (semver format)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the marketplace",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "owner": {
+      "type": "string",
+      "description": "GitHub username or organization",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "plugins": {
+      "type": "array",
+      "description": "List of plugins in this marketplace",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "version", "author", "source"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique plugin identifier",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[a-zA-Z0-9-_]+$"
+          },
+          "description": {
+            "type": "string",
+            "description": "Plugin description for marketplace display",
+            "minLength": 10,
+            "maxLength": 500
+          },
+          "version": {
+            "type": "string",
+            "description": "Plugin version (semver format)",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "author": {
+            "type": "string",
+            "description": "Plugin author or maintainer",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "source": {
+            "type": "string",
+            "description": "Relative path to plugin directory (usually '.')",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "description": "Optional plugin category",
+            "enum": ["development", "data-access", "productivity", "security", "other"]
+          }
+        }
+      }
+    }
+  }
+}

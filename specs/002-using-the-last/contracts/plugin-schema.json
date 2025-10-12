@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nsip-api-client.github.io/schemas/plugin.json",
+  "title": "Claude Code Plugin Configuration Schema",
+  "description": "Schema for .claude-plugin/plugin.json file",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Plugin identifier (must match marketplace.json plugins[].name)",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-zA-Z0-9-_]+$"
+    },
+    "mcpServers": {
+      "type": "object",
+      "description": "MCP server configurations (key = server name)",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["command"],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Path to executable (supports ${CLAUDE_PLUGIN_ROOT} variable)",
+            "minLength": 1
+          },
+          "args": {
+            "type": "array",
+            "description": "Command-line arguments",
+            "items": {
+              "type": "string"
+            }
+          },
+          "env": {
+            "type": "object",
+            "description": "Environment variables (supports ${VAR_NAME} expansion)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

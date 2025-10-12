@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nsip-api-client.github.io/schemas/slash-command.json",
+  "title": "Slash Command Markdown Structure",
+  "description": "Validation rules for slash command Markdown files in .claude-plugin/commands/",
+  "type": "object",
+  "properties": {
+    "fileName": {
+      "type": "string",
+      "description": "Command file name determines command (e.g., discover.md → /nsip/discover)",
+      "pattern": "^[a-z0-9-]+\\.md$"
+    },
+    "requiredSections": {
+      "type": "array",
+      "description": "Required sections in slash command Markdown",
+      "items": {
+        "type": "string",
+        "enum": [
+          "# /nsip/[command] - [Description]",
+          "## Instructions",
+          "## Error Handling"
+        ]
+      },
+      "minItems": 3
+    },
+    "requiredCommands": {
+      "type": "array",
+      "description": "Minimum required slash commands for nsip-api-client plugin",
+      "items": {
+        "type": "string",
+        "enum": [
+          "discover.md",
+          "lookup.md",
+          "profile.md",
+          "health.md",
+          "test-api.md",
+          "search.md",
+          "traits.md",
+          "lineage.md",
+          "progeny.md"
+        ]
+      },
+      "minItems": 5,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false,
+  "notes": [
+    "This schema defines validation rules, not the Markdown structure itself",
+    "Actual validation must check:",
+    "1. File name follows pattern: [a-z0-9-]+.md",
+    "2. Content includes heading: # /nsip/[command] - [Description]",
+    "3. Content includes ## Instructions section",
+    "4. Content includes ## Error Handling section",
+    "5. At least 5 of the required commands exist"
+  ]
+}

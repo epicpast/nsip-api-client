@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-10-12
+
+### Added
+- **Claude Code Plugin**: One-command installation for Claude Code users
+  - Plugin marketplace configuration (`.claude-plugin/marketplace.json`)
+  - Auto-start MCP server configuration (`.claude-plugin/plugin.json`)
+  - 9 slash commands for common NSIP workflows:
+    - `/nsip/discover` - Show database info, breeds, and statuses
+    - `/nsip/lookup` - Get animal details by LPN ID
+    - `/nsip/profile` - Complete animal profile (details + lineage + progeny)
+    - `/nsip/health` - MCP server performance metrics
+    - `/nsip/test-api` - Validate API connectivity
+    - `/nsip/search` - Search animals with filters
+    - `/nsip/traits` - Get trait ranges by breed
+    - `/nsip/lineage` - View pedigree tree
+    - `/nsip/progeny` - List offspring
+  - Comprehensive plugin README with installation guide
+  - Optional custom NSIP_BASE_URL environment variable (defaults to http://nsipsearch.nsip.org/api)
+  - No authentication required - NSIP API is public
+  - 59 validation tests for plugin configuration
+  - Works on both Claude Code CLI and VS Code extension
+
 ## [1.0.0] - 2025-10-06
 
 ### Added

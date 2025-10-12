@@ -11,6 +11,24 @@ This client provides programmatic access to sheep breeding data including:
 - Breed groups and trait ranges
 - Search and filtering capabilities
 
+## Quick Start: Claude Code Plugin
+
+**NEW:** Install as a Claude Code plugin for instant access to NSIP data with one command:
+
+```bash
+# In Claude Code (terminal or VS Code)
+/plugin marketplace add epicpast/nsip-api-client
+/plugin install nsip-api-client
+```
+
+This automatically:
+- ✓ Configures the NSIP MCP server (no API key required!)
+- ✓ Exposes all 10 NSIP tools to Claude
+- ✓ Provides 9 slash commands for common workflows
+- ✓ Works with public NSIP API (http://nsipsearch.nsip.org)
+
+See [.claude-plugin/README.md](.claude-plugin/README.md) for complete plugin documentation.
+
 ## Installation
 
 > **⚠️ Important:** This package is **NOT** published to PyPI. It is only available through GitHub Releases.
