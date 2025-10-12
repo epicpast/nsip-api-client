@@ -57,8 +57,8 @@ The NSIP MCP Server is a Model Context Protocol (MCP) implementation that provid
 │  ┌────────────────────────────────────────────────────┐     │
 │  │  Caching Layer                                     │     │
 │  │  - 1-hour TTL                                      │     │
-│  │  - Key generation from method + params            │     │
-│  │  - FIFO eviction (1000 max entries)               │     │
+│  │  - Key generation from method + params             │     │
+│  │  - FIFO eviction (1000 max entries)                │     │
 │  └────────────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────┘
                            │
