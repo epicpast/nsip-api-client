@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - name: Checkout code
@@ -33,7 +33,7 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest --cov=nsip_client --cov-report=term-missing -v
+        pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing -v
 
   quality:
     name: Quality Checks
