@@ -1,10 +1,39 @@
 .PHONY: help install install-dev test test-cov lint format clean build publish docs
 
-help:  ## Show this help message
+.DEFAULT_GOAL := help
+
+help:  ## Show this help message with categorized targets
+	@echo '================================'
+	@echo 'NSIP API Client - Make Targets'
+	@echo '================================'
+	@echo ''
 	@echo 'Usage: make [target]'
 	@echo ''
-	@echo 'Available targets:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo '📦 Installation & Setup:'
+	@grep -E '^(install|install-dev|init-dev):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo '✅ Quality Gates (run before commit):'
+	@grep -E '^(ci-local|quality-gates|quality):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo '🔍 Code Quality Tools:'
+	@grep -E '^(lint|format|format-check|security):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo '🧪 Testing:'
+	@grep -E '^(test|test-cov):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo '🔨 Build & Package:'
+	@grep -E '^(build|check-package|clean):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo '📚 Documentation & Examples:'
+	@grep -E '^(docs|run-example|run-advanced):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo '💡 Quick Start:'
+	@echo '  1. make install-dev     # Install with dev dependencies'
+	@echo '  2. make ci-local        # Run all quality gates'
+	@echo '  3. make test-cov        # Run tests with coverage'
+	@echo ''
+	@echo '📖 For detailed development workflow, see CLAUDE.md'
+	@echo ''
 
 install:  ## Install package
 	pip install -e .
