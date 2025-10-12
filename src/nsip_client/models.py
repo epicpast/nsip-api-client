@@ -89,6 +89,12 @@ class AnimalDetails:
     contact_info: Optional[ContactInfo] = None
     raw_data: Dict[str, Any] = field(default_factory=dict)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        from dataclasses import asdict
+
+        return asdict(self)
+
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> "AnimalDetails":
         """Create AnimalDetails from API response"""
@@ -143,6 +149,12 @@ class ProgenyAnimal:
     date_of_birth: Optional[str] = None
     traits: Dict[str, float] = field(default_factory=dict)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        from dataclasses import asdict
+
+        return asdict(self)
+
 
 @dataclass
 class Progeny:
@@ -196,6 +208,12 @@ class Lineage:
     dam: Optional[LineageAnimal] = None
     generations: List[List[LineageAnimal]] = field(default_factory=list)
     raw_data: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        from dataclasses import asdict
+
+        return asdict(self)
 
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> "Lineage":
