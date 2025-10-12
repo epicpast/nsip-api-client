@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   pr-checks:
     name: PR Quality Gate
@@ -46,7 +50,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        pytest --cov=nsip_client --cov-report=term-missing --cov-fail-under=80 -v
+        pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-fail-under=80 -v
 
     - name: Check for new TODO/FIXME comments
       run: |
