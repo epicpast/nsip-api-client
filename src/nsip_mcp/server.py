@@ -9,7 +9,7 @@ import time
 from fastmcp import FastMCP
 
 from nsip_mcp.metrics import server_metrics
-from nsip_mcp.transport import TransportConfig
+from nsip_mcp.transport import TransportConfig, TransportType
 
 # Track server startup time
 _startup_start = time.time()
@@ -54,15 +54,32 @@ def start_server():
     # Log startup information
     print(f"Starting NSIP MCP Server with {transport_config.transport_type.value} transport")
     print(f"Startup time: {startup_duration:.3f}s (target: <3s)")
-    if transport_config.port:
-        print(f"Listening on port {transport_config.port}")
 
     # Start server with configured transport
-    # Note: FastMCP's run() method will be called with appropriate transport settings
-    # For stdio: mcp.run() uses stdin/stdout by default
-    # For HTTP SSE/WebSocket: mcp.run() will need server_transport parameter
-    # TODO: Update with actual FastMCP 2.0 transport API when implementing CLI
-    mcp.run()
+    # FastMCP 2.12.4+ provides native Streamable HTTP support
+    if transport_config.transport_type == TransportType.STDIO:
+        # stdio uses default stdin/stdout
+        print("Listening on stdin/stdout")
+        mcp.run()
+    elif transport_config.transport_type == TransportType.STREAMABLE_HTTP:
+        # Streamable HTTP (MCP spec 2025-03-26)
+        print(
+            f"Listening on {transport_config.host}:{transport_config.port}{transport_config.path}"
+        )
+        mcp.run(
+            transport="streamable-http",
+            host=transport_config.host,
+            port=transport_config.port,
+            path=transport_config.path,
+        )
+    elif transport_config.transport_type == TransportType.WEBSOCKET:
+        # WebSocket transport
+        print(f"Listening on ws://{transport_config.host}:{transport_config.port}/ws")
+        mcp.run(
+            transport="websocket",  # type: ignore[arg-type]  # FastMCP types don't include websocket but it works
+            host=transport_config.host,
+            port=transport_config.port,
+        )
 
 
 @mcp.tool()

@@ -23,15 +23,15 @@ class TestTransportType:
     """Tests for TransportType enum."""
 
     def test_valid_transport_types(self):
-        """Verify TransportType enum has stdio, http-sse, websocket."""
+        """Verify TransportType enum has stdio, streamable-http, websocket."""
         assert TransportType.STDIO.value == "stdio"
-        assert TransportType.HTTP_SSE.value == "http-sse"
+        assert TransportType.STREAMABLE_HTTP.value == "streamable-http"
         assert TransportType.WEBSOCKET.value == "websocket"
 
     def test_transport_type_from_string(self):
         """Verify TransportType can be created from string values."""
         assert TransportType("stdio") == TransportType.STDIO
-        assert TransportType("http-sse") == TransportType.HTTP_SSE
+        assert TransportType("streamable-http") == TransportType.STREAMABLE_HTTP
         assert TransportType("websocket") == TransportType.WEBSOCKET
 
     def test_transport_type_invalid_value(self):
@@ -50,11 +50,11 @@ class TestTransportConfig:
         assert config.transport_type == TransportType.STDIO
         assert config.port is None
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": "8080"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http", "MCP_PORT": "8080"}, clear=True)
     def test_from_environment_http_sse(self):
-        """Verify from_environment() correctly parses MCP_TRANSPORT=http-sse."""
+        """Verify from_environment() correctly parses MCP_TRANSPORT=streamable-http."""
         config = TransportConfig.from_environment()
-        assert config.transport_type == TransportType.HTTP_SSE
+        assert config.transport_type == TransportType.STREAMABLE_HTTP
         assert config.port == 8080
 
     @patch.dict(os.environ, {"MCP_TRANSPORT": "websocket", "MCP_PORT": "9000"}, clear=True)
@@ -77,36 +77,43 @@ class TestTransportConfig:
         config = TransportConfig.from_environment()
         assert config.transport_type == TransportType.STDIO
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "HTTP-SSE", "MCP_PORT": "3000"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "STREAMABLE-HTTP", "MCP_PORT": "3000"}, clear=True)
     def test_from_environment_uppercase(self):
         """Verify uppercase transport values are handled correctly."""
         config = TransportConfig.from_environment()
-        assert config.transport_type == TransportType.HTTP_SSE
+        assert config.transport_type == TransportType.STREAMABLE_HTTP
         assert config.port == 3000
+
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": "8080"}, clear=True)
+    def test_backward_compatibility_http_sse(self):
+        """Verify legacy http-sse is mapped to streamable-http for backward compatibility."""
+        config = TransportConfig.from_environment()
+        assert config.transport_type == TransportType.STREAMABLE_HTTP
+        assert config.port == 8080
 
 
 class TestPortValidation:
     """Tests for port validation (1024-65535 range)."""
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": "1024"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http", "MCP_PORT": "1024"}, clear=True)
     def test_valid_port_lower_bound(self):
         """Verify port 1024 (lower bound) is accepted."""
         config = TransportConfig.from_environment()
         assert config.port == 1024
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": "65535"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http", "MCP_PORT": "65535"}, clear=True)
     def test_valid_port_upper_bound(self):
         """Verify port 65535 (upper bound) is accepted."""
         config = TransportConfig.from_environment()
         assert config.port == 65535
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": "8080"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http", "MCP_PORT": "8080"}, clear=True)
     def test_valid_port_mid_range(self):
         """Verify port in mid-range (8080) is accepted."""
         config = TransportConfig.from_environment()
         assert config.port == 8080
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": "1023"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http", "MCP_PORT": "1023"}, clear=True)
     def test_invalid_port_too_low(self):
         """Verify ports <1024 are rejected."""
         with pytest.raises(ValueError, match="Port must be between 1024 and 65535"):
@@ -118,15 +125,15 @@ class TestPortValidation:
         with pytest.raises(ValueError, match="Port must be between 1024 and 65535"):
             TransportConfig.from_environment()
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": "0"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http", "MCP_PORT": "0"}, clear=True)
     def test_invalid_port_zero(self):
         """Verify port 0 is rejected."""
         with pytest.raises(ValueError, match="Port must be between 1024 and 65535"):
             TransportConfig.from_environment()
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http"}, clear=True)
     def test_port_required_for_http_sse(self):
-        """Verify MCP_PORT required when MCP_TRANSPORT=http-sse."""
+        """Verify MCP_PORT required when MCP_TRANSPORT=streamable-http."""
         with pytest.raises(ValueError, match="MCP_PORT environment variable required"):
             TransportConfig.from_environment()
 
@@ -156,7 +163,7 @@ class TestErrorCases:
     @patch.dict(os.environ, {"MCP_TRANSPORT": "grpc"}, clear=True)
     def test_unsupported_transport(self):
         """Verify unsupported transport raises ValueError with valid options."""
-        with pytest.raises(ValueError, match="Valid values: stdio, http-sse, websocket"):
+        with pytest.raises(ValueError, match="Valid values: stdio, streamable-http, websocket"):
             TransportConfig.from_environment()
 
     @patch.dict(os.environ, {"MCP_TRANSPORT": "websocket", "MCP_PORT": "abc"}, clear=True)
@@ -165,13 +172,13 @@ class TestErrorCases:
         with pytest.raises(ValueError, match="Invalid MCP_PORT value: abc"):
             TransportConfig.from_environment()
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": "80.5"}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http", "MCP_PORT": "80.5"}, clear=True)
     def test_invalid_port_float(self):
         """Verify float MCP_PORT raises ValueError."""
         with pytest.raises(ValueError, match="Invalid MCP_PORT value"):
             TransportConfig.from_environment()
 
-    @patch.dict(os.environ, {"MCP_TRANSPORT": "http-sse", "MCP_PORT": ""}, clear=True)
+    @patch.dict(os.environ, {"MCP_TRANSPORT": "streamable-http", "MCP_PORT": ""}, clear=True)
     def test_empty_port_value(self):
         """Verify empty MCP_PORT raises ValueError."""
         with pytest.raises(ValueError, match="MCP_PORT environment variable required"):
@@ -187,8 +194,8 @@ class TestConfigValidation:
         config.validate()  # Should not raise
 
     def test_validate_http_sse_with_port(self):
-        """Verify HTTP SSE config with valid port passes validation."""
-        config = TransportConfig(transport_type=TransportType.HTTP_SSE, port=8080)
+        """Verify Streamable HTTP config with valid port passes validation."""
+        config = TransportConfig(transport_type=TransportType.STREAMABLE_HTTP, port=8080)
         config.validate()  # Should not raise
 
     def test_validate_websocket_with_port(self):
@@ -197,9 +204,9 @@ class TestConfigValidation:
         config.validate()  # Should not raise
 
     def test_validate_http_sse_missing_port(self):
-        """Verify HTTP SSE config without port fails validation."""
-        config = TransportConfig(transport_type=TransportType.HTTP_SSE)
-        with pytest.raises(ValueError, match="Port required for http-sse transport"):
+        """Verify Streamable HTTP config without port fails validation."""
+        config = TransportConfig(transport_type=TransportType.STREAMABLE_HTTP)
+        with pytest.raises(ValueError, match="Port required for streamable-http transport"):
             config.validate()
 
     def test_validate_websocket_missing_port(self):
@@ -210,6 +217,6 @@ class TestConfigValidation:
 
     def test_validate_invalid_port_range(self):
         """Verify invalid port range fails validation."""
-        config = TransportConfig(transport_type=TransportType.HTTP_SSE, port=500)
+        config = TransportConfig(transport_type=TransportType.STREAMABLE_HTTP, port=500)
         with pytest.raises(ValueError, match="Port must be between 1024 and 65535"):
             config.validate()

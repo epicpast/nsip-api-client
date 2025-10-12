@@ -13,8 +13,10 @@ def main() -> None:
     """Main CLI entry point for nsip-mcp-server command.
 
     Starts the NSIP MCP server with transport configuration from environment variables:
-        - MCP_TRANSPORT: stdio (default), http-sse, or websocket
-        - MCP_PORT: Port number for HTTP SSE/WebSocket (required for non-stdio)
+        - MCP_TRANSPORT: stdio (default), streamable-http, or websocket
+        - MCP_PORT: Port number for Streamable HTTP/WebSocket (required for non-stdio)
+        - MCP_HOST: Host address to bind to (default: 0.0.0.0)
+        - MCP_PATH: Path for HTTP endpoints (default: /mcp)
 
     The server will run until interrupted (Ctrl+C) or an error occurs.
 
