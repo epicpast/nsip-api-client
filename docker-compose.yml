@@ -1,0 +1,194 @@
+# NSIP MCP Server - Docker Compose Configuration
+# Provides easy deployment with different transport configurations
+# Version: 1.1.0
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Service 1: stdio mode (for testing with piped input)
+  # ============================================================================
+  nsip-mcp-stdio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nsip-mcp-server:1.1.0
+    container_name: nsip-mcp-stdio
+    environment:
+      MCP_TRANSPORT: stdio
+      LOG_LEVEL: INFO
+    stdin_open: true
+    tty: false
+    restart: unless-stopped
+    profiles:
+      - stdio
+    # No ports exposed for stdio mode
+
+  # ============================================================================
+  # Service 2: HTTP SSE mode (for web applications)
+  # ============================================================================
+  nsip-mcp-http:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nsip-mcp-server:1.1.0
+    container_name: nsip-mcp-http
+    environment:
+      MCP_TRANSPORT: http-sse
+      MCP_PORT: 8000
+      MCP_HOST: 0.0.0.0
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    profiles:
+      - http
+      - default
+
+  # ============================================================================
+  # Service 3: WebSocket mode (for real-time applications)
+  # ============================================================================
+  nsip-mcp-websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nsip-mcp-server:1.1.0
+    container_name: nsip-mcp-websocket
+    environment:
+      MCP_TRANSPORT: websocket
+      MCP_PORT: 9000
+      MCP_HOST: 0.0.0.0
+      LOG_LEVEL: INFO
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+    profiles:
+      - websocket
+
+  # ============================================================================
+  # Service 4: HTTP SSE with persistent cache (production)
+  # ============================================================================
+  nsip-mcp-http-persistent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nsip-mcp-server:1.1.0
+    container_name: nsip-mcp-http-persistent
+    environment:
+      MCP_TRANSPORT: http-sse
+      MCP_PORT: 8000
+      MCP_HOST: 0.0.0.0
+      LOG_LEVEL: INFO
+      TIKTOKEN_CACHE_DIR: /app/.cache/tiktoken
+    ports:
+      - "8000:8000"
+    volumes:
+      - tiktoken-cache:/app/.cache/tiktoken
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    profiles:
+      - production
+
+  # ============================================================================
+  # Service 5: HTTP SSE with debug logging (development)
+  # ============================================================================
+  nsip-mcp-http-debug:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nsip-mcp-server:1.1.0
+    container_name: nsip-mcp-http-debug
+    environment:
+      MCP_TRANSPORT: http-sse
+      MCP_PORT: 8000
+      MCP_HOST: 0.0.0.0
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    profiles:
+      - debug
+
+# ============================================================================
+# Named volumes for persistent data
+# ============================================================================
+volumes:
+  tiktoken-cache:
+    driver: local
+    name: nsip-mcp-tiktoken-cache
+
+# ============================================================================
+# Usage Examples:
+# ============================================================================
+#
+# Build all images:
+#   docker-compose build
+#
+# Start default service (HTTP SSE):
+#   docker-compose up
+#   # or
+#   docker-compose up nsip-mcp-http
+#
+# Start with specific profile:
+#   docker-compose --profile http up
+#   docker-compose --profile websocket up
+#   docker-compose --profile production up
+#   docker-compose --profile debug up
+#
+# Start in background (detached):
+#   docker-compose up -d
+#
+# View logs:
+#   docker-compose logs -f nsip-mcp-http
+#
+# Stop services:
+#   docker-compose down
+#
+# Restart service:
+#   docker-compose restart nsip-mcp-http
+#
+# Check health:
+#   curl http://localhost:8000/health
+#
+# Test tool call (HTTP SSE):
+#   curl -X POST http://localhost:8000/messages \
+#     -H "Content-Type: application/json" \
+#     -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
+#
+# Test WebSocket connection:
+#   docker-compose --profile websocket up -d
+#   wscat -c ws://localhost:9000/ws
+#   > {"jsonrpc":"2.0","method":"tools/list","id":1}
+#
+# Run stdio mode with input:
+#   echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | \
+#     docker-compose --profile stdio run --rm nsip-mcp-stdio
+#
+# Clean up everything (including volumes):
+#   docker-compose down -v
+#
+# Rebuild after code changes:
+#   docker-compose build --no-cache
+#   docker-compose up -d
+#
+# Scale production service (load balancing):
+#   docker-compose --profile production up --scale nsip-mcp-http-persistent=3
+#
+# Override environment variables:
+#   MCP_PORT=8080 docker-compose up nsip-mcp-http
+#
+# Use custom compose file:
+#   docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+#
+# ============================================================================
