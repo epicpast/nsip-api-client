@@ -82,10 +82,14 @@ echo ""
 
 echo "Step 5: Security Check (bandit)"
 echo "--------------------------------"
-if $PYTHON_CMD bandit -r src/ -ll -q 2>/dev/null; then
-    echo "✅ bandit security: PASS"
+if command -v bandit &> /dev/null || $PYTHON_CMD bandit --version &>/dev/null 2>&1; then
+    if $PYTHON_CMD bandit -r src/ -ll -q 2>/dev/null; then
+        echo "✅ bandit security: PASS (no high/low severity issues)"
+    else
+        echo "⚠️  bandit security: Issues found (review recommended)"
+    fi
 else
-    echo "⚠️  bandit security: Install with 'pip install bandit' (non-blocking)"
+    echo "ℹ️  bandit not available (install with: uv pip install -e '.[dev]')"
 fi
 echo ""
 
@@ -106,29 +110,27 @@ echo ""
 
 echo "Step 8: Package Build Validation"
 echo "---------------------------------"
-if command -v python &> /dev/null; then
-    if python -m build --help &>/dev/null 2>&1; then
-        echo "  Building package..."
-        if python -m build &>/dev/null; then
-            echo "✅ package build: PASS"
-            if command -v twine &> /dev/null; then
-                echo "  Checking package metadata..."
-                if twine check dist/* &>/dev/null; then
-                    echo "✅ package metadata: PASS"
-                else
-                    echo "⚠️  package metadata: Issues found (non-blocking)"
-                fi
+if $PYTHON_CMD python -m build --help &>/dev/null 2>&1; then
+    echo "  Building package..."
+    # Clean old builds first
+    rm -rf dist/ build/ *.egg-info 2>/dev/null
+    if $PYTHON_CMD python -m build &>/dev/null; then
+        echo "✅ package build: PASS"
+        if $PYTHON_CMD twine --version &>/dev/null 2>&1; then
+            echo "  Checking package metadata..."
+            if $PYTHON_CMD twine check dist/* &>/dev/null; then
+                echo "✅ package metadata: PASS"
             else
-                echo "ℹ️  twine not installed (optional check)"
+                echo "⚠️  package metadata: Issues found (review output)"
             fi
         else
-            echo "⚠️  package build: FAIL (non-blocking)"
+            echo "ℹ️  twine not available (install with: uv pip install -e '.[dev]')"
         fi
     else
-        echo "ℹ️  build package not installed (optional check)"
+        echo "⚠️  package build: FAIL (check build configuration)"
     fi
 else
-    echo "ℹ️  Package build check skipped (build module not available)"
+    echo "ℹ️  build not available (install with: uv pip install -e '.[dev]')"
 fi
 echo ""
 
