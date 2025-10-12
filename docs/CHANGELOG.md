@@ -161,6 +161,77 @@ Complete Model Context Protocol (MCP) server for seamless integration with Claud
 - Docker images available via `docker-compose up`
 - CLI command: `nsip-mcp` for server startup
 
+## [1.1.1] - 2025-10-12
+
+### Changed
+
+#### Streamable HTTP Transport Migration
+Migrated from legacy HTTP SSE to modern Streamable HTTP transport following MCP specification 2025-03-26.
+
+- **Transport Rename**: `HTTP_SSE` → `STREAMABLE_HTTP` in `TransportType` enum
+- **Backward Compatibility**: Legacy `http-sse` environment variable value automatically mapped to `streamable-http`
+- **Enhanced Configuration**:
+  - Added `MCP_HOST` environment variable (default: `0.0.0.0`)
+  - Added `MCP_PATH` environment variable (default: `/mcp`)
+  - Updated `TransportConfig` dataclass with `host` and `path` attributes
+- **Server Implementation**: Updated `start_server()` to use FastMCP 2.12.4+ native Streamable HTTP support
+  - Endpoint: `POST {host}:{port}{path}` (e.g., `POST http://0.0.0.0:8000/mcp`)
+  - Session management via MCP protocol
+  - Improved error handling and connection lifecycle
+
+#### Updated Transport Options
+- **stdio** (unchanged): Default transport for local MCP clients
+- **streamable-http** (new): Modern MCP-compliant HTTP transport with session management
+- **websocket** (unchanged): Real-time bidirectional communication
+
+#### Documentation Updates
+- Updated `docs/mcp-server.md` with Streamable HTTP specification (replaced HTTP SSE section)
+- Added migration guide from HTTP SSE to Streamable HTTP
+- Updated environment variable documentation
+- Added Streamable HTTP endpoint structure and examples
+- Updated `cli.py` docstrings to reference `streamable-http` transport
+
+### Migration Guide
+
+**For existing HTTP SSE users:**
+
+Old configuration (still supported):
+```bash
+MCP_TRANSPORT=http-sse MCP_PORT=8000 nsip-mcp-server
+```
+
+New configuration (recommended):
+```bash
+MCP_TRANSPORT=streamable-http MCP_PORT=8000 nsip-mcp-server
+```
+
+**Additional configuration options:**
+```bash
+MCP_TRANSPORT=streamable-http
+MCP_PORT=8000
+MCP_HOST=0.0.0.0  # Optional, default: 0.0.0.0
+MCP_PATH=/mcp     # Optional, default: /mcp
+nsip-mcp-server
+```
+
+**Endpoint changes:**
+- Old: `POST /messages`, `GET /sse`
+- New: `POST /mcp`, `GET /mcp` (unified endpoint with session management)
+
+### Technical Details
+
+- **MCP Specification**: Compliant with MCP Streamable HTTP transport spec (2025-03-26)
+- **Session Management**: Automatic session lifecycle management via MCP protocol
+- **Connection Handling**: Improved connection pooling and error recovery
+- **Performance**: No performance impact, same startup time and throughput as v1.1.0
+- **Testing**: All existing tests passing, no breaking changes to stdio or websocket transports
+
+### Compatibility
+
+- ✅ **Backward compatible**: Legacy `http-sse` configuration automatically mapped to `streamable-http`
+- ✅ **No breaking changes**: stdio and websocket transports unchanged
+- ✅ **Drop-in replacement**: Existing MCP clients work without modification
+
 ## [Unreleased]
 
 ### Planned

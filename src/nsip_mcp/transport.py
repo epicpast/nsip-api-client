@@ -1,7 +1,7 @@
 """Transport configuration for MCP server.
 
 This module handles transport mechanism selection and configuration for the MCP server,
-supporting stdio (default), HTTP SSE, and WebSocket transports.
+supporting stdio (default), Streamable HTTP, and WebSocket transports.
 """
 
 import os
@@ -14,7 +14,7 @@ class TransportType(Enum):
     """Supported MCP transport mechanisms."""
 
     STDIO = "stdio"
-    HTTP_SSE = "http-sse"
+    STREAMABLE_HTTP = "streamable-http"
     WEBSOCKET = "websocket"
 
 
@@ -24,19 +24,25 @@ class TransportConfig:
 
     Attributes:
         transport_type: The transport mechanism to use
-        port: Port number for HTTP SSE and WebSocket transports (required for non-stdio)
+        port: Port number for Streamable HTTP and WebSocket transports (required for non-stdio)
+        host: Host address to bind to (default: 0.0.0.0)
+        path: Path for HTTP endpoints (default: /mcp)
     """
 
     transport_type: TransportType
     port: Optional[int] = None
+    host: str = "0.0.0.0"
+    path: str = "/mcp"
 
     @classmethod
     def from_environment(cls) -> "TransportConfig":
         """Load configuration from environment variables.
 
         Environment variables:
-            MCP_TRANSPORT: Transport type (stdio, http-sse, websocket). Defaults to stdio.
-            MCP_PORT: Port number for HTTP SSE/WebSocket transports (required for non-stdio).
+            MCP_TRANSPORT: Transport type (stdio, streamable-http, websocket). Defaults to stdio.
+            MCP_PORT: Port number for Streamable HTTP/WebSocket transports (required for non-stdio).
+            MCP_HOST: Host address to bind to (default: 0.0.0.0).
+            MCP_PATH: Path for HTTP endpoints (default: /mcp).
 
         Returns:
             TransportConfig instance
@@ -46,16 +52,20 @@ class TransportConfig:
         """
         transport_str = os.getenv("MCP_TRANSPORT", "stdio").lower()
 
+        # Support legacy http-sse for backward compatibility, map to streamable-http
+        if transport_str == "http-sse":
+            transport_str = "streamable-http"
+
         try:
             transport_type = TransportType(transport_str)
         except ValueError:
             raise ValueError(
                 f"Invalid MCP_TRANSPORT: {transport_str}. "
-                f"Valid values: stdio, http-sse, websocket"
+                f"Valid values: stdio, streamable-http, websocket"
             )
 
         port = None
-        if transport_type in (TransportType.HTTP_SSE, TransportType.WEBSOCKET):
+        if transport_type in (TransportType.STREAMABLE_HTTP, TransportType.WEBSOCKET):
             port_str = os.getenv("MCP_PORT")
             if not port_str:
                 raise ValueError(
@@ -66,7 +76,10 @@ class TransportConfig:
             except ValueError:
                 raise ValueError(f"Invalid MCP_PORT value: {port_str}. Must be an integer.")
 
-        config = cls(transport_type=transport_type, port=port)
+        host = os.getenv("MCP_HOST", "0.0.0.0")
+        path = os.getenv("MCP_PATH", "/mcp")
+
+        config = cls(transport_type=transport_type, port=port, host=host, path=path)
         config.validate()
         return config
 
@@ -76,7 +89,7 @@ class TransportConfig:
         Raises:
             ValueError: If configuration is invalid
         """
-        if self.transport_type in (TransportType.HTTP_SSE, TransportType.WEBSOCKET):
+        if self.transport_type in (TransportType.STREAMABLE_HTTP, TransportType.WEBSOCKET):
             if self.port is None:
                 raise ValueError(f"Port required for {self.transport_type.value} transport")
             if not (1024 <= self.port <= 65535):

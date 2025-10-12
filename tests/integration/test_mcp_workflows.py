@@ -887,7 +887,7 @@ class TestMultiTransport:
 
     @pytest.mark.integration
     def test_http_sse_transport(self):
-        """Verify HTTP SSE transport works correctly."""
+        """Verify HTTP SSE transport (backward compatibility - mapped to streamable-http)."""
         import os
 
         from nsip_mcp.transport import TransportConfig, TransportType
@@ -897,12 +897,12 @@ class TestMultiTransport:
         old_port = os.environ.pop("MCP_PORT", None)
 
         try:
-            # Test HTTP SSE transport configuration
+            # Test HTTP SSE transport configuration (legacy, should map to streamable-http)
             os.environ["MCP_TRANSPORT"] = "http-sse"
             os.environ["MCP_PORT"] = "8080"
 
             config = TransportConfig.from_environment()
-            assert config.transport_type == TransportType.HTTP_SSE
+            assert config.transport_type == TransportType.STREAMABLE_HTTP  # Mapped for backward compatibility
             assert config.port == 8080
 
             # Verify validation passes
