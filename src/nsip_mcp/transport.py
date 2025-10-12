@@ -31,7 +31,7 @@ class TransportConfig:
 
     transport_type: TransportType
     port: Optional[int] = None
-    host: str = "0.0.0.0"
+    host: str = "0.0.0.0"  # nosec B104  # MCP server intentionally binds to all interfaces
     path: str = "/mcp"
 
     @classmethod
@@ -76,7 +76,7 @@ class TransportConfig:
             except ValueError:
                 raise ValueError(f"Invalid MCP_PORT value: {port_str}. Must be an integer.")
 
-        host = os.getenv("MCP_HOST", "0.0.0.0")
+        host = os.getenv("MCP_HOST", "0.0.0.0")  # nosec B104  # Configurable via env var
         path = os.getenv("MCP_PATH", "/mcp")
 
         config = cls(transport_type=transport_type, port=port, host=host, path=path)

@@ -37,7 +37,8 @@ format-check:  ## Check code formatting
 	isort --check src/ tests/ examples/
 
 security:  ## Run security checks with bandit
-	bandit -r src/ -ll
+	@echo "Running bandit security scan (high/low severity only)..."
+	@bandit -r src/ -ll || uv run bandit -r src/ -ll
 
 quality-gates:  ## Run ALL quality gates (matches CI/CD)
 	@echo "========================================="
