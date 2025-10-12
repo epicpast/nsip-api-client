@@ -26,6 +26,8 @@ echo ""
 
 # Track overall status
 FAILED_CHECKS=0
+BANDIT_STATUS="not_run"
+BUILD_STATUS="not_run"
 
 echo "Step 1: Code Formatting (Black)"
 echo "--------------------------------"
@@ -50,18 +52,24 @@ echo ""
 echo "Step 3: Linting (flake8)"
 echo "------------------------"
 echo "  Critical errors (E9, F63, F7, F82)..."
-FLAKE8_CRITICAL=$($PYTHON_CMD flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics)
-if [ "$FLAKE8_CRITICAL" = "0" ]; then
+if $PYTHON_CMD flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics; then
     echo "✅ flake8 critical: PASS (0 errors)"
 else
-    echo "❌ flake8 critical: FAIL ($FLAKE8_CRITICAL errors)"
-    $PYTHON_CMD flake8 src/ tests/ --select=E9,F63,F7,F82 --show-source
+    echo "❌ flake8 critical: FAIL"
     ((FAILED_CHECKS++))
 fi
 
-echo "  Style warnings (informational, exit-zero)..."
-FLAKE8_STYLE=$($PYTHON_CMD flake8 src/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics | tail -1)
+echo "  Style warnings (max-complexity=10, max-line-length=100)..."
+FLAKE8_STYLE=$($PYTHON_CMD flake8 src/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics 2>&1 | tail -1)
 echo "ℹ️  flake8 style warnings: $FLAKE8_STYLE (non-blocking)"
+
+echo "  Full flake8 check (matching PR gates)..."
+if $PYTHON_CMD flake8 src/ tests/; then
+    echo "✅ flake8 full: PASS"
+else
+    echo "❌ flake8 full: FAIL"
+    ((FAILED_CHECKS++))
+fi
 echo ""
 
 echo "Step 4: Type Checking (mypy)"
@@ -74,7 +82,23 @@ else
 fi
 echo ""
 
-echo "Step 5: Test Suite & Coverage"
+echo "Step 5: Security Check (bandit)"
+echo "--------------------------------"
+if command -v bandit &> /dev/null || $PYTHON_CMD bandit --version &>/dev/null 2>&1; then
+    if $PYTHON_CMD bandit -r src/ -ll -q 2>/dev/null; then
+        echo "✅ bandit security: PASS (no high/low severity issues)"
+        BANDIT_STATUS="pass"
+    else
+        echo "⚠️  bandit security: Issues found (review recommended)"
+        BANDIT_STATUS="warn"
+    fi
+else
+    echo "ℹ️  bandit not available (install with: uv pip install -e '.[dev]')"
+    BANDIT_STATUS="not_installed"
+fi
+echo ""
+
+echo "Step 6: Test Suite & Coverage"
 echo "------------------------------"
 if $PYTHON_CMD pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=80 -v; then
     echo "✅ pytest & coverage: PASS"
@@ -84,30 +108,111 @@ else
 fi
 echo ""
 
-echo "Step 6: Coverage Report"
+echo "Step 7: Coverage Report"
 echo "-----------------------"
 $PYTHON_CMD coverage report --precision=2
+echo ""
+
+echo "Step 8: Package Build Validation"
+echo "---------------------------------"
+if $PYTHON_CMD python -m build --help &>/dev/null 2>&1; then
+    echo "  Building package..."
+    # Clean old builds first
+    rm -rf dist/ build/ *.egg-info 2>/dev/null
+    if $PYTHON_CMD python -m build &>/dev/null; then
+        echo "✅ package build: PASS"
+        BUILD_STATUS="pass"
+        if $PYTHON_CMD twine --version &>/dev/null 2>&1; then
+            echo "  Checking package metadata..."
+            if $PYTHON_CMD twine check dist/* &>/dev/null; then
+                echo "✅ package metadata: PASS"
+            else
+                echo "⚠️  package metadata: Issues found (review output)"
+                BUILD_STATUS="warn"
+            fi
+        else
+            echo "ℹ️  twine not available (install with: uv pip install -e '.[dev]')"
+            BUILD_STATUS="warn"
+        fi
+    else
+        echo "⚠️  package build: FAIL (check build configuration)"
+        BUILD_STATUS="fail"
+    fi
+else
+    echo "ℹ️  build not available (install with: uv pip install -e '.[dev]')"
+    BUILD_STATUS="not_installed"
+fi
 echo ""
 
 echo "========================================="
 echo "Quality Gate Summary"
 echo "========================================="
 echo ""
-echo "Checks run: 5 quality gates"
+echo "Checks run: 6 required quality gates"
 echo "Failed checks: $FAILED_CHECKS"
 echo ""
 
 if [ $FAILED_CHECKS -eq 0 ]; then
     echo "✅ ALL QUALITY GATES PASSED"
     echo ""
+    echo "Quality Gates Passed:"
+    echo "  ✅ Black formatting"
+    echo "  ✅ isort import sorting"
+    echo "  ✅ flake8 linting (critical & full)"
+    echo "  ✅ mypy type checking"
+    echo "  ✅ pytest & coverage (>80%)"
+    echo ""
+    echo "Optional Checks:"
+
+    # Show bandit status
+    case "$BANDIT_STATUS" in
+        pass)
+            echo "  ✅ bandit security scan: PASS"
+            ;;
+        warn)
+            echo "  ⚠️  bandit security scan: Issues found"
+            ;;
+        not_installed)
+            echo "  ℹ️  bandit security scan: Not installed"
+            ;;
+        *)
+            echo "  ℹ️  bandit security scan: Not run"
+            ;;
+    esac
+
+    # Show build status
+    case "$BUILD_STATUS" in
+        pass)
+            echo "  ✅ package build validation: PASS"
+            ;;
+        warn)
+            echo "  ⚠️  package build validation: Issues found"
+            ;;
+        fail)
+            echo "  ❌ package build validation: FAIL"
+            ;;
+        not_installed)
+            echo "  ℹ️  package build validation: Not installed"
+            ;;
+        *)
+            echo "  ℹ️  package build validation: Not run"
+            ;;
+    esac
+
+    echo ""
     echo "View detailed HTML coverage report at:"
     echo "  file://$(pwd)/htmlcov/index.html"
+    echo ""
+    echo "✅ Ready for commit and push"
     echo ""
     exit 0
 else
     echo "❌ QUALITY GATES FAILED"
     echo ""
+    echo "Failed checks: $FAILED_CHECKS"
+    echo ""
     echo "Fix the errors above and run again."
+    echo "All quality gates must pass before merge."
     echo ""
     exit 1
 fi
