@@ -75,8 +75,9 @@ def start_server():
     elif transport_config.transport_type == TransportType.WEBSOCKET:
         # WebSocket transport
         print(f"Listening on ws://{transport_config.host}:{transport_config.port}/ws")
+        # FastMCP types don't include websocket transport but it works at runtime
         mcp.run(
-            transport="websocket",  # type: ignore[arg-type]  # FastMCP types don't include websocket but it works
+            transport="websocket",  # type: ignore[arg-type]
             host=transport_config.host,
             port=transport_config.port,
         )
