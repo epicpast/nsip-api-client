@@ -902,7 +902,9 @@ class TestMultiTransport:
             os.environ["MCP_PORT"] = "8080"
 
             config = TransportConfig.from_environment()
-            assert config.transport_type == TransportType.STREAMABLE_HTTP  # Mapped for backward compatibility
+            assert (
+                config.transport_type == TransportType.STREAMABLE_HTTP
+            )  # Mapped for backward compatibility
             assert config.port == 8080
 
             # Verify validation passes
