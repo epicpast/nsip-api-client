@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nsip-client"
-version = "1.0.0"
-description = "Python client for the NSIP (National Sheep Improvement Program) Search API"
+version = "1.1.0"
+description = "Python client for the NSIP (National Sheep Improvement Program) Search API with MCP server support"
 readme = "README.md"
 authors = [
     {name = "Allen R", email = "allenr1@example.com"}
@@ -18,18 +18,19 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "requests>=2.31.0",
     "python-dateutil>=2.8.2",
+    "fastmcp>=2.0",
+    "tiktoken>=0.8.0",
 ]
 
 [project.optional-dependencies]
@@ -59,13 +60,14 @@ Releases = "https://github.com/epicpast/nsip-api-client/releases"
 
 [project.scripts]
 nsip-search = "nsip_client.cli:main"
+nsip-mcp-server = "nsip_mcp.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["nsip_client*"]
+include = ["nsip_client*", "nsip_mcp*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -74,15 +76,20 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
     "--cov=nsip_client",
+    "--cov=nsip_mcp",
     "--cov-report=html",
     "--cov-report=term-missing",
     "--cov-report=xml",
     "-v",
 ]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
 
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312"]
+target-version = ["py310", "py311", "py312", "py313"]
 include = '\.pyi?$'
 
 [tool.isort]
@@ -91,7 +98,7 @@ line_length = 100
 multi_line_output = 3
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false
