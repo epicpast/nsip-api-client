@@ -26,6 +26,8 @@ echo ""
 
 # Track overall status
 FAILED_CHECKS=0
+BANDIT_STATUS="not_run"
+BUILD_STATUS="not_run"
 
 echo "Step 1: Code Formatting (Black)"
 echo "--------------------------------"
@@ -85,11 +87,14 @@ echo "--------------------------------"
 if command -v bandit &> /dev/null || $PYTHON_CMD bandit --version &>/dev/null 2>&1; then
     if $PYTHON_CMD bandit -r src/ -ll -q 2>/dev/null; then
         echo "✅ bandit security: PASS (no high/low severity issues)"
+        BANDIT_STATUS="pass"
     else
         echo "⚠️  bandit security: Issues found (review recommended)"
+        BANDIT_STATUS="warn"
     fi
 else
     echo "ℹ️  bandit not available (install with: uv pip install -e '.[dev]')"
+    BANDIT_STATUS="not_installed"
 fi
 echo ""
 
@@ -116,21 +121,26 @@ if $PYTHON_CMD python -m build --help &>/dev/null 2>&1; then
     rm -rf dist/ build/ *.egg-info 2>/dev/null
     if $PYTHON_CMD python -m build &>/dev/null; then
         echo "✅ package build: PASS"
+        BUILD_STATUS="pass"
         if $PYTHON_CMD twine --version &>/dev/null 2>&1; then
             echo "  Checking package metadata..."
             if $PYTHON_CMD twine check dist/* &>/dev/null; then
                 echo "✅ package metadata: PASS"
             else
                 echo "⚠️  package metadata: Issues found (review output)"
+                BUILD_STATUS="warn"
             fi
         else
             echo "ℹ️  twine not available (install with: uv pip install -e '.[dev]')"
+            BUILD_STATUS="warn"
         fi
     else
         echo "⚠️  package build: FAIL (check build configuration)"
+        BUILD_STATUS="fail"
     fi
 else
     echo "ℹ️  build not available (install with: uv pip install -e '.[dev]')"
+    BUILD_STATUS="not_installed"
 fi
 echo ""
 
@@ -153,8 +163,42 @@ if [ $FAILED_CHECKS -eq 0 ]; then
     echo "  ✅ pytest & coverage (>80%)"
     echo ""
     echo "Optional Checks:"
-    echo "  ℹ️  bandit security scan"
-    echo "  ℹ️  package build validation"
+
+    # Show bandit status
+    case "$BANDIT_STATUS" in
+        pass)
+            echo "  ✅ bandit security scan: PASS"
+            ;;
+        warn)
+            echo "  ⚠️  bandit security scan: Issues found"
+            ;;
+        not_installed)
+            echo "  ℹ️  bandit security scan: Not installed"
+            ;;
+        *)
+            echo "  ℹ️  bandit security scan: Not run"
+            ;;
+    esac
+
+    # Show build status
+    case "$BUILD_STATUS" in
+        pass)
+            echo "  ✅ package build validation: PASS"
+            ;;
+        warn)
+            echo "  ⚠️  package build validation: Issues found"
+            ;;
+        fail)
+            echo "  ❌ package build validation: FAIL"
+            ;;
+        not_installed)
+            echo "  ℹ️  package build validation: Not installed"
+            ;;
+        *)
+            echo "  ℹ️  package build validation: Not run"
+            ;;
+    esac
+
     echo ""
     echo "View detailed HTML coverage report at:"
     echo "  file://$(pwd)/htmlcov/index.html"
