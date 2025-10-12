@@ -118,13 +118,13 @@ jobs:
       id: changelog
       run: |
         VERSION="${{ steps.get_version.outputs.VERSION }}"
-        # Extract the section for this version from CHANGELOG.md
-        sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
+        # Extract the section for this version from docs/CHANGELOG.md
+        sed -n "/## \[$VERSION\]/,/## \[/p" docs/CHANGELOG.md | sed '$d' > release_notes.md
         # If no specific notes found, use a default message
         if [ ! -s release_notes.md ]; then
           echo "Release version $VERSION" > release_notes.md
           echo "" >> release_notes.md
-          echo "See [CHANGELOG.md](CHANGELOG.md) for details." >> release_notes.md
+          echo "See [docs/CHANGELOG.md](https://github.com/epicpast/nsip-api-client/blob/main/docs/CHANGELOG.md) for details." >> release_notes.md
         fi
 
     - name: Create GitHub Release

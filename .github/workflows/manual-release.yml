@@ -148,7 +148,7 @@ jobs:
           pip install https://github.com/epicpast/nsip-api-client/releases/download/v${{ github.event.inputs.version }}/nsip-client-${{ github.event.inputs.version }}.tar.gz
           ```
 
-          See [CHANGELOG.md](CHANGELOG.md) for details.
+          See [docs/CHANGELOG.md](https://github.com/epicpast/nsip-api-client/blob/main/docs/CHANGELOG.md) for details.
         files: |
           dist/*.tar.gz
           dist/*.whl
