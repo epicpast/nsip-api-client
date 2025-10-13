@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-10-13
+
+### Changed
+- **BREAKING**: MCP tools no longer automatically summarize responses
+  - Summarization is now opt-in via explicit `summarize=True` parameter
+  - Default behavior: ALL data preserved (zero data loss)
+  - Affected tools: `nsip_search_animals`, `nsip_get_animal`, `nsip_get_lineage`, `nsip_get_progeny`, `nsip_search_by_lpn`
+
+### Added
+- Opt-in `summarize` parameter to 5 MCP tools for explicit control over data reduction
+- Enhanced data format handling in `summarize_response()`:
+  - Support for both string and dict formats for sire/dam fields
+  - Trait normalization for dataclass serialization format
+  - Automatic accuracy percentage (0-100) to decimal (0-1) conversion
+  - Improved contact_info handling with None filtering
+
+### Fixed
+- Data loss issue where responses were automatically summarized without user consent
+- Format mismatch when handling sire/dam fields in different data structures
+- Trait accuracy conversion between percentage and decimal formats
+- Empty field issues in summarized responses
+
+### Improved
+- User control: Explicit opt-in ensures predictable behavior
+- Transparency: `_summarized` metadata always indicates summarization status
+- Backward compatibility: Optional parameter doesn't break existing code
+- Test coverage: 290 tests passing, 91.94% coverage maintained
+
 ## [1.0.0] - 2025-10-06
 
 ### Added
