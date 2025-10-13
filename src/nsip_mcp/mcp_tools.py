@@ -15,7 +15,6 @@ from nsip_client.exceptions import (
 )
 from nsip_mcp.context import (
     ContextManagedResponse,
-    should_summarize,
     summarize_response,
 )
 from nsip_mcp.errors import McpErrorResponse
@@ -38,31 +37,36 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def apply_context_management(
-    response: Dict[str, Any], force_summarize: bool = False
-) -> Dict[str, Any]:
+def apply_context_management(response: Dict[str, Any], summarize: bool = False) -> Dict[str, Any]:
     """Apply context management (pass-through or summarization) to API response.
+
+    IMPORTANT: Summarization is OPT-IN only. By default, all data is preserved.
 
     Args:
         response: Original API response
-        force_summarize: If True, always summarize regardless of size
+        summarize: If True, summarize the response. If False (default), pass through all data.
 
     Returns:
         Context-managed response with metadata
 
     Example:
         >>> response = {"lpn_id": "ABC123", "breed": "Katahdin"}
+        >>> # Default: pass-through (no data loss)
         >>> managed = apply_context_management(response)
-        >>> "_summarized" in managed
+        >>> managed['_summarized']
+        False
+        >>> # Explicit summarization
+        >>> managed = apply_context_management(response, summarize=True)
+        >>> managed['_summarized']
         True
     """
     try:
-        if force_summarize or should_summarize(response):
-            # Response exceeds 2000 tokens - summarize
+        if summarize:
+            # User explicitly requested summarization
             summarized = summarize_response(response)
             managed = ContextManagedResponse.create_summarized(response, summarized)
         else:
-            # Response ≤2000 tokens - pass through unmodified
+            # Default: pass through unmodified (no data loss)
             managed = ContextManagedResponse.create_passthrough(response)
 
         return managed.final_response
@@ -331,6 +335,7 @@ def nsip_search_animals(
     sorted_trait: Optional[str] = None,
     reverse: Optional[bool] = None,
     search_criteria: Optional[Dict[str, Any]] = None,
+    summarize: bool = False,
 ) -> Dict[str, Any]:
     """Search for animals based on criteria with pagination.
 
@@ -341,9 +346,10 @@ def nsip_search_animals(
         sorted_trait: Trait to sort by, e.g. 'BWT', 'WWT' (optional)
         reverse: Sort in reverse order (optional)
         search_criteria: Additional filters as a dict (optional)
+        summarize: If True, summarize large responses. Default False (no data loss)
 
     Returns:
-        Dict containing results or error response
+        Dict containing results or error response. All data preserved by default.
 
     Example:
         {
@@ -379,8 +385,8 @@ def nsip_search_animals(
             "page_size": results.page_size,
         }
 
-        # Apply context management (T029)
-        return apply_context_management(response)
+        # Apply context management - NO automatic summarization (T029)
+        return apply_context_management(response, summarize=summarize)
 
     except Exception as e:
         return handle_nsip_api_error(e, "searching animals")
@@ -388,28 +394,23 @@ def nsip_search_animals(
 
 @mcp.tool()
 @cached_api_call("get_animal_details")
-def nsip_get_animal(search_string: str) -> Dict[str, Any]:
+def nsip_get_animal(search_string: str, summarize: bool = False) -> Dict[str, Any]:
     """Get detailed information about a specific animal.
 
     Args:
         search_string: LPN ID or registration number to search for
+        summarize: If True, summarize the response. Default False (no data loss)
 
     Returns:
-        Dict containing complete animal information including traits, breeding values,
-        pedigree info, and metadata. Large responses are automatically summarized.
+        Dict containing complete animal information. All data preserved by default.
 
     Example:
         {
             'lpn_id': '6####92020###249',
             'breed': 'Katahdin',
-            'top_traits': [
-                {'trait': 'YWT', 'value': 2.1, 'accuracy': 0.92},
-                ...
-            ],
-            '_summarized': True,
-            '_original_token_count': 3500,
-            '_summary_token_count': 950,
-            '_reduction_percent': 72.86
+            'traits': {...},  # All traits included by default
+            'contact_info': {...},
+            '_summarized': False
         }
     """
     try:
@@ -422,8 +423,8 @@ def nsip_get_animal(search_string: str) -> Dict[str, Any]:
         animal = client.get_animal_details(search_string)
         response = animal.to_dict()
 
-        # Apply context management (T030)
-        return apply_context_management(response)
+        # Apply context management - NO automatic summarization (T030)
+        return apply_context_management(response, summarize=summarize)
 
     except Exception as e:
         # NSIP API error - convert to structured error (T039)
@@ -432,24 +433,22 @@ def nsip_get_animal(search_string: str) -> Dict[str, Any]:
 
 @mcp.tool()
 @cached_api_call("get_lineage")
-def nsip_get_lineage(lpn_id: str) -> Dict[str, Any]:
+def nsip_get_lineage(lpn_id: str, summarize: bool = False) -> Dict[str, Any]:
     """Get the lineage/pedigree information for an animal.
 
     Args:
         lpn_id: The LPN ID of the animal
+        summarize: If True, summarize the response. Default False (no data loss)
 
     Returns:
-        Dict containing pedigree tree with sire, dam, and ancestor information.
-        Large lineage trees are automatically summarized.
+        Dict containing pedigree tree. All data preserved by default.
 
     Example:
         {
             'sire': '123ABC',
             'dam': '456DEF',
-            '_summarized': True,
-            '_original_token_count': 2500,
-            '_summary_token_count': 720,
-            '_reduction_percent': 71.20
+            'generations': [...],  # Full lineage included by default
+            '_summarized': False
         }
     """
     try:
@@ -462,8 +461,8 @@ def nsip_get_lineage(lpn_id: str) -> Dict[str, Any]:
         lineage = client.get_lineage(lpn_id)
         response = lineage.to_dict()
 
-        # Apply context management (T031)
-        return apply_context_management(response)
+        # Apply context management - NO automatic summarization (T031)
+        return apply_context_management(response, summarize=summarize)
 
     except Exception as e:
         # NSIP API error - convert to structured error (T039)
@@ -472,31 +471,27 @@ def nsip_get_lineage(lpn_id: str) -> Dict[str, Any]:
 
 @mcp.tool()
 @cached_api_call("get_progeny")
-def nsip_get_progeny(lpn_id: str, page: int = 0, page_size: int = 10) -> Dict[str, Any]:
+def nsip_get_progeny(
+    lpn_id: str, page: int = 0, page_size: int = 10, summarize: bool = False
+) -> Dict[str, Any]:
     """Get progeny (offspring) for a specific animal with pagination.
 
     Args:
         lpn_id: The LPN ID of the parent animal
         page: Page number (0-indexed, default: 0)
         page_size: Number of results per page (default: 10)
+        summarize: If True, summarize the response. Default False (no data loss)
 
     Returns:
-        Dict containing:
-        - animals: List of offspring records (or summarized if large)
-        - total_count: Total number of offspring
-        - page: Current page number
-        - page_size: Results per page
-        - _summarized: True if response was summarized
+        Dict containing offspring records. All data preserved by default.
 
     Example:
         {
+            'animals': [...],  # All offspring included by default
             'total_count': 6,
             'page': 0,
             'page_size': 10,
-            '_summarized': True,
-            '_original_token_count': 2800,
-            '_summary_token_count': 750,
-            '_reduction_percent': 73.21
+            '_summarized': False
         }
     """
     try:
@@ -518,8 +513,8 @@ def nsip_get_progeny(lpn_id: str, page: int = 0, page_size: int = 10) -> Dict[st
             "page_size": progeny.page_size,
         }
 
-        # Apply context management (T032)
-        return apply_context_management(response)
+        # Apply context management - NO automatic summarization (T032)
+        return apply_context_management(response, summarize=summarize)
 
     except Exception as e:
         # NSIP API error - convert to structured error (T039)
@@ -528,29 +523,28 @@ def nsip_get_progeny(lpn_id: str, page: int = 0, page_size: int = 10) -> Dict[st
 
 @mcp.tool()
 @cached_api_call("search_by_lpn")
-def nsip_search_by_lpn(lpn_id: str) -> Dict[str, Any]:
+def nsip_search_by_lpn(lpn_id: str, summarize: bool = False) -> Dict[str, Any]:
     """Get complete profile for an animal by LPN ID (details + lineage + progeny).
 
     This is a convenience tool that combines three API calls into one comprehensive result.
-    **ALWAYS returns a summarized response** due to the combined data size.
+    Note: Combined responses can be large. Use summarize=True to reduce token usage.
 
     Args:
         lpn_id: The LPN ID to search for
+        summarize: If True, summarize the response. Default False (no data loss)
 
     Returns:
-        Dict containing summarized profile with:
-        - lpn_id: Animal identifier
-        - breed: Breed name
-        - sire: Sire LPN ID
-        - dam: Dam LPN ID
-        - total_progeny: Number of offspring
-        - top_traits: Top 3 traits by accuracy
-        - _summarized: Always True
-        - _original_token_count: Original size before summarization
-        - _summary_token_count: Size after summarization
-        - _reduction_percent: Percentage reduction achieved
+        Dict containing complete profile. All data preserved by default.
 
-    Example:
+    Example (without summarization):
+        {
+            'details': {...},  # Full animal details
+            'lineage': {...},  # Complete pedigree tree
+            'progeny': {...},  # All offspring
+            '_summarized': False
+        }
+
+    Example (with summarization):
         {
             'lpn_id': '6####92020###249',
             'breed': 'Katahdin',
@@ -562,8 +556,6 @@ def nsip_search_by_lpn(lpn_id: str) -> Dict[str, Any]:
                 ...
             ],
             '_summarized': True,
-            '_original_token_count': 5200,
-            '_summary_token_count': 1100,
             '_reduction_percent': 78.85
         }
     """
@@ -586,9 +578,8 @@ def nsip_search_by_lpn(lpn_id: str) -> Dict[str, Any]:
             },
         }
 
-        # Apply context management - ALWAYS summarize (T033)
-        # Combined response always exceeds 2000 tokens
-        return apply_context_management(response, force_summarize=True)
+        # Apply context management - NO automatic summarization (T033)
+        return apply_context_management(response, summarize=summarize)
 
     except Exception as e:
         # NSIP API error - convert to structured error (T039)

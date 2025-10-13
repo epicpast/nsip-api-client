@@ -237,8 +237,8 @@ class TestUS1ToolInvocation:
         assert "animals" in result8
 
         result9 = mcp_tools.nsip_search_by_lpn.fn(lpn_id="ABC123")
-        # nsip_search_by_lpn returns summarized response with FR-005a fields
-        assert "lpn_id" in result9
+        # nsip_search_by_lpn now returns full structure by default (no auto-summarization)
+        assert "details" in result9 or "lpn_id" in result9  # Either full or summarized format
         assert "_summarized" in result9
 
     @pytest.mark.integration
@@ -355,7 +355,7 @@ class TestUS2Summarization:
     @pytest.mark.integration
     @patch("nsip_mcp.tools.NSIPClient")
     def test_large_response_summarized(self, mock_client_class):
-        """Verify responses >2000 tokens are summarized."""
+        """Verify responses can be summarized when explicitly requested."""
         mock_client = MagicMock()
 
         # Create a large animal response (>2000 tokens)
@@ -388,11 +388,12 @@ class TestUS2Summarization:
 
         from nsip_mcp import mcp_tools
 
-        result = mcp_tools.nsip_get_animal.fn(search_string="6####92020###249")
+        # Explicitly request summarization with summarize=True
+        result = mcp_tools.nsip_get_animal.fn(search_string="6####92020###249", summarize=True)
 
         # Verify summarization occurred
         assert "_summarized" in result
-        assert result["_summarized"] is True, "Large response should be summarized"
+        assert result["_summarized"] is True, "Large response should be summarized when requested"
         assert "_original_token_count" in result
         assert "_summary_token_count" in result
         assert result["_original_token_count"] > 2000, "Original should exceed threshold"
@@ -430,13 +431,14 @@ class TestUS2Summarization:
 
         from nsip_mcp import mcp_tools
 
-        result = mcp_tools.nsip_get_animal.fn(search_string="TEST123")
+        # Explicitly request summarization to test reduction
+        result = mcp_tools.nsip_get_animal.fn(search_string="TEST123", summarize=True)
 
         # Verify 70% reduction target (SC-002)
-        if result["_summarized"]:
-            assert "_reduction_percent" in result
-            reduction = result["_reduction_percent"]
-            assert reduction >= 70.0, f"Reduction should be >=70%, got {reduction}%"
+        assert result["_summarized"] is True, "Should be summarized when requested"
+        assert "_reduction_percent" in result
+        reduction = result["_reduction_percent"]
+        assert reduction >= 70.0, f"Reduction should be >=70%, got {reduction}%"
 
     @pytest.mark.integration
     @patch("nsip_mcp.tools.NSIPClient")
@@ -472,11 +474,12 @@ class TestUS2Summarization:
 
         from nsip_mcp import mcp_tools
 
-        result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="ABC123")
+        # Explicitly request summarization to test field preservation
+        result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="ABC123", summarize=True)
 
         # Verify FR-005a required fields present
         assert "_summarized" in result
-        assert result["_summarized"] is True, "search_by_lpn always summarizes"
+        assert result["_summarized"] is True, "Should be summarized when requested"
 
         # Check for required fields
         assert "lpn_id" in result, "lpn_id should be preserved"
@@ -490,14 +493,18 @@ class TestUS2Summarization:
         mock_client = MagicMock()
 
         mock_animal = MagicMock()
+        # Create large response to ensure summarization triggers
+        traits = {}
+        for i in range(30):
+            acc = 0.3 + (i % 70) / 100.0  # Mix of high and low accuracy
+            traits[f"TRAIT_{i}"] = {"value": float(i), "accuracy": acc}
+
         mock_animal.to_dict.return_value = {
-            "lpn_id": "TEST",
+            "lpn_id": "TEST12345",
             "breed": "Katahdin",
-            "traits": {
-                "HIGH_ACC": {"value": 1.0, "accuracy": 0.95},
-                "LOW_ACC": {"value": 2.0, "accuracy": 0.30},  # Should be omitted
-            },
-            "verbose_registration_data": "x" * 1000,  # Should be omitted
+            "traits": traits,
+            "verbose_registration_data": "x" * 5000,  # Should be omitted
+            "detailed_records": [{"record": i, "data": "x" * 100} for i in range(50)],
         }
 
         mock_client.get_animal_details.return_value = mock_animal
@@ -505,19 +512,20 @@ class TestUS2Summarization:
 
         from nsip_mcp import mcp_tools
 
-        result = mcp_tools.nsip_get_animal.fn(search_string="TEST")
+        # Explicitly request summarization to test field omission
+        result = mcp_tools.nsip_get_animal.fn(search_string="TEST12345", summarize=True)
 
-        # If summarized, verify low-accuracy traits omitted
-        if result.get("_summarized"):
-            if "top_traits" in result:
-                # Check that only high-accuracy traits included
-                for trait in result["top_traits"]:
-                    assert trait.get("accuracy", 0) >= 0.5, "Low-accuracy traits should be omitted"
+        # Verify low-accuracy traits omitted (FR-005b)
+        assert result["_summarized"] is True, "Should be summarized when requested"
+        if "top_traits" in result:
+            # Check that only high-accuracy traits included
+            for trait in result["top_traits"]:
+                assert trait.get("accuracy", 0) >= 0.5, "Low-accuracy traits should be omitted"
 
     @pytest.mark.integration
     @patch("nsip_mcp.tools.NSIPClient")
-    def test_nsip_search_by_lpn_always_summarized(self, mock_client_class):
-        """Verify nsip_search_by_lpn always returns summarized response."""
+    def test_nsip_search_by_lpn_respects_summarize_flag(self, mock_client_class):
+        """Verify nsip_search_by_lpn respects summarize parameter (opt-in)."""
         mock_client = MagicMock()
 
         mock_details = MagicMock()
@@ -541,13 +549,17 @@ class TestUS2Summarization:
 
         from nsip_mcp import mcp_tools
 
-        result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="ABC12345")
+        # Default: no summarization
+        result_default = mcp_tools.nsip_search_by_lpn.fn(lpn_id="ABC12345")
+        assert "_summarized" in result_default
+        assert result_default["_summarized"] is False, "Should NOT summarize by default"
 
-        # MUST always be summarized
-        assert "_summarized" in result
-        assert result["_summarized"] is True, "search_by_lpn ALWAYS summarizes"
-        assert "_original_token_count" in result
-        assert "_summary_token_count" in result
+        # Explicit opt-in: summarization enabled
+        result_summarized = mcp_tools.nsip_search_by_lpn.fn(lpn_id="ABC12345", summarize=True)
+        assert "_summarized" in result_summarized
+        assert result_summarized["_summarized"] is True, "Should summarize when requested"
+        assert "_original_token_count" in result_summarized
+        assert "_summary_token_count" in result_summarized
 
 
 class TestUS3ParameterValidation:
@@ -1068,12 +1080,15 @@ class TestEndToEndWorkflow:
         assert result_small[0]["id"] == 61
 
         # === 4. Verify Context Management ===
-        # Test pass-through behavior (≤2000 tokens, FR-015)
+        # Test pass-through behavior (default, no summarization)
         assert "_summarized" not in str(result_small), "Small response should not be summarized"
 
-        # Test summarization (>2000 tokens, SC-002: >=70% reduction)
-        result_large = mcp_tools.nsip_get_animal.fn(search_string="6####92020###249")
-        assert "_summarized" in result_large, "Large response should be summarized"
+        # Test summarization when explicitly requested (SC-002: >=70% reduction)
+        result_large = mcp_tools.nsip_get_animal.fn(
+            search_string="6####92020###249", summarize=True
+        )
+        assert "_summarized" in result_large, "Large response should be summarized when requested"
+        assert result_large["_summarized"] is True, "Summarization flag should be True"
 
         # Verify FR-005a fields preserved
         assert "lpn_id" in result_large, "FR-005a: lpn_id (identity) should be preserved"

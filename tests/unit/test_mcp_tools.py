@@ -723,13 +723,13 @@ class TestNsipGetProgeny:
 class TestNsipSearchByLpn:
     """Tests for nsip_search_by_lpn tool.
 
-    Note: This tool ALWAYS returns a summarized response due to the large
-    combined data size from details + lineage + progeny.
+    Note: This tool combines data from details + lineage + progeny.
+    Summarization is opt-in via the summarize parameter.
     """
 
     @patch("nsip_mcp.tools.NSIPClient")
-    def test_returns_summarized_profile(self, mock_client_class):
-        """Verify tool returns summarized animal profile (always summarized)."""
+    def test_returns_profile_default_no_summarization(self, mock_client_class):
+        """Verify tool returns full animal profile by default (no summarization)."""
         mock_client = MagicMock()
 
         # Mock animal details
@@ -770,17 +770,17 @@ class TestNsipSearchByLpn:
 
         result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="6####92020###249")
 
-        # Verify summarized response structure (not nested details/lineage/progeny)
+        # Verify NO summarization by default
         assert "_summarized" in result
-        assert result["_summarized"] is True
-        assert "lpn_id" in result
-        assert "breed" in result
-        assert "total_progeny" in result
-        assert result["total_progeny"] == 1
+        assert result["_summarized"] is False, "Should NOT summarize by default"
+        # Full structure preserved (nested)
+        assert "details" in result
+        assert "lineage" in result
+        assert "progeny" in result
 
     @patch("nsip_mcp.tools.NSIPClient")
-    def test_includes_lineage_info(self, mock_client_class):
-        """Verify summarized profile includes sire/dam info."""
+    def test_summarized_profile_includes_lineage(self, mock_client_class):
+        """Verify summarized profile includes sire/dam info when requested."""
         mock_client = MagicMock()
 
         mock_details = MagicMock()
@@ -808,17 +808,15 @@ class TestNsipSearchByLpn:
         }
         mock_client_class.return_value = mock_client
 
-        result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="6####92020###249")
+        # Request summarization explicitly
+        result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="6####92020###249", summarize=True)
 
-        # Summarized response always includes core fields
+        # Verify summarization occurred
         assert "_summarized" in result
         assert result["_summarized"] is True
-        # Summarized response always includes core fields
-        assert "_summarized" in result
-        assert result["_summarized"] is True
-        # Summarized response always includes core fields
-        assert "_summarized" in result
-        assert result["_summarized"] is True
+        # Core fields should be present in summarized version
+        assert "lpn_id" in result
+        assert "breed" in result
 
     @patch("nsip_mcp.tools.NSIPClient")
     def test_caching_behavior(self, mock_client_class):
@@ -887,12 +885,14 @@ class TestNsipSearchByLpn:
         }
         mock_client_class.return_value = mock_client
 
+        # Without summarization, full nested structure is returned
         result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="6####92020###249")
 
-        # Summarized response includes progeny count (not full list)
-        assert "total_progeny" in result
-        assert result["total_progeny"] == 3
-        assert result["_summarized"] is True
+        # Without summarization, check nested structure
+        assert result["_summarized"] is False
+        assert "progeny" in result
+        assert result["progeny"]["total_count"] == 3
+        assert len(result["progeny"]["animals"]) == 3
 
 
 class TestCacheBehavior:

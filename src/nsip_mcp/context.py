@@ -307,19 +307,62 @@ def summarize_response(
     # Extract required fields per FR-005a
     lpn_id = response.get("lpn_id", response.get("LpnId", ""))
     breed = response.get("breed", response.get("Breed", ""))
-    sire = response.get("sire_id", response.get("sire", {}).get("lpn_id"))
-    dam = response.get("dam_id", response.get("dam", {}).get("lpn_id"))
+
+    # Handle sire/dam - can be string or nested dict
+    sire_value = response.get("sire_id") or response.get("sire")
+    if isinstance(sire_value, dict):
+        sire = sire_value.get("lpn_id")
+    elif isinstance(sire_value, str):
+        sire = sire_value
+    else:
+        sire = None
+
+    dam_value = response.get("dam_id") or response.get("dam")
+    if isinstance(dam_value, dict):
+        dam = dam_value.get("lpn_id")
+    elif isinstance(dam_value, str):
+        dam = dam_value
+    else:
+        dam = None
 
     # Extract progeny count (not full list per FR-005b)
     progeny_data = response.get("progeny", {})
     total_progeny = progeny_data.get("total_count", 0) if isinstance(progeny_data, dict) else 0
 
-    # Extract contact information
-    contact = response.get("contact")
+    # Extract contact information - handle both nested dict and flat dict
+    contact_raw = response.get("contact") or response.get("contact_info")
+    contact = None
+    if isinstance(contact_raw, dict):
+        # Filter out None values to keep contact compact
+        contact = {k: v for k, v in contact_raw.items() if v is not None}
+        if not contact:  # If all values were None
+            contact = None
 
-    # Extract and filter traits
-    traits = response.get("traits", {})
-    top_traits = SummarizedAnimalResponse.select_top_traits(traits, max_traits=3, min_accuracy=0.5)
+    # Extract and filter traits - handle both formats:
+    # Format 1: {"BWT": {"value": 0.5, "accuracy": 0.89}}  (from API)
+    # Format 2: {"BWT": {"name": "BWT", "value": 0.5, "accuracy": 89}}  (dataclass)
+    traits_raw = response.get("traits", {})
+    traits_normalized = {}
+    if isinstance(traits_raw, dict):
+        for trait_name, trait_data in traits_raw.items():
+            if isinstance(trait_data, dict):
+                # Extract value and accuracy, handling both formats
+                value = trait_data.get("value", 0)
+                accuracy = trait_data.get("accuracy", 0)
+
+                # Handle accuracy as percentage (0-100) or decimal (0-1)
+                # If accuracy > 1, it's a percentage, convert to decimal
+                if accuracy > 1:
+                    accuracy = accuracy / 100.0
+
+                traits_normalized[trait_name] = {
+                    "value": value,
+                    "accuracy": accuracy,
+                }
+
+    top_traits = SummarizedAnimalResponse.select_top_traits(
+        traits_normalized, max_traits=3, min_accuracy=0.5
+    )
 
     # Create summarized model
     summarized = SummarizedAnimalResponse(
