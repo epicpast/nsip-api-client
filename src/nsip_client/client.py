@@ -241,15 +241,16 @@ class NSIPClient:
             params["reverse"] = reverse
 
         # Convert SearchCriteria to dict if needed
-        criteria_dict = {}
+        # Only send json body if search_criteria is provided
+        json_data = None
         if search_criteria:
             if isinstance(search_criteria, SearchCriteria):
-                criteria_dict = search_criteria.to_dict()
+                json_data = search_criteria.to_dict()
             else:
-                criteria_dict = search_criteria
+                json_data = search_criteria
 
         data = self._make_request(
-            "POST", "search/getPageOfSearchResults", params=params, json=criteria_dict
+            "POST", "search/getPageOfSearchResults", params=params, json=json_data
         )
         return SearchResults.from_api_response(data)
 
