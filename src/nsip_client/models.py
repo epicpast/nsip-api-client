@@ -167,22 +167,37 @@ class Progeny:
 
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> "Progeny":
-        """Create Progeny from API response"""
+        """Create Progeny from API response
+
+        The progeny endpoint returns a different structure than other endpoints:
+        - Uses "records" instead of "Results"
+        - Uses "recordCount" instead of "TotalCount"
+        - Uses lowercase field names (lpnId, dob, sex) instead of PascalCase
+        - Does not include Page/PageSize in response
+        """
         animals = []
-        for animal_data in data.get("Results", []):
+
+        # Try both response formats (records vs Results)
+        records = data.get("records", data.get("Results", []))
+
+        for animal_data in records:
+            # Map lowercase field names to expected format
             progeny_animal = ProgenyAnimal(
-                lpn_id=animal_data.get("LpnId", ""),
-                sex=animal_data.get("Sex"),
-                date_of_birth=animal_data.get("DateOfBirth"),
-                traits=animal_data.get("Traits", {}),
+                lpn_id=animal_data.get("lpnId", animal_data.get("LpnId", "")),
+                sex=animal_data.get("sex", animal_data.get("Sex")),
+                date_of_birth=animal_data.get("dob", animal_data.get("DateOfBirth")),
+                traits=animal_data.get("Traits", {}),  # Traits still use PascalCase
             )
             animals.append(progeny_animal)
 
+        # Try both field naming conventions
+        total_count = data.get("recordCount", data.get("TotalCount", 0))
+
         return cls(
-            total_count=data.get("TotalCount", 0),
+            total_count=total_count,
             animals=animals,
             page=data.get("Page", 0),
-            page_size=data.get("PageSize", 10),
+            page_size=data.get("PageSize", len(animals)),
         )
 
 
