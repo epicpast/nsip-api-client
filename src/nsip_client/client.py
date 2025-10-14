@@ -140,13 +140,19 @@ class NSIPClient:
             69: Terminal
         """
         data = self._make_request("GET", "search/getAvailableBreedGroups")
-        # API returns a list, not a dict
-        breed_list: List[Dict[str, Any]] = data  # type: ignore
-        # Support both PascalCase (Id, Name) and camelCase (id, name) field names
+
+        # Handle wrapped response: {"success": true, "data": [...]}
+        if isinstance(data, dict) and "data" in data:
+            breed_list = data["data"]
+        else:
+            # Fallback for old format (direct list)
+            breed_list = data
+
+        # Support multiple field name formats
         return [
             BreedGroup(
-                id=int(g.get("Id") or g.get("id") or 0),
-                name=str(g.get("Name") or g.get("name") or ""),
+                id=int(g.get("breedGroupId") or g.get("Id") or g.get("id") or 0),
+                name=str(g.get("breedGroupName") or g.get("Name") or g.get("name") or ""),
             )
             for g in breed_list
         ]
