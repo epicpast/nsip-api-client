@@ -33,6 +33,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backward compatibility: Optional parameter doesn't break existing code
 - Test coverage: 290 tests passing, 91.94% coverage maintained
 
+## [1.2.1] - 2025-10-14
+
+### Fixed
+- **API Response Format Compatibility**: Fixed `get_available_breed_groups()` to handle new NSIP API response format
+  - Now supports wrapped response format: `{"success": true, "data": [...]}`
+  - Added support for multiple field name variations: `breedGroupId/Id/id` and `breedGroupName/Name/name`
+  - Maintains backward compatibility with legacy direct list format
+  - Resolves `'str' object has no attribute 'get'` error in `/nsip:discover` MCP command
+- **Search Request Headers**: Fixed `search_animals()` to always send `Content-Type: application/json` header
+  - API requires JSON content type even with empty request body
+  - Changed to always send `json={}` instead of `json=None`
+  - Fixes 415 "Unsupported Media Type" errors
+  - Fixes 400 "Bad Request" errors when searching without criteria
+- **Search Response Parsing**: Enhanced `SearchResults.from_api_response()` to support both field naming conventions
+  - Supports camelCase: `recordCount`, `records`, `page`, `pageSize`
+  - Supports PascalCase: `TotalCount`, `Results`, `Page`, `PageSize`
+  - Resolves 0 results returned when searching (now returns all 145,595+ animals for Katahdin breed)
+- **MCP Tool Response Format**: Fixed FastMCP serialization bug in `nsip_list_breeds()` and `nsip_get_statuses()`
+  - Wrapped list returns in dict structure due to FastMCP Issue #1969
+  - Return format: `{"success": True, "data": [...]}`
+  - Prevents MCP client-side deserialization errors
+
+### Changed
+- Enhanced API response format flexibility across all endpoints
+- Improved error handling for HTTP content negotiation
+- Updated all unit and integration tests for new response formats (295 tests passing)
+
+### Technical Details
+- **Root Cause**: NSIP API changed response format without versioning
+  - Previous: Direct list `[...]` with PascalCase fields
+  - Current: Wrapped response `{"success": true, "data": [...]}` with camelCase fields
+- **Testing**: Verified against live NSIP API using curl
+- **Coverage**: Maintained 92.28% test coverage
+- **Quality Gates**: All 6 mandatory gates passing (Black, isort, flake8, mypy, pytest, package build)
+
 ## [1.0.0] - 2025-10-06
 
 ### Added
