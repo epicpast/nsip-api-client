@@ -5,7 +5,7 @@ LLM-friendly interfaces with automatic caching, context management, and error ha
 """
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from nsip_client.exceptions import (
     NSIPAPIError,
@@ -260,38 +260,44 @@ def nsip_get_last_update() -> Dict[str, Any]:
 
 @mcp.tool()
 @cached_api_call("get_available_breed_groups")
-def nsip_list_breeds() -> List[Dict[str, Any]]:
+def nsip_list_breeds() -> Dict[str, Any]:
     """Get list of available breed groups in the NSIP database.
 
     Returns:
-        List of breed groups with their IDs and names
+        Dict containing list of breed groups with their IDs and names
 
     Example:
-        [
-            {'id': 61, 'name': 'Range'},
-            {'id': 62, 'name': 'Maternal Wool'},
-            {'id': 64, 'name': 'Hair'},
-            {'id': 69, 'name': 'Terminal'}
-        ]
+        {
+            'success': True,
+            'data': [
+                {'id': 61, 'name': 'Range'},
+                {'id': 62, 'name': 'Maternal Wool'},
+                {'id': 64, 'name': 'Hair'},
+                {'id': 69, 'name': 'Terminal'}
+            ]
+        }
     """
     client = get_nsip_client()
     breed_groups = client.get_available_breed_groups()
-    return [{"id": bg.id, "name": bg.name} for bg in breed_groups]
+    return {"success": True, "data": [{"id": bg.id, "name": bg.name} for bg in breed_groups]}
 
 
 @mcp.tool()
 @cached_api_call("get_statuses_by_breed_group")
-def nsip_get_statuses() -> List[str]:
+def nsip_get_statuses() -> Dict[str, Any]:
     """Get list of available animal statuses.
 
     Returns:
-        List of status strings (e.g., CURRENT, SOLD, DEAD, COMMERCIAL, CULL)
+        Dict containing list of status strings
 
     Example:
-        ['CURRENT', 'SOLD', 'DEAD', 'COMMERCIAL', 'CULL', 'EXPORTED']
+        {
+            'success': True,
+            'data': ['CURRENT', 'SOLD', 'DEAD', 'COMMERCIAL', 'CULL', 'EXPORTED']
+        }
     """
     client = get_nsip_client()
-    return client.get_statuses_by_breed_group()
+    return {"success": True, "data": client.get_statuses_by_breed_group()}
 
 
 @mcp.tool()

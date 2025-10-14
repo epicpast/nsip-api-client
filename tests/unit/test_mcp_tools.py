@@ -151,13 +151,15 @@ class TestNsipListBreeds:
 
         result = mcp_tools.nsip_list_breeds.fn()
 
-        expected = [
+        assert result["success"] is True
+        assert "data" in result
+        expected_data = [
             {"id": 61, "name": "Range"},
             {"id": 62, "name": "Maternal Wool"},
             {"id": 64, "name": "Hair"},
             {"id": 69, "name": "Terminal"},
         ]
-        assert result == expected
+        assert result["data"] == expected_data
         mock_client.get_available_breed_groups.assert_called_once()
 
     @patch("nsip_mcp.tools.NSIPClient")
@@ -190,7 +192,8 @@ class TestNsipListBreeds:
 
         result = mcp_tools.nsip_list_breeds.fn()
 
-        assert result == []
+        assert result["success"] is True
+        assert result["data"] == []
         mock_client.get_available_breed_groups.assert_called_once()
 
 
@@ -213,8 +216,10 @@ class TestNsipGetStatuses:
 
         result = mcp_tools.nsip_get_statuses.fn()
 
-        expected = ["CURRENT", "SOLD", "DEAD", "COMMERCIAL", "CULL", "EXPORTED"]
-        assert result == expected
+        assert result["success"] is True
+        assert "data" in result
+        expected_data = ["CURRENT", "SOLD", "DEAD", "COMMERCIAL", "CULL", "EXPORTED"]
+        assert result["data"] == expected_data
         mock_client.get_statuses_by_breed_group.assert_called_once()
 
     @patch("nsip_mcp.tools.NSIPClient")

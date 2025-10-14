@@ -143,13 +143,16 @@ class TestUS1ToolInvocation:
 
         result = mcp_tools.nsip_list_breeds.fn()
 
-        # Verify result structure
-        assert isinstance(result, list), "Result should be a list"
-        assert len(result) > 0, "Result should not be empty"
-        assert "id" in result[0], "Breed should have 'id' field"
-        assert "name" in result[0], "Breed should have 'name' field"
-        assert result[0]["id"] == 61
-        assert result[0]["name"] == "Range"
+        # Verify result structure (now wrapped in dict with success/data)
+        assert isinstance(result, dict), "Result should be a dict"
+        assert result["success"] is True, "Success should be True"
+        assert "data" in result, "Result should have 'data' field"
+        assert isinstance(result["data"], list), "Data should be a list"
+        assert len(result["data"]) > 0, "Data list should not be empty"
+        assert "id" in result["data"][0], "Breed should have 'id' field"
+        assert "name" in result["data"][0], "Breed should have 'name' field"
+        assert result["data"][0]["id"] == 61
+        assert result["data"][0]["name"] == "Range"
 
     @pytest.mark.integration
     @patch("nsip_mcp.tools.NSIPClient")
@@ -216,10 +219,12 @@ class TestUS1ToolInvocation:
         assert result1 is not None
 
         result2 = mcp_tools.nsip_list_breeds.fn()
-        assert isinstance(result2, list)
+        assert isinstance(result2, dict)
+        assert result2["success"] is True
 
         result3 = mcp_tools.nsip_get_statuses.fn()
-        assert isinstance(result3, list)
+        assert isinstance(result3, dict)
+        assert result3["success"] is True
 
         result4 = mcp_tools.nsip_get_trait_ranges.fn(breed_id=486)
         assert isinstance(result4, dict)
@@ -297,14 +302,16 @@ class TestUS2PassthroughBehavior:
         # Invoke the tool
         result = mcp_tools.nsip_list_breeds.fn()
 
-        # Verify pass-through behavior for list responses
-        # List responses are returned directly without metadata wrapper
-        assert isinstance(result, list), "Should return list directly"
-        assert len(result) == 2, "All breeds should be present"
-        assert result[0]["id"] == 61
-        assert result[0]["name"] == "Range"
-        assert result[1]["id"] == 62
-        assert result[1]["name"] == "Maternal Wool"
+        # Verify result is wrapped in success/data structure (FastMCP requirement)
+        assert isinstance(result, dict), "Should return dict with success/data"
+        assert result["success"] is True
+        assert "data" in result
+        assert isinstance(result["data"], list)
+        assert len(result["data"]) == 2, "All breeds should be present"
+        assert result["data"][0]["id"] == 61
+        assert result["data"][0]["name"] == "Range"
+        assert result["data"][1]["id"] == 62
+        assert result["data"][1]["name"] == "Maternal Wool"
 
     @pytest.mark.integration
     @patch("nsip_mcp.tools.NSIPClient")
@@ -325,12 +332,15 @@ class TestUS2PassthroughBehavior:
 
         result = mcp_tools.nsip_get_statuses.fn()
 
-        # List responses don't have metadata wrapper
-        assert isinstance(result, list), "Should return list directly"
-        assert "CURRENT" in result
-        assert "SOLD" in result
-        assert "DEAD" in result
-        assert "COMMERCIAL" in result
+        # Result is wrapped in success/data structure (FastMCP requirement)
+        assert isinstance(result, dict), "Should return dict with success/data"
+        assert result["success"] is True
+        assert "data" in result
+        assert isinstance(result["data"], list)
+        assert "CURRENT" in result["data"]
+        assert "SOLD" in result["data"]
+        assert "DEAD" in result["data"]
+        assert "COMMERCIAL" in result["data"]
 
     @pytest.mark.integration
     @patch("nsip_mcp.tools.NSIPClient")
@@ -1075,9 +1085,11 @@ class TestEndToEndWorkflow:
 
         # Invoke tool with valid parameters
         result_small = mcp_tools.nsip_list_breeds.fn()
-        assert isinstance(result_small, list), "Small response should pass through"
-        assert len(result_small) == 1
-        assert result_small[0]["id"] == 61
+        assert isinstance(result_small, dict), "Response is wrapped in success/data"
+        assert result_small["success"] is True
+        assert "data" in result_small
+        assert len(result_small["data"]) == 1
+        assert result_small["data"][0]["id"] == 61
 
         # === 4. Verify Context Management ===
         # Test pass-through behavior (default, no summarization)
