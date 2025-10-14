@@ -142,7 +142,14 @@ class NSIPClient:
         data = self._make_request("GET", "search/getAvailableBreedGroups")
         # API returns a list, not a dict
         breed_list: List[Dict[str, Any]] = data  # type: ignore
-        return [BreedGroup(id=int(g["Id"]), name=str(g["Name"])) for g in breed_list]
+        # Support both PascalCase (Id, Name) and camelCase (id, name) field names
+        return [
+            BreedGroup(
+                id=int(g.get("Id") or g.get("id") or 0),
+                name=str(g.get("Name") or g.get("name") or ""),
+            )
+            for g in breed_list
+        ]
 
     def get_statuses_by_breed_group(self) -> List[str]:
         """
@@ -219,13 +226,19 @@ class NSIPClient:
         if page_size < 1 or page_size > 100:
             raise NSIPValidationError(f"Page size must be 1-100, got {page_size}")
 
-        params = {
+        # Build params dict with only required parameters
+        params: Dict[str, Any] = {
             "page": page,
             "pageSize": page_size,
-            "breedId": breed_id if breed_id is not None else "undefined",
-            "sortedBreedTrait": sorted_trait or "undefined",
-            "reverse": reverse if reverse is not None else "undefined",
         }
+
+        # Only add optional parameters if they are not None
+        if breed_id is not None:
+            params["breedId"] = breed_id
+        if sorted_trait:
+            params["sortedBreedTrait"] = sorted_trait
+        if reverse is not None:
+            params["reverse"] = reverse
 
         # Convert SearchCriteria to dict if needed
         criteria_dict = {}

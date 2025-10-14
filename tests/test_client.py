@@ -130,6 +130,22 @@ class TestNSIPClient:
             assert groups[0].id == 61
             assert groups[0].name == "Range"
 
+    def test_get_available_breed_groups_camelcase(self, client):
+        """Test getting breed groups with camelCase field names"""
+        camelcase_groups = [
+            {"id": 61, "name": "Range"},
+            {"id": 62, "name": "Maternal Wool"},
+        ]
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://nsipsearch.nsip.org/api/search/getAvailableBreedGroups",
+                json=camelcase_groups,
+            )
+            groups = client.get_available_breed_groups()
+            assert len(groups) == 2
+            assert groups[0].id == 61
+            assert groups[0].name == "Range"
+
     def test_get_animal_details(self, client, mock_animal_details):
         """Test getting animal details"""
         with requests_mock.Mocker() as m:
@@ -424,7 +440,7 @@ class TestNSIPClient:
             assert m.last_request.qs["reverse"] == ["true"]
 
     def test_search_animals_without_optional_parameters(self, client, mock_search_results):
-        """Test search with None optional parameters"""
+        """Test search with None optional parameters - verify they are NOT sent"""
         with requests_mock.Mocker() as m:
             m.post(
                 "http://nsipsearch.nsip.org/api/search/getPageOfSearchResults",
@@ -436,10 +452,13 @@ class TestNSIPClient:
 
             assert isinstance(results, SearchResults)
 
-            # Verify undefined parameters are sent as "undefined"
-            assert m.last_request.qs["breedid"] == ["undefined"]
-            assert m.last_request.qs["sortedbreedtrait"] == ["undefined"]
-            assert m.last_request.qs["reverse"] == ["undefined"]
+            # Verify optional parameters are NOT in the query string
+            assert "breedid" not in m.last_request.qs
+            assert "sortedbreedtrait" not in m.last_request.qs
+            assert "reverse" not in m.last_request.qs
+            # Only required parameters should be present
+            assert "page" in m.last_request.qs
+            assert "pagesize" in m.last_request.qs
 
     def test_custom_base_url(self):
         """Test client with custom base URL"""
