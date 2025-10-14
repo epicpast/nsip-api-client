@@ -378,10 +378,13 @@ class SearchResults:
 
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> "SearchResults":
-        """Create SearchResults from API response"""
+        """Create SearchResults from API response
+
+        Supports both PascalCase (TotalCount, Results) and camelCase (recordCount, records)
+        """
         return cls(
-            total_count=data.get("TotalCount", 0),
-            results=data.get("Results", []),
-            page=data.get("Page", 0),
-            page_size=data.get("PageSize", 15),
+            total_count=data.get("TotalCount") or data.get("recordCount") or 0,
+            results=data.get("Results") or data.get("records") or [],
+            page=data.get("Page") or data.get("page") or 0,
+            page_size=data.get("PageSize") or data.get("pageSize") or 15,
         )

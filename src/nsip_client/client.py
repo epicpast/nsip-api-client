@@ -241,8 +241,8 @@ class NSIPClient:
             params["reverse"] = reverse
 
         # Convert SearchCriteria to dict if needed
-        # Only send json body if search_criteria is provided
-        json_data = None
+        # Always send empty dict {} if no criteria - API requires Content-Type: application/json
+        json_data = {}
         if search_criteria:
             if isinstance(search_criteria, SearchCriteria):
                 json_data = search_criteria.to_dict()
@@ -252,6 +252,11 @@ class NSIPClient:
         data = self._make_request(
             "POST", "search/getPageOfSearchResults", params=params, json=json_data
         )
+
+        # Add page/page_size to response since API doesn't return them
+        data["page"] = page
+        data["pageSize"] = page_size
+
         return SearchResults.from_api_response(data)
 
     def get_animal_details(self, search_string: str) -> AnimalDetails:
