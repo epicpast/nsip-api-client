@@ -44,8 +44,8 @@ class TestAnimalDetails:
     """Test AnimalDetails model"""
 
     @pytest.fixture
-    def mock_api_response(self):
-        """Mock API response"""
+    def mock_api_response_legacy(self):
+        """Mock API response in legacy format (PascalCase at root)"""
         return {
             "LpnId": "6####92020###249",
             "Breed": "Katahdin",
@@ -76,9 +76,54 @@ class TestAnimalDetails:
             },
         }
 
-    def test_from_api_response(self, mock_api_response):
-        """Test creating AnimalDetails from API response"""
-        animal = AnimalDetails.from_api_response(mock_api_response)
+    @pytest.fixture
+    def mock_api_response_nested(self):
+        """Mock API response in new nested format"""
+        return {
+            "success": True,
+            "data": {
+                "progenyCount": 25,
+                "dateOfBirth": "2/13/2024",
+                "gender": "Male",
+                "genotyped": "50K Genotyped",
+                "flockCount": "1",
+                "breed": {
+                    "breedName": "Katahdin",
+                    "breedDisplayString": "640 - Katahdin",
+                    "breedId": 640,
+                },
+                "searchResultViewModel": {
+                    "lpnId": "6402382024NCS310",
+                    "lpnSre": "6400462020VPI007",
+                    "lpnDam": "6402382022NCS087",
+                    "status": "CURRENT",
+                    "regNumber": "",
+                    "bwt": -0.227,
+                    "accbwt": 0.80,
+                    "wwt": -0.628,
+                    "accwwt": 0.75,
+                    "pwwt": -0.352,
+                    "accpwwt": 0.72,
+                    "ywt": -1.145,
+                    "accywt": 0.70,
+                    "nlb": 0.059,
+                    "accnlb": 0.65,
+                },
+                "contactInfo": {
+                    "flockCode": "640238",
+                    "farmName": "North Carolina State University Katahdins",
+                    "customerName": "Andrew Weaver",
+                    "phone": "555-1234",
+                    "email": "test@example.com",
+                    "city": "Raleigh",
+                    "state": "NC",
+                },
+            },
+        }
+
+    def test_from_api_response_legacy(self, mock_api_response_legacy):
+        """Test creating AnimalDetails from legacy API response"""
+        animal = AnimalDetails.from_api_response(mock_api_response_legacy)
 
         assert animal.lpn_id == "6####92020###249"
         assert animal.breed == "Katahdin"
@@ -88,9 +133,23 @@ class TestAnimalDetails:
         assert animal.total_progeny == 6
         assert animal.genotyped == "No"
 
-    def test_traits_parsing(self, mock_api_response):
-        """Test trait parsing"""
-        animal = AnimalDetails.from_api_response(mock_api_response)
+    def test_from_api_response_nested(self, mock_api_response_nested):
+        """Test creating AnimalDetails from new nested API response"""
+        animal = AnimalDetails.from_api_response(mock_api_response_nested)
+
+        assert animal.lpn_id == "6402382024NCS310"
+        assert animal.breed == "Katahdin"
+        assert animal.status == "CURRENT"
+        assert animal.total_progeny == 25
+        assert animal.sire == "6400462020VPI007"
+        assert animal.dam == "6402382022NCS087"
+        assert animal.gender == "Male"
+        assert animal.genotyped == "50K Genotyped"
+        assert animal.flock_count == 1
+
+    def test_traits_parsing_legacy(self, mock_api_response_legacy):
+        """Test trait parsing from legacy format"""
+        animal = AnimalDetails.from_api_response(mock_api_response_legacy)
 
         assert "BWT" in animal.traits
         assert animal.traits["BWT"].value == 0.246
@@ -98,9 +157,23 @@ class TestAnimalDetails:
         assert animal.traits["WWT"].value == 3.051
         assert "NLB" in animal.traits
 
-    def test_contact_info_parsing(self, mock_api_response):
-        """Test contact info parsing"""
-        animal = AnimalDetails.from_api_response(mock_api_response)
+    def test_traits_parsing_nested(self, mock_api_response_nested):
+        """Test trait parsing from nested format"""
+        animal = AnimalDetails.from_api_response(mock_api_response_nested)
+
+        assert len(animal.traits) > 0
+        assert "BWT" in animal.traits
+        assert animal.traits["BWT"].value == -0.227
+        # Accuracy should be converted from 0.80 to 80
+        assert animal.traits["BWT"].accuracy == 80
+        assert "WWT" in animal.traits
+        assert animal.traits["WWT"].value == -0.628
+        assert animal.traits["WWT"].accuracy == 75
+        assert "NLB" in animal.traits
+
+    def test_contact_info_parsing_legacy(self, mock_api_response_legacy):
+        """Test contact info parsing from legacy format"""
+        animal = AnimalDetails.from_api_response(mock_api_response_legacy)
 
         assert animal.contact_info is not None
         assert animal.contact_info.farm_name == "[FARM_NAME]"
@@ -108,6 +181,18 @@ class TestAnimalDetails:
         assert animal.contact_info.email == "[EMAIL_ADDRESS]"
         assert animal.contact_info.city == "Abingdon"
         assert animal.contact_info.state == "VA"
+
+    def test_contact_info_parsing_nested(self, mock_api_response_nested):
+        """Test contact info parsing from nested format"""
+        animal = AnimalDetails.from_api_response(mock_api_response_nested)
+
+        assert animal.contact_info is not None
+        assert animal.contact_info.farm_name == "North Carolina State University Katahdins"
+        assert animal.contact_info.contact_name == "Andrew Weaver"
+        assert animal.contact_info.phone == "555-1234"
+        assert animal.contact_info.email == "test@example.com"
+        assert animal.contact_info.city == "Raleigh"
+        assert animal.contact_info.state == "NC"
 
     def test_minimal_response(self):
         """Test with minimal API response"""
@@ -118,6 +203,18 @@ class TestAnimalDetails:
         assert animal.breed is None
         assert animal.traits == {}
         assert animal.contact_info is None
+
+    def test_minimal_nested_response(self):
+        """Test with minimal nested API response"""
+        minimal_data = {
+            "success": True,
+            "data": {"searchResultViewModel": {"lpnId": "TEST456"}},
+        }
+        animal = AnimalDetails.from_api_response(minimal_data)
+
+        assert animal.lpn_id == "TEST456"
+        assert animal.breed is None
+        assert animal.traits == {}
 
 
 class TestProgeny:

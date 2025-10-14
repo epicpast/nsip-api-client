@@ -97,43 +97,163 @@ class AnimalDetails:
 
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> "AnimalDetails":
-        """Create AnimalDetails from API response"""
-        traits = {}
-        if "Traits" in data:
-            for trait_name, trait_data in data["Traits"].items():
-                if isinstance(trait_data, dict):
+        """Create AnimalDetails from API response
+
+        Supports both the new nested format (with 'data' wrapper and searchResultViewModel)
+        and the legacy flat format (PascalCase fields at root level) for backward compatibility.
+
+        New format structure:
+        {
+            "success": true,
+            "data": {
+                "progenyCount": int,
+                "dateOfBirth": str,
+                "gender": str,
+                "genotyped": str,
+                "flockCount": str,
+                "breed": {
+                    "breedName": str,
+                    "breedId": int
+                },
+                "searchResultViewModel": {
+                    "lpnId": str,
+                    "lpnSre": str (sire),
+                    "lpnDam": str (dam),
+                    "status": str,
+                    "regNumber": str,
+                    "bwt": float,
+                    "accbwt": float,
+                    ...
+                },
+                "contactInfo": {...}
+            }
+        }
+
+        Legacy format: PascalCase fields at root level
+        """
+        # Check if this is the new nested format
+        is_nested_format = "data" in data and isinstance(data["data"], dict)
+
+        if is_nested_format:
+            # Extract from nested structure
+            data_section = data["data"]
+            search_result = data_section.get("searchResultViewModel", {})
+            breed_obj = data_section.get("breed", {})
+            contact_obj = data_section.get("contactInfo", data_section.get("ContactInfo", {}))
+
+            # Extract basic fields from nested structure
+            lpn_id = search_result.get("lpnId", "")
+            breed_name = breed_obj.get("breedName")
+            date_of_birth = data_section.get("dateOfBirth")
+            gender = data_section.get("gender")
+            status = search_result.get("status")
+            sire = search_result.get("lpnSre")
+            dam = search_result.get("lpnDam")
+            registration_number = search_result.get("regNumber")
+            total_progeny = data_section.get("progenyCount")
+            flock_count_str = data_section.get("flockCount")
+            flock_count = (
+                int(flock_count_str) if flock_count_str and str(flock_count_str).isdigit() else None
+            )
+            genotyped = data_section.get("genotyped")
+
+            # Extract traits from searchResultViewModel
+            # The API includes trait values and accuracies as separate fields
+            trait_mapping = {
+                "bwt": ("BWT", "accbwt"),
+                "wwt": ("WWT", "accwwt"),
+                "pwwt": ("PWWT", "accpwwt"),
+                "ywt": ("YWT", "accywt"),
+                "fat": ("FAT", "accfat"),
+                "emd": ("EMD", "accemd"),
+                "nlb": ("NLB", "accnlb"),
+                "nwt": ("NWT", "accnwt"),
+                "pwt": ("PWT", "accpwt"),
+                "dag": ("DAG", "accdag"),
+                "wgr": ("WGR", "accwgr"),
+                "wec": ("WEC", "accwec"),
+                "fec": ("FEC", "accfec"),
+            }
+
+            traits = {}
+            for trait_key, (trait_name, acc_key) in trait_mapping.items():
+                if trait_key in search_result and search_result[trait_key] is not None:
+                    accuracy = search_result.get(acc_key)
+                    # Convert accuracy from decimal (0.80) to percentage (80) if needed
+                    if accuracy is not None and accuracy <= 1.0:
+                        accuracy = int(accuracy * 100)
+
                     traits[trait_name] = Trait(
                         name=trait_name,
-                        value=trait_data.get("Value", 0),
-                        accuracy=trait_data.get("Accuracy"),
+                        value=float(search_result[trait_key]),
+                        accuracy=accuracy if accuracy else None,
                     )
 
-        contact = None
-        if "ContactInfo" in data:
-            contact = ContactInfo(
-                farm_name=data["ContactInfo"].get("FarmName"),
-                contact_name=data["ContactInfo"].get("ContactName"),
-                phone=data["ContactInfo"].get("Phone"),
-                email=data["ContactInfo"].get("Email"),
-                address=data["ContactInfo"].get("Address"),
-                city=data["ContactInfo"].get("City"),
-                state=data["ContactInfo"].get("State"),
-                zip_code=data["ContactInfo"].get("ZipCode"),
-            )
+            # Extract contact info (handle both camelCase and PascalCase)
+            contact = None
+            if contact_obj:
+                contact = ContactInfo(
+                    farm_name=contact_obj.get("farmName", contact_obj.get("FarmName")),
+                    contact_name=contact_obj.get("customerName", contact_obj.get("ContactName")),
+                    phone=contact_obj.get("phone", contact_obj.get("Phone")),
+                    email=contact_obj.get("email", contact_obj.get("Email")),
+                    address=contact_obj.get("address", contact_obj.get("Address")),
+                    city=contact_obj.get("city", contact_obj.get("City")),
+                    state=contact_obj.get("state", contact_obj.get("State")),
+                    zip_code=contact_obj.get("zipCode", contact_obj.get("ZipCode")),
+                )
+        else:
+            # Legacy format - extract from root level with PascalCase
+            lpn_id = data.get("LpnId", "")
+            breed_name = data.get("Breed")
+            date_of_birth = data.get("DateOfBirth")
+            gender = data.get("Gender")
+            status = data.get("Status")
+            sire = data.get("Sire")
+            dam = data.get("Dam")
+            registration_number = data.get("RegistrationNumber")
+            total_progeny = data.get("TotalProgeny")
+            flock_count = data.get("FlockCount")
+            genotyped = data.get("Genotyped")
+
+            # Extract traits from legacy format
+            traits = {}
+            if "Traits" in data:
+                for trait_name, trait_data in data["Traits"].items():
+                    if isinstance(trait_data, dict):
+                        traits[trait_name] = Trait(
+                            name=trait_name,
+                            value=trait_data.get("Value", 0),
+                            accuracy=trait_data.get("Accuracy"),
+                        )
+
+            # Extract contact info from legacy format
+            contact = None
+            if "ContactInfo" in data:
+                contact = ContactInfo(
+                    farm_name=data["ContactInfo"].get("FarmName"),
+                    contact_name=data["ContactInfo"].get("ContactName"),
+                    phone=data["ContactInfo"].get("Phone"),
+                    email=data["ContactInfo"].get("Email"),
+                    address=data["ContactInfo"].get("Address"),
+                    city=data["ContactInfo"].get("City"),
+                    state=data["ContactInfo"].get("State"),
+                    zip_code=data["ContactInfo"].get("ZipCode"),
+                )
 
         return cls(
-            lpn_id=data.get("LpnId", ""),
-            breed=data.get("Breed"),
-            breed_group=data.get("BreedGroup"),
-            date_of_birth=data.get("DateOfBirth"),
-            gender=data.get("Gender"),
-            status=data.get("Status"),
-            sire=data.get("Sire"),
-            dam=data.get("Dam"),
-            registration_number=data.get("RegistrationNumber"),
-            total_progeny=data.get("TotalProgeny"),
-            flock_count=data.get("FlockCount"),
-            genotyped=data.get("Genotyped"),
+            lpn_id=lpn_id,
+            breed=breed_name,
+            breed_group=data.get("BreedGroup"),  # Not present in new format yet
+            date_of_birth=date_of_birth,
+            gender=gender,
+            status=status,
+            sire=sire,
+            dam=dam,
+            registration_number=registration_number,
+            total_progeny=total_progeny,
+            flock_count=flock_count,
+            genotyped=genotyped,
             traits=traits,
             contact_info=contact,
             raw_data=data,
