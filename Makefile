@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-cov lint format clean build publish docs
+.PHONY: help install install-dev test test-cov lint typecheck security coverage format clean build docker-build publish docs quality
 
 .DEFAULT_GOAL := help
 
@@ -16,13 +16,13 @@ help:  ## Show this help message with categorized targets
 	@grep -E '^(ci-local|quality-gates|quality):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ''
 	@echo '🔍 Code Quality Tools:'
-	@grep -E '^(lint|format|format-check|security):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(lint|typecheck|format|format-check|security):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ''
 	@echo '🧪 Testing:'
-	@grep -E '^(test|test-cov):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(test|test-cov|coverage):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ''
 	@echo '🔨 Build & Package:'
-	@grep -E '^(build|check-package|clean):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(build|docker-build|check-package|clean):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ''
 	@echo '📚 Documentation & Examples:'
 	@grep -E '^(docs|run-example|run-advanced):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -47,15 +47,18 @@ test:  ## Run tests
 test-cov:  ## Run tests with coverage report
 	pytest --cov=nsip_client --cov-report=html --cov-report=term-missing
 
-lint:  ## Run linters (flake8 critical + full, mypy)
-	@echo "Critical errors (E9, F63, F7, F82)..."
-	flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
-	@echo "\nStyle warnings (max-complexity=10, max-line-length=100)..."
-	flake8 src/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
-	@echo "\nFull flake8 check..."
-	flake8 src/ tests/
-	@echo "\nType checking..."
-	mypy src/ --ignore-missing-imports
+lint:  ## Run linters (ruff check)
+	@echo "Running ruff..."
+	ruff check src/ tests/ || uv run ruff check src/ tests/
+
+typecheck:  ## Run type checker (mypy)
+	@echo "Running mypy type checking..."
+	mypy src/ --ignore-missing-imports || uv run mypy src/ --ignore-missing-imports
+
+coverage:  ## Run tests with coverage (80% minimum)
+	@echo "Running pytest with coverage..."
+	pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-report=html --cov-fail-under=80 --override-ini="addopts=" -v || \
+	uv run pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-report=html --cov-fail-under=80 --override-ini="addopts=" -v
 
 format:  ## Format code with black and isort
 	black src/ tests/ examples/
@@ -93,17 +96,30 @@ quality-gates:  ## Run ALL quality gates (matches CI/CD)
 	@pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-fail-under=80 -v
 	@echo "\n✅ ALL QUALITY GATES PASSED"
 
-quality:  ## Run all quality checks (auto-fix formatting, then check)
-	@echo "Running black (auto-fix)..."
-	@black src/ tests/ examples/
-	@echo "\nRunning isort (auto-fix)..."
-	@isort src/ tests/ examples/
-	@echo "\nRunning flake8..."
-	@flake8 src/ tests/
-	@echo "\nRunning mypy..."
-	@mypy src/ --ignore-missing-imports
-	@echo "\nRunning tests..."
-	@pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing
+quality:  ## Run all quality checks (format, lint, typecheck, security, coverage)
+	@echo "========================================="
+	@echo "Running Full Quality Suite"
+	@echo "========================================="
+	@echo ""
+	@echo "Step 1: Formatting (black + isort)..."
+	@black src/ tests/ examples/ || uv run black src/ tests/ examples/
+	@isort src/ tests/ examples/ || uv run isort src/ tests/ examples/
+	@echo "✅ Formatting: PASS\n"
+	@echo "Step 2: Linting (ruff)..."
+	@ruff check src/ tests/ || uv run ruff check src/ tests/
+	@echo "✅ Linting: PASS\n"
+	@echo "Step 3: Type checking (mypy)..."
+	@mypy src/ --ignore-missing-imports || uv run mypy src/ --ignore-missing-imports
+	@echo "✅ Type checking: PASS\n"
+	@echo "Step 4: Security (bandit)..."
+	@bandit -r src/ -ll -q || uv run bandit -r src/ -ll -q
+	@echo "✅ Security: PASS\n"
+	@echo "Step 5: Tests with coverage (80% minimum)..."
+	@pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-fail-under=80 --override-ini="addopts=" -q || \
+	 uv run pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-fail-under=80 --override-ini="addopts=" -q
+	@echo "\n========================================="
+	@echo "✅ ALL QUALITY CHECKS PASSED"
+	@echo "========================================="
 
 ci-local:  ## Run exact CI/CD checks locally (no auto-fix)
 	./run_tests_and_coverage.sh
@@ -121,6 +137,11 @@ clean:  ## Clean build artifacts and cache files
 
 build:  ## Build distribution packages
 	python -m build
+
+docker-build:  ## Build Docker image
+	@echo "Building Docker image..."
+	docker build -t nsip-mcp-server:latest .
+	@echo "✅ Docker image built: nsip-mcp-server:latest"
 
 check-package:  ## Validate package without publishing
 	python -m build

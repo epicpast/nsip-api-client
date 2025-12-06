@@ -2,73 +2,121 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'packaging/**'
 
 permissions:
   contents: write
 
 jobs:
-  test:
-    name: Run Tests
+  detect-changes:
+    name: Detect Changed Packages
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    # Skip if this is a version bump commit (checked via commit message in if condition, not run command)
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    outputs:
+      client_changed: ${{ steps.changes.outputs.client }}
+      server_changed: ${{ steps.changes.outputs.server }}
+      any_changed: ${{ steps.changes.outputs.client == 'true' || steps.changes.outputs.server == 'true' }}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/checkout@v4
       with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
+        fetch-depth: 0
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+    - name: Detect file changes
+      uses: dorny/paths-filter@v3
+      id: changes
+      with:
+        filters: |
+          client:
+            - 'src/nsip_client/**'
+            - 'packaging/nsip-client/**'
+          server:
+            - 'src/nsip_mcp/**'
+            - 'packaging/nsip-mcp-server/**'
 
-    - name: Run tests
-      run: |
-        pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing -v
-
-  quality:
-    name: Quality Checks
+  bump-and-tag:
+    name: Bump Version and Tag
+    needs: detect-changes
+    if: needs.detect-changes.outputs.any_changed == 'true'
     runs-on: ubuntu-latest
+    outputs:
+      client_version: ${{ steps.versions.outputs.client_version }}
+      server_version: ${{ steps.versions.outputs.server_version }}
+      release_tag: ${{ steps.versions.outputs.release_tag }}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: 'pip'
 
-    - name: Install dependencies
+    - name: Bump versions
+      id: bump
+      env:
+        CLIENT_CHANGED: ${{ needs.detect-changes.outputs.client_changed }}
+        SERVER_CHANGED: ${{ needs.detect-changes.outputs.server_changed }}
       run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+        if [ "$CLIENT_CHANGED" = "true" ] && [ "$SERVER_CHANGED" = "true" ]; then
+          echo "Bumping both packages"
+          python scripts/bump_version.py --package both --bump patch
+        elif [ "$CLIENT_CHANGED" = "true" ]; then
+          echo "Bumping client only"
+          python scripts/bump_version.py --package client --bump patch
+        elif [ "$SERVER_CHANGED" = "true" ]; then
+          echo "Bumping server only"
+          python scripts/bump_version.py --package server --bump patch
+        fi
 
-    - name: Run quality checks
+    - name: Extract versions
+      id: versions
       run: |
-        black --check src/ tests/ examples/
-        isort --check-only src/ tests/ examples/
-        flake8 src/ tests/
-        mypy src/ --ignore-missing-imports
+        CLIENT_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/nsip_client/__init__.py)
+        SERVER_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/nsip_mcp/__init__.py)
+        echo "client_version=$CLIENT_VERSION" >> "$GITHUB_OUTPUT"
+        echo "server_version=$SERVER_VERSION" >> "$GITHUB_OUTPUT"
+        # Use the higher version as the release tag
+        if [ "$(printf '%s\n' "$CLIENT_VERSION" "$SERVER_VERSION" | sort -V | tail -n1)" = "$CLIENT_VERSION" ]; then
+          echo "release_tag=v$CLIENT_VERSION" >> "$GITHUB_OUTPUT"
+        else
+          echo "release_tag=v$SERVER_VERSION" >> "$GITHUB_OUTPUT"
+        fi
 
-  build:
-    name: Build Distribution
-    needs: [test, quality]
+    - name: Commit version changes
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git diff --staged --quiet || git commit -m "chore: bump version [skip ci]"
+        git push
+
+    - name: Create release tag
+      env:
+        RELEASE_TAG: ${{ steps.versions.outputs.release_tag }}
+      run: |
+        git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
+        git push origin "$RELEASE_TAG"
+
+  build-and-release:
+    name: Build and Release
+    needs: [detect-changes, bump-and-tag]
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.bump-and-tag.outputs.release_tag }}
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -79,71 +127,66 @@ jobs:
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine
+        pip install build twine hatchling
 
-    - name: Build package
+    - name: Build packages
       run: |
+        mkdir -p dist
+
+        # Build client
+        cd packaging/nsip-client
         python -m build
+        cp dist/* ../../dist/
+        cd ../..
 
-    - name: Check package
-      run: |
+        # Build server
+        cd packaging/nsip-mcp-server
+        python -m build
+        cp dist/* ../../dist/
+        cd ../..
+
+        # Verify all packages
         twine check dist/*
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v5
-      with:
-        name: dist-packages
-        path: dist/
-
-  release:
-    name: Create GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: dist-packages
-        path: dist/
-
-    - name: Extract version from tag
-      id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-    - name: Extract changelog for this version
-      id: changelog
-      run: |
-        VERSION="${{ steps.get_version.outputs.VERSION }}"
-        # Extract the section for this version from docs/CHANGELOG.md
-        sed -n "/## \[$VERSION\]/,/## \[/p" docs/CHANGELOG.md | sed '$d' > release_notes.md
-        # If no specific notes found, use a default message
-        if [ ! -s release_notes.md ]; then
-          echo "Release version $VERSION" > release_notes.md
-          echo "" >> release_notes.md
-          echo "See [docs/CHANGELOG.md](https://github.com/epicpast/nsip-api-client/blob/main/docs/CHANGELOG.md) for details." >> release_notes.md
-        fi
-
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_TAG: ${{ needs.bump-and-tag.outputs.release_tag }}
+        CLIENT_VERSION: ${{ needs.bump-and-tag.outputs.client_version }}
+        SERVER_VERSION: ${{ needs.bump-and-tag.outputs.server_version }}
       with:
-        name: Release v${{ steps.get_version.outputs.VERSION }}
-        body_path: release_notes.md
-        files: |
-          dist/*.tar.gz
-          dist/*.whl
+        tag_name: ${{ needs.bump-and-tag.outputs.release_tag }}
+        name: Release ${{ needs.bump-and-tag.outputs.release_tag }}
+        body: |
+          ## Packages
+
+          - **nsip-client**: ${{ needs.bump-and-tag.outputs.client_version }}
+          - **nsip-mcp-server**: ${{ needs.bump-and-tag.outputs.server_version }}
+
+          ## Installation
+
+          ```bash
+          # Install the API client
+          pip install ./nsip_client-${{ needs.bump-and-tag.outputs.client_version }}-py3-none-any.whl
+
+          # Install the MCP server (includes client as dependency)
+          pip install ./nsip_mcp_server-${{ needs.bump-and-tag.outputs.server_version }}-py3-none-any.whl
+          ```
+
+          ## Changes
+
+          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/docs/CHANGELOG.md) for details.
+        files: dist/*
         draft: false
         prerelease: false
         generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Upload release assets
-      uses: actions/upload-artifact@v5
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v4
+      env:
+        RELEASE_TAG: ${{ needs.bump-and-tag.outputs.release_tag }}
       with:
-        name: release-v${{ steps.get_version.outputs.VERSION }}
+        name: release-${{ needs.bump-and-tag.outputs.release_tag }}
         path: dist/
         retention-days: 90

@@ -7,7 +7,6 @@ supporting stdio (default), Streamable HTTP, and WebSocket transports.
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class TransportType(Enum):
@@ -30,8 +29,10 @@ class TransportConfig:
     """
 
     transport_type: TransportType
-    port: Optional[int] = None
-    host: str = "0.0.0.0"  # nosec B104  # MCP server intentionally binds to all interfaces
+    port: int | None = None
+    host: str = (
+        "0.0.0.0"  # noqa: S104  # nosec B104 - MCP server intentionally binds to all interfaces
+    )
     path: str = "/mcp"
 
     @classmethod
@@ -58,11 +59,11 @@ class TransportConfig:
 
         try:
             transport_type = TransportType(transport_str)
-        except ValueError:
+        except ValueError as e:
             raise ValueError(
                 f"Invalid MCP_TRANSPORT: {transport_str}. "
                 f"Valid values: stdio, streamable-http, websocket"
-            )
+            ) from e
 
         port = None
         if transport_type in (TransportType.STREAMABLE_HTTP, TransportType.WEBSOCKET):
@@ -73,10 +74,10 @@ class TransportConfig:
                 )
             try:
                 port = int(port_str)
-            except ValueError:
-                raise ValueError(f"Invalid MCP_PORT value: {port_str}. Must be an integer.")
+            except ValueError as e:
+                raise ValueError(f"Invalid MCP_PORT value: {port_str}. Must be an integer.") from e
 
-        host = os.getenv("MCP_HOST", "0.0.0.0")  # nosec B104  # Configurable via env var
+        host = os.getenv("MCP_HOST", "0.0.0.0")  # noqa: S104  # nosec B104
         path = os.getenv("MCP_PATH", "/mcp")
 
         config = cls(transport_type=transport_type, port=port, host=host, path=path)

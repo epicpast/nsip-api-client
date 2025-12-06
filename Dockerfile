@@ -1,6 +1,6 @@
 # NSIP MCP Server Dockerfile
 # Multi-stage build for optimized image size and security
-# Version: 1.1.0
+# Version: 1.2.0
 
 # ============================================================================
 # Stage 1: Builder - Install dependencies and compile wheels
@@ -20,22 +20,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy only dependency files first for better layer caching
-COPY pyproject.toml /tmp/
+# Install build tools
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel build hatchling
 
-# Install Python dependencies
-# Using --no-cache-dir to reduce image size
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir build
-
-# Copy source code
+# Set working directory
 WORKDIR /build
-COPY . .
 
-# Build wheel
+# Copy source code (src directory contains actual Python packages)
+COPY src/ ./src/
+COPY packaging/ ./packaging/
+COPY README.md ./
+COPY LICENSE ./
+
+# Build nsip-client package first (nsip-mcp-server depends on it)
+WORKDIR /build/packaging/nsip-client
+# Create the symlink for hatchling to find the source
+RUN ln -sf ../../src/nsip_client src/nsip_client
 RUN python -m build --wheel
 
-# Install the built wheel and dependencies
+# Install nsip-client
+RUN pip install --no-cache-dir dist/*.whl
+
+# Build nsip-mcp-server package
+WORKDIR /build/packaging/nsip-mcp-server
+# Create the symlink for hatchling to find the source
+RUN ln -sf ../../src/nsip_mcp src/nsip_mcp
+RUN python -m build --wheel
+
+# Install nsip-mcp-server (this also installs its dependencies)
 RUN pip install --no-cache-dir dist/*.whl
 
 # ============================================================================
@@ -45,11 +57,11 @@ FROM python:3.11-slim
 
 # Metadata labels
 LABEL maintainer="Allen R <allenr1@example.com>" \
-      version="1.1.0" \
+      version="1.2.0" \
       description="NSIP MCP Server - Model Context Protocol server for NSIP sheep breeding data" \
       org.opencontainers.image.title="NSIP MCP Server" \
       org.opencontainers.image.description="FastMCP-based server providing LLM access to NSIP API" \
-      org.opencontainers.image.version="1.1.0" \
+      org.opencontainers.image.version="1.2.0" \
       org.opencontainers.image.vendor="NSIP API Client Project" \
       org.opencontainers.image.source="https://github.com/epicpast/nsip-api-client" \
       org.opencontainers.image.licenses="MIT"
@@ -114,49 +126,49 @@ CMD []
 # ============================================================================
 #
 # Build the image:
-#   docker build -t nsip-mcp-server:1.1.0 .
+#   docker build -t nsip-mcp-server:1.2.0 .
 #   docker build -t nsip-mcp-server:latest .
 #
 # Run with stdio (default - for MCP clients):
-#   docker run -i nsip-mcp-server:1.1.0
+#   docker run -i nsip-mcp-server:1.2.0
 #
 # Run with stdio and pipe JSON-RPC messages:
-#   echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | docker run -i nsip-mcp-server:1.1.0
+#   echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | docker run -i nsip-mcp-server:1.2.0
 #
 # Run with HTTP SSE:
-#   docker run -p 8000:8000 -e MCP_TRANSPORT=http-sse -e MCP_PORT=8000 nsip-mcp-server:1.1.0
+#   docker run -p 8000:8000 -e MCP_TRANSPORT=http-sse -e MCP_PORT=8000 nsip-mcp-server:1.2.0
 #
 # Run with WebSocket:
-#   docker run -p 9000:9000 -e MCP_TRANSPORT=websocket -e MCP_PORT=9000 nsip-mcp-server:1.1.0
+#   docker run -p 9000:9000 -e MCP_TRANSPORT=websocket -e MCP_PORT=9000 nsip-mcp-server:1.2.0
 #
 # Run with custom host binding (HTTP SSE):
 #   docker run -p 8000:8000 \
 #     -e MCP_TRANSPORT=http-sse \
 #     -e MCP_PORT=8000 \
 #     -e MCP_HOST=0.0.0.0 \
-#     nsip-mcp-server:1.1.0
+#     nsip-mcp-server:1.2.0
 #
 # Run with debug logging:
 #   docker run -p 8000:8000 \
 #     -e MCP_TRANSPORT=http-sse \
 #     -e MCP_PORT=8000 \
 #     -e LOG_LEVEL=DEBUG \
-#     nsip-mcp-server:1.1.0
+#     nsip-mcp-server:1.2.0
 #
 # Run with custom tiktoken cache (persistent volume):
 #   docker run -p 8000:8000 \
 #     -e MCP_TRANSPORT=http-sse \
 #     -e MCP_PORT=8000 \
 #     -v tiktoken-cache:/app/.cache/tiktoken \
-#     nsip-mcp-server:1.1.0
+#     nsip-mcp-server:1.2.0
 #
 # Test health endpoint (HTTP SSE):
 #   curl http://localhost:8000/health
 #
 # Interactive shell for debugging:
-#   docker run -it --entrypoint /bin/bash nsip-mcp-server:1.1.0
+#   docker run -it --entrypoint /bin/bash nsip-mcp-server:1.2.0
 #
 # Check server version:
-#   docker run nsip-mcp-server:1.1.0 --version
+#   docker run nsip-mcp-server:1.2.0 --version
 #
 # ============================================================================

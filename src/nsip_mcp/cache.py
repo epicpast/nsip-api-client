@@ -7,7 +7,7 @@ NSIP API responses to reduce redundant calls.
 import json
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -45,11 +45,11 @@ class TtlCache:
         """
         self.ttl_seconds = ttl_seconds
         self.max_size = max_size
-        self._cache: Dict[str, Tuple[Any, float]] = {}
+        self._cache: dict[str, tuple[Any, float]] = {}
         self.hits = 0
         self.misses = 0
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Retrieve value from cache if not expired.
 
         Args:

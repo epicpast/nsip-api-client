@@ -5,7 +5,7 @@ LLM-friendly interfaces with automatic caching, context management, and error ha
 """
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from nsip_client.exceptions import (
     NSIPAPIError,
@@ -37,7 +37,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def apply_context_management(response: Dict[str, Any], summarize: bool = False) -> Dict[str, Any]:
+def apply_context_management(response: dict[str, Any], summarize: bool = False) -> dict[str, Any]:
     """Apply context management (pass-through or summarization) to API response.
 
     IMPORTANT: Summarization is OPT-IN only. By default, all data is preserved.
@@ -79,7 +79,7 @@ def apply_context_management(response: Dict[str, Any], summarize: bool = False) 
         return response
 
 
-def validate_lpn_id(lpn_id: str, parameter_name: str = "lpn_id") -> Optional[Dict[str, Any]]:
+def validate_lpn_id(lpn_id: str, parameter_name: str = "lpn_id") -> dict[str, Any] | None:
     """Validate LPN ID parameter.
 
     Args:
@@ -119,7 +119,7 @@ def validate_lpn_id(lpn_id: str, parameter_name: str = "lpn_id") -> Optional[Dic
     return None
 
 
-def validate_breed_id(breed_id: int, parameter_name: str = "breed_id") -> Optional[Dict[str, Any]]:
+def validate_breed_id(breed_id: int, parameter_name: str = "breed_id") -> dict[str, Any] | None:
     """Validate breed ID parameter.
 
     Args:
@@ -151,7 +151,7 @@ def validate_breed_id(breed_id: int, parameter_name: str = "breed_id") -> Option
     return None
 
 
-def validate_pagination(page: int, page_size: int) -> Optional[Dict[str, Any]]:
+def validate_pagination(page: int, page_size: int) -> dict[str, Any] | None:
     """Validate pagination parameters.
 
     Args:
@@ -188,7 +188,7 @@ def validate_pagination(page: int, page_size: int) -> Optional[Dict[str, Any]]:
     return None
 
 
-def handle_nsip_api_error(error: Exception, context: str = "") -> Dict[str, Any]:
+def handle_nsip_api_error(error: Exception, context: str = "") -> dict[str, Any]:
     """Convert NSIP API exceptions to structured MCP error responses.
 
     Args:
@@ -245,7 +245,7 @@ def handle_nsip_api_error(error: Exception, context: str = "") -> Dict[str, Any]
 
 @mcp.tool()
 @cached_api_call("get_date_last_updated")
-def nsip_get_last_update() -> Dict[str, Any]:
+def nsip_get_last_update() -> dict[str, Any]:
     """Get the date when the NSIP database was last updated.
 
     Returns:
@@ -260,7 +260,7 @@ def nsip_get_last_update() -> Dict[str, Any]:
 
 @mcp.tool()
 @cached_api_call("get_available_breed_groups")
-def nsip_list_breeds() -> Dict[str, Any]:
+def nsip_list_breeds() -> dict[str, Any]:
     """Get list of available breed groups in the NSIP database.
 
     Returns:
@@ -284,7 +284,7 @@ def nsip_list_breeds() -> Dict[str, Any]:
 
 @mcp.tool()
 @cached_api_call("get_statuses_by_breed_group")
-def nsip_get_statuses() -> Dict[str, Any]:
+def nsip_get_statuses() -> dict[str, Any]:
     """Get list of available animal statuses.
 
     Returns:
@@ -302,7 +302,7 @@ def nsip_get_statuses() -> Dict[str, Any]:
 
 @mcp.tool()
 @cached_api_call("get_trait_ranges_by_breed")
-def nsip_get_trait_ranges(breed_id: int) -> Dict[str, Any]:
+def nsip_get_trait_ranges(breed_id: int) -> dict[str, Any]:
     """Get trait ranges (min/max values) for a specific breed.
 
     Args:
@@ -337,12 +337,12 @@ def nsip_get_trait_ranges(breed_id: int) -> Dict[str, Any]:
 def nsip_search_animals(
     page: int = 0,
     page_size: int = 15,
-    breed_id: Optional[int] = None,
-    sorted_trait: Optional[str] = None,
-    reverse: Optional[bool] = None,
-    search_criteria: Optional[Dict[str, Any]] = None,
+    breed_id: int | None = None,
+    sorted_trait: str | None = None,
+    reverse: bool | None = None,
+    search_criteria: dict[str, Any] | None = None,
     summarize: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Search for animals based on criteria with pagination.
 
     Args:
@@ -400,7 +400,7 @@ def nsip_search_animals(
 
 @mcp.tool()
 @cached_api_call("get_animal_details")
-def nsip_get_animal(search_string: str, summarize: bool = False) -> Dict[str, Any]:
+def nsip_get_animal(search_string: str, summarize: bool = False) -> dict[str, Any]:
     """Get detailed information about a specific animal.
 
     Args:
@@ -439,7 +439,7 @@ def nsip_get_animal(search_string: str, summarize: bool = False) -> Dict[str, An
 
 @mcp.tool()
 @cached_api_call("get_lineage")
-def nsip_get_lineage(lpn_id: str, summarize: bool = False) -> Dict[str, Any]:
+def nsip_get_lineage(lpn_id: str, summarize: bool = False) -> dict[str, Any]:
     """Get the lineage/pedigree information for an animal.
 
     Args:
@@ -479,7 +479,7 @@ def nsip_get_lineage(lpn_id: str, summarize: bool = False) -> Dict[str, Any]:
 @cached_api_call("get_progeny")
 def nsip_get_progeny(
     lpn_id: str, page: int = 0, page_size: int = 10, summarize: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get progeny (offspring) for a specific animal with pagination.
 
     Args:
@@ -529,7 +529,7 @@ def nsip_get_progeny(
 
 @mcp.tool()
 @cached_api_call("search_by_lpn")
-def nsip_search_by_lpn(lpn_id: str, summarize: bool = False) -> Dict[str, Any]:
+def nsip_search_by_lpn(lpn_id: str, summarize: bool = False) -> dict[str, Any]:
     """Get complete profile for an animal by LPN ID (details + lineage + progeny).
 
     This is a convenience tool that combines three API calls into one comprehensive result.

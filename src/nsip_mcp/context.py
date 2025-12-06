@@ -6,7 +6,7 @@ to prevent overwhelming LLM context limits.
 
 import json
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import tiktoken
 
@@ -80,14 +80,14 @@ class ContextManagedResponse:
         reduction_percent: Percentage token reduction (if summarized)
     """
 
-    original_response: Dict[str, Any]
+    original_response: dict[str, Any]
     token_count: int
     was_summarized: bool
-    final_response: Dict[str, Any]
+    final_response: dict[str, Any]
     reduction_percent: float = 0.0
 
     @classmethod
-    def create_passthrough(cls, response: Dict[str, Any]) -> "ContextManagedResponse":
+    def create_passthrough(cls, response: dict[str, Any]) -> "ContextManagedResponse":
         """Create a pass-through response (≤2000 tokens, no summarization).
 
         Args:
@@ -122,7 +122,7 @@ class ContextManagedResponse:
 
     @classmethod
     def create_summarized(
-        cls, original_response: Dict[str, Any], summarized_response: Dict[str, Any]
+        cls, original_response: dict[str, Any], summarized_response: dict[str, Any]
     ) -> "ContextManagedResponse":
         """Create a summarized response (>2000 tokens).
 
@@ -206,13 +206,13 @@ class SummarizedAnimalResponse:
 
     lpn_id: str
     breed: str
-    sire: Optional[str] = None
-    dam: Optional[str] = None
+    sire: str | None = None
+    dam: str | None = None
     total_progeny: int = 0
-    contact: Optional[Dict[str, Any]] = None
-    top_traits: List[Dict[str, Any]] = field(default_factory=list)
+    contact: dict[str, Any] | None = None
+    top_traits: list[dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization.
 
         Returns:
@@ -236,8 +236,8 @@ class SummarizedAnimalResponse:
 
     @staticmethod
     def select_top_traits(
-        traits: Dict[str, Any], max_traits: int = 3, min_accuracy: float = 0.5
-    ) -> List[Dict[str, Any]]:
+        traits: dict[str, Any], max_traits: int = 3, min_accuracy: float = 0.5
+    ) -> list[dict[str, Any]]:
         """Select top N traits by accuracy for inclusion in summary.
 
         Args:
@@ -275,8 +275,8 @@ class SummarizedAnimalResponse:
 
 
 def summarize_response(
-    response: Dict[str, Any], token_budget: int = TOKEN_THRESHOLD
-) -> Dict[str, Any]:
+    response: dict[str, Any], token_budget: int = TOKEN_THRESHOLD
+) -> dict[str, Any]:
     """Summarize API response according to FR-005a/FR-005b rules.
 
     This function implements the summarization strategy:
