@@ -150,7 +150,7 @@ Thumbs.db
 
 # MCP and Personal Configuration (contains API keys and personal paths)
 .mcp.json
-.claude/
+.claude/settings.local.json
 .specify/
 
 # Snyk Security Extension - AI Rules (auto-generated)
