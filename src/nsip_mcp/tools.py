@@ -5,13 +5,14 @@ including caching and client lifecycle management.
 """
 
 import functools
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from nsip_client.client import NSIPClient
 from nsip_mcp.cache import response_cache
 
 # Lazy-initialized client instance (created on first use)
-_client_instance: Optional[NSIPClient] = None
+_client_instance: NSIPClient | None = None
 
 
 def get_nsip_client() -> NSIPClient:

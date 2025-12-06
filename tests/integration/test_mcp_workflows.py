@@ -835,7 +835,7 @@ class TestUS3ApiErrorHandling:
             (Exception("Generic error"), "Unexpected error"),
         ]
 
-        for exception, expected_message_part in test_cases:
+        for exception, _expected_message_part in test_cases:
             mock_client = MagicMock()
             mock_client.get_animal_details.side_effect = exception
             mock_client_class.return_value = mock_client
@@ -934,12 +934,10 @@ class TestMultiTransport:
 
             # Test missing port raises error
             os.environ.pop("MCP_PORT")
-            try:
+            with pytest.raises(ValueError) as exc_info:
                 TransportConfig.from_environment()
-                assert False, "Should raise ValueError for missing port"
-            except ValueError as e:
-                assert "MCP_PORT" in str(e)
-                assert "required" in str(e).lower()
+            assert "MCP_PORT" in str(exc_info.value)
+            assert "required" in str(exc_info.value).lower()
 
         finally:
             # Restore original environment
@@ -977,20 +975,16 @@ class TestMultiTransport:
 
             # Test invalid port range
             os.environ["MCP_PORT"] = "100"  # Below 1024
-            try:
-                config = TransportConfig.from_environment()
-                assert False, "Should raise ValueError for invalid port range"
-            except ValueError as e:
-                assert "1024" in str(e) and "65535" in str(e)
+            with pytest.raises(ValueError) as exc_info:
+                TransportConfig.from_environment()
+            assert "1024" in str(exc_info.value) and "65535" in str(exc_info.value)
 
             # Test missing port raises error
             os.environ.pop("MCP_PORT")
-            try:
+            with pytest.raises(ValueError) as exc_info:
                 TransportConfig.from_environment()
-                assert False, "Should raise ValueError for missing port"
-            except ValueError as e:
-                assert "MCP_PORT" in str(e)
-                assert "required" in str(e).lower()
+            assert "MCP_PORT" in str(exc_info.value)
+            assert "required" in str(exc_info.value).lower()
 
         finally:
             # Restore original environment

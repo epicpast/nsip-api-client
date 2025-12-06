@@ -153,3 +153,6 @@ Thumbs.db
 .claude/
 .specify/
 CLAUDE.md
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.windsurf/rules/snyk_rules.md

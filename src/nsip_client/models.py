@@ -3,27 +3,27 @@ Data models for NSIP API responses
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
 class SearchCriteria:
     """Search criteria for animal search"""
 
-    breed_group_id: Optional[int] = None
-    breed_id: Optional[int] = None
-    born_after: Optional[str] = None  # Format: YYYY-MM-DD
-    born_before: Optional[str] = None  # Format: YYYY-MM-DD
-    gender: Optional[str] = None  # "Male", "Female", "Both"
-    proven_only: Optional[bool] = None
-    status: Optional[str] = None  # "CURRENT", "SOLD", "DEAD", etc.
-    flock_id: Optional[str] = None
+    breed_group_id: int | None = None
+    breed_id: int | None = None
+    born_after: str | None = None  # Format: YYYY-MM-DD
+    born_before: str | None = None  # Format: YYYY-MM-DD
+    gender: str | None = None  # "Male", "Female", "Both"
+    proven_only: bool | None = None
+    status: str | None = None  # "CURRENT", "SOLD", "DEAD", etc.
+    flock_id: str | None = None
     # {"BWT": {"min": -1.0, "max": 1.0}}
-    trait_ranges: Optional[Dict[str, Dict[str, float]]] = None
+    trait_ranges: dict[str, dict[str, float]] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for API request"""
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         if self.breed_group_id is not None:
             data["breedGroupId"] = self.breed_group_id
         if self.breed_id is not None:
@@ -51,22 +51,22 @@ class Trait:
 
     name: str
     value: float
-    accuracy: Optional[int] = None
-    units: Optional[str] = None
+    accuracy: int | None = None
+    units: str | None = None
 
 
 @dataclass
 class ContactInfo:
     """Contact information for animal owner"""
 
-    farm_name: Optional[str] = None
-    contact_name: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    zip_code: Optional[str] = None
+    farm_name: str | None = None
+    contact_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    zip_code: str | None = None
 
 
 @dataclass
@@ -74,29 +74,29 @@ class AnimalDetails:
     """Detailed information about an animal"""
 
     lpn_id: str
-    breed: Optional[str] = None
-    breed_group: Optional[str] = None
-    date_of_birth: Optional[str] = None
-    gender: Optional[str] = None
-    status: Optional[str] = None
-    sire: Optional[str] = None
-    dam: Optional[str] = None
-    registration_number: Optional[str] = None
-    total_progeny: Optional[int] = None
-    flock_count: Optional[int] = None
-    genotyped: Optional[str] = None
-    traits: Dict[str, Trait] = field(default_factory=dict)
-    contact_info: Optional[ContactInfo] = None
-    raw_data: Dict[str, Any] = field(default_factory=dict)
+    breed: str | None = None
+    breed_group: str | None = None
+    date_of_birth: str | None = None
+    gender: str | None = None
+    status: str | None = None
+    sire: str | None = None
+    dam: str | None = None
+    registration_number: str | None = None
+    total_progeny: int | None = None
+    flock_count: int | None = None
+    genotyped: str | None = None
+    traits: dict[str, Trait] = field(default_factory=dict)
+    contact_info: ContactInfo | None = None
+    raw_data: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         from dataclasses import asdict
 
         return asdict(self)
 
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> "AnimalDetails":
+    def from_api_response(cls, data: dict[str, Any]) -> "AnimalDetails":
         """Create AnimalDetails from API response
 
         Supports both the new nested format (with 'data' wrapper and searchResultViewModel)
@@ -265,11 +265,11 @@ class ProgenyAnimal:
     """Individual progeny animal"""
 
     lpn_id: str
-    sex: Optional[str] = None
-    date_of_birth: Optional[str] = None
-    traits: Dict[str, float] = field(default_factory=dict)
+    sex: str | None = None
+    date_of_birth: str | None = None
+    traits: dict[str, float] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         from dataclasses import asdict
 
@@ -281,12 +281,12 @@ class Progeny:
     """Progeny information for an animal"""
 
     total_count: int
-    animals: List[ProgenyAnimal] = field(default_factory=list)
+    animals: list[ProgenyAnimal] = field(default_factory=list)
     page: int = 0
     page_size: int = 10
 
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> "Progeny":
+    def from_api_response(cls, data: dict[str, Any]) -> "Progeny":
         """Create Progeny from API response
 
         The progeny endpoint returns a different structure than other endpoints:
@@ -326,32 +326,32 @@ class LineageAnimal:
     """Individual animal in lineage/pedigree"""
 
     lpn_id: str
-    farm_name: Optional[str] = None
-    us_index: Optional[float] = None
-    src_index: Optional[float] = None
-    date_of_birth: Optional[str] = None
-    sex: Optional[str] = None
-    status: Optional[str] = None
+    farm_name: str | None = None
+    us_index: float | None = None
+    src_index: float | None = None
+    date_of_birth: str | None = None
+    sex: str | None = None
+    status: str | None = None
 
 
 @dataclass
 class Lineage:
     """Pedigree/lineage information"""
 
-    subject: Optional[LineageAnimal] = None
-    sire: Optional[LineageAnimal] = None
-    dam: Optional[LineageAnimal] = None
-    generations: List[List[LineageAnimal]] = field(default_factory=list)
-    raw_data: Dict[str, Any] = field(default_factory=dict)
+    subject: LineageAnimal | None = None
+    sire: LineageAnimal | None = None
+    dam: LineageAnimal | None = None
+    generations: list[list[LineageAnimal]] = field(default_factory=list)
+    raw_data: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         from dataclasses import asdict
 
         return asdict(self)
 
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> "Lineage":
+    def from_api_response(cls, data: dict[str, Any]) -> "Lineage":
         """Create Lineage from API response"""
         # This is a simplified implementation
         # The actual lineage structure may be more complex
@@ -364,7 +364,7 @@ class BreedGroup:
 
     id: int
     name: str
-    breeds: List[Dict[str, Any]] = field(default_factory=list)
+    breeds: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -372,12 +372,12 @@ class SearchResults:
     """Search results container"""
 
     total_count: int
-    results: List[Dict[str, Any]] = field(default_factory=list)
+    results: list[dict[str, Any]] = field(default_factory=list)
     page: int = 0
     page_size: int = 15
 
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> "SearchResults":
+    def from_api_response(cls, data: dict[str, Any]) -> "SearchResults":
         """Create SearchResults from API response
 
         Supports both PascalCase (TotalCount, Results) and camelCase (recordCount, records)

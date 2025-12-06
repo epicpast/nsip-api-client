@@ -5,13 +5,12 @@ Command-line interface for NSIP client
 import argparse
 import json
 import sys
-from typing import Optional
 
 from .client import NSIPClient
 from .exceptions import NSIPError
 
 
-def main(args: Optional[list] = None) -> int:
+def main(args: list | None = None) -> int:
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
         description="NSIP Search API Command Line Interface",

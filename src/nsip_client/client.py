@@ -8,7 +8,7 @@ API Base URL: http://nsipsearch.nsip.org/api
 Authentication: None required (public API)
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import requests
 from requests.exceptions import RequestException, Timeout
@@ -54,10 +54,10 @@ class NSIPClient:
         self,
         method: str,
         endpoint: str,
-        params: Dict[str, Any] = None,
-        data: Dict[str, Any] = None,
-        json: Dict[str, Any] = None,
-    ) -> Dict[str, Any]:
+        params: dict[str, Any] = None,
+        data: dict[str, Any] = None,
+        json: dict[str, Any] = None,
+    ) -> dict[str, Any]:
         """
         Make an HTTP request to the API with error handling
 
@@ -98,17 +98,17 @@ class NSIPClient:
             return response.json()
 
         except Timeout as e:
-            raise NSIPTimeoutError(f"Request timed out after {self.timeout}s: {e}")
+            raise NSIPTimeoutError(f"Request timed out after {self.timeout}s: {e}") from e
         except RequestException as e:
             if hasattr(e, "response") and e.response is not None:
                 raise NSIPAPIError(
                     f"API request failed: {e}",
                     status_code=e.response.status_code,
                     response={"text": e.response.text},
-                )
-            raise NSIPConnectionError(f"Failed to connect to API: {e}")
+                ) from e
+            raise NSIPConnectionError(f"Failed to connect to API: {e}") from e
 
-    def get_date_last_updated(self) -> Dict[str, Any]:
+    def get_date_last_updated(self) -> dict[str, Any]:
         """
         Get the date when the database was last updated
 
@@ -122,7 +122,7 @@ class NSIPClient:
         """
         return self._make_request("GET", "search/getDateLastUpdated")
 
-    def get_available_breed_groups(self) -> List[BreedGroup]:
+    def get_available_breed_groups(self) -> list[BreedGroup]:
         """
         Get list of available breed groups
 
@@ -157,7 +157,7 @@ class NSIPClient:
             for g in breed_list
         ]
 
-    def get_statuses_by_breed_group(self) -> List[str]:
+    def get_statuses_by_breed_group(self) -> list[str]:
         """
         Get list of available animal statuses
 
@@ -174,7 +174,7 @@ class NSIPClient:
             return [str(item) for item in result]
         return []
 
-    def get_trait_ranges_by_breed(self, breed_id: int) -> Dict[str, Any]:
+    def get_trait_ranges_by_breed(self, breed_id: int) -> dict[str, Any]:
         """
         Get trait ranges for a specific breed
 
@@ -201,10 +201,10 @@ class NSIPClient:
         self,
         page: int = 0,
         page_size: int = 15,
-        breed_id: Optional[int] = None,
-        sorted_trait: Optional[str] = None,
-        reverse: Optional[bool] = None,
-        search_criteria: Optional[Union[SearchCriteria, Dict[str, Any]]] = None,
+        breed_id: int | None = None,
+        sorted_trait: str | None = None,
+        reverse: bool | None = None,
+        search_criteria: SearchCriteria | dict[str, Any] | None = None,
     ) -> SearchResults:
         """
         Search for animals based on criteria
@@ -233,7 +233,7 @@ class NSIPClient:
             raise NSIPValidationError(f"Page size must be 1-100, got {page_size}")
 
         # Build params dict with only required parameters
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "page": page,
             "pageSize": page_size,
         }
@@ -346,7 +346,7 @@ class NSIPClient:
         data = self._make_request("GET", "details/getPageOfProgeny", params=params)
         return Progeny.from_api_response(data)
 
-    def search_by_lpn(self, lpn_id: str) -> Dict[str, Any]:
+    def search_by_lpn(self, lpn_id: str) -> dict[str, Any]:
         """
         Convenience method to get all information about an animal by LPN ID
 

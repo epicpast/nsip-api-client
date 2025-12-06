@@ -1,37 +1,23 @@
-[build-system]
-requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.build_meta"
+# Root pyproject.toml - Development tools configuration only
+#
+# This file does NOT define a package. Individual packages are defined in:
+#   - packaging/nsip-client/pyproject.toml
+#   - packaging/nsip-mcp-server/pyproject.toml
+#
+# For development, install both packages in editable mode:
+#   pip install -e src/nsip_client -e src/nsip_mcp
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Minimal project section required for tool compatibility
+# This does NOT create a distributable package
 [project]
-name = "nsip-client"
-version = "1.2.1"
-description = "Python client for the NSIP (National Sheep Improvement Program) Search API with MCP server support"
-readme = "README.md"
-authors = [
-    {name = "Allen R", email = "allenr1@example.com"}
-]
-license = {text = "MIT"}
-keywords = ["nsip", "sheep", "breeding", "genetics", "api-client", "livestock"]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Scientific/Engineering",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-]
+name = "nsip-dev-workspace"
+version = "0.0.0"
+description = "Development workspace for nsip-client and nsip-mcp-server"
 requires-python = ">=3.10"
-dependencies = [
-    "requests>=2.31.0",
-    "python-dateutil>=2.8.2",
-    "fastmcp>=2.0",
-    "tiktoken>=0.8.0",
-]
 
 [project.optional-dependencies]
 dev = [
@@ -47,6 +33,12 @@ dev = [
     "bandit>=1.7.5",
     "build>=1.0.0",
     "twine>=4.0.0",
+    "hatchling>=1.18.0",
+    # Runtime dependencies for local development
+    "requests>=2.31.0",
+    "python-dateutil>=2.8.2",
+    "fastmcp>=2.0",
+    "tiktoken>=0.8.0",
 ]
 docs = [
     "sphinx>=7.1.0",
@@ -54,23 +46,15 @@ docs = [
     "sphinx-autodoc-typehints>=1.24.0",
 ]
 
-[project.urls]
-Homepage = "https://github.com/epicpast/nsip-api-client"
-Documentation = "https://github.com/epicpast/nsip-api-client#readme"
-Repository = "https://github.com/epicpast/nsip-api-client.git"
-"Bug Tracker" = "https://github.com/epicpast/nsip-api-client/issues"
-Releases = "https://github.com/epicpast/nsip-api-client/releases"
+# Hatch build configuration for development workspace
+[tool.hatch.build.targets.wheel]
+packages = ["src/nsip_client", "src/nsip_mcp"]
 
-[project.scripts]
-nsip-search = "nsip_client.cli:main"
-nsip-mcp-server = "nsip_mcp.cli:main"
-
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["nsip_client*", "nsip_mcp*"]
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/nsip_client/**/*.py",
+    "src/nsip_mcp/**/*.py",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -114,3 +98,54 @@ warn_unused_ignores = false
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "S",      # flake8-bandit (security)
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "S101",   # assert usage (OK in tests)
+    "S311",   # pseudo-random generators (OK for non-crypto)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]  # Allow asserts and hardcoded passwords in tests
+".claude/*" = ["S101", "S105", "S311"]  # Plugin hooks may use asserts
+
+[tool.bandit]
+exclude_dirs = ["tests", ".claude"]
+skips = ["B101", "B311"]  # assert_used, pseudo-random (same as ruff ignores)
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8.6",
+    "black>=25.9.0",
+    "build>=1.0.0",
+    "hatchling>=1.18.0",
+    "isort>=7.0.0",
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.15.1",
+    "requests-mock>=1.12.1",
+    "ruff>=0.14.8",
+    "twine>=4.0.0",
+    "types-requests>=2.32.4.20250913",
+    # Runtime dependencies for local dev
+    "requests>=2.31.0",
+    "python-dateutil>=2.8.2",
+    "fastmcp>=2.0",
+    "tiktoken>=0.8.0",
+]

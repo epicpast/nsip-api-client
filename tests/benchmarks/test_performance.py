@@ -29,8 +29,8 @@ class TestDiscoveryPerformance:
         tools_dict = asyncio.run(mcp.get_tools())
         discovery_time = time.time() - start_time
 
-        print("\n✓ Tool discovery time: {:.3f}s".format(discovery_time))
-        print("  Tools discovered: {}".format(len(tools_dict)))
+        print(f"\n✓ Tool discovery time: {discovery_time:.3f}s")
+        print(f"  Tools discovered: {len(tools_dict)}")
         print("  Target: <5.0s")
         print("  Status: {}".format("PASS" if discovery_time < 5.0 else "FAIL"))
 
@@ -81,9 +81,9 @@ class TestSummarizationPerformance:
         reduction_percent = ((original_tokens - summarized_tokens) / original_tokens) * 100.0
 
         print("\n✓ Summarization performance:")
-        print("  Original tokens: {}".format(original_tokens))
-        print("  Summarized tokens: {}".format(summarized_tokens))
-        print("  Reduction: {:.1f}%".format(reduction_percent))
+        print(f"  Original tokens: {original_tokens}")
+        print(f"  Summarized tokens: {summarized_tokens}")
+        print(f"  Reduction: {reduction_percent:.1f}%")
         print("  Target: ≥70.0%")
         print("  Status: {}".format("PASS" if reduction_percent >= 70.0 else "FAIL"))
 
@@ -98,7 +98,7 @@ class TestStartupPerformance:
         startup_time = server_metrics.startup_time
 
         print("\n✓ Startup performance:")
-        print("  Startup time: {:.3f}s".format(startup_time))
+        print(f"  Startup time: {startup_time:.3f}s")
         print("  Target: <3.0s")
         print("  Status: {}".format("PASS" if startup_time < 3.0 else "FAIL"))
 
@@ -130,8 +130,8 @@ class TestCachePerformance:
         assert response_cache.hits == initial_hits + 1
 
         print("\n✓ Cache performance:")
-        print("  Cache hits: {}".format(response_cache.hits))
-        print("  Cache misses: {}".format(response_cache.misses))
+        print(f"  Cache hits: {response_cache.hits}")
+        print(f"  Cache misses: {response_cache.misses}")
         print("  Status: PASS")
 
 
@@ -153,8 +153,8 @@ class TestMetricsPerformance:
         per_operation_us = (elapsed / iterations) * 1_000_000
 
         print("\n✓ Metrics collection overhead:")
-        print("  Total time for {} operations: {:.3f}s".format(iterations, elapsed))
-        print("  Per-operation overhead: {:.2f}µs".format(per_operation_us))
+        print(f"  Total time for {iterations} operations: {elapsed:.3f}s")
+        print(f"  Per-operation overhead: {per_operation_us:.2f}µs")
         print("  Status: PASS")
 
         assert elapsed < 0.1, f"Metrics overhead too high: {elapsed:.3f}s"

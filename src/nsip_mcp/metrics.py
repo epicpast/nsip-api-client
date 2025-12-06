@@ -10,7 +10,6 @@ This module implements ServerMetrics dataclass for tracking:
 
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import List
 
 
 @dataclass
@@ -29,8 +28,8 @@ class ServerMetrics:
         startup_time: Server startup time in seconds
     """
 
-    discovery_times: List[float] = field(default_factory=list)
-    summarization_reductions: List[float] = field(default_factory=list)
+    discovery_times: list[float] = field(default_factory=list)
+    summarization_reductions: list[float] = field(default_factory=list)
     validation_attempts: int = 0
     validation_successes: int = 0
     cache_hits: int = 0

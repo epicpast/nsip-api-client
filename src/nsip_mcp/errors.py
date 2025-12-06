@@ -6,7 +6,7 @@ that comply with JSON-RPC 2.0 specification and provide LLM-friendly error messa
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class McpErrorCode(IntEnum):
@@ -53,13 +53,13 @@ class McpErrorData:
         retry_after: Seconds to wait before retrying (for rate limiting)
     """
 
-    parameter: Optional[str] = None
-    value: Optional[Any] = None
-    expected: Optional[str] = None
-    suggestion: Optional[str] = None
-    retry_after: Optional[Any] = None  # Can be int or str
+    parameter: str | None = None
+    value: Any | None = None
+    expected: str | None = None
+    suggestion: str | None = None
+    retry_after: Any | None = None  # Can be int or str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization.
 
         Returns:
@@ -91,9 +91,9 @@ class McpErrorResponse:
 
     code: int
     message: str
-    data: Optional[McpErrorData] = None
+    data: McpErrorData | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to JSON-RPC 2.0 error format.
 
         Returns:
@@ -155,9 +155,7 @@ class McpErrorResponse:
         )
 
     @classmethod
-    def nsip_api_error(
-        cls, message: str, original_error: Optional[str] = None
-    ) -> "McpErrorResponse":
+    def nsip_api_error(cls, message: str, original_error: str | None = None) -> "McpErrorResponse":
         """Create NSIP API error (-32000).
 
         Args:
