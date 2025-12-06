@@ -7,7 +7,7 @@ name = "nsip-mcp-server"
 dynamic = ["version"]
 description = "MCP server for NSIP sheep breeding data - Context-efficient API-to-MCP gateway"
 authors = [
-    {name = "Allen R", email = "allenr1@example.com"}
+    {name = "Robert Allen", email = "bob@epicpastures.com"}
 ]
 license = {text = "MIT"}
 keywords = ["nsip", "sheep", "breeding", "mcp", "model-context-protocol", "llm"]

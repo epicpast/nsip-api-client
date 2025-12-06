@@ -7,7 +7,7 @@ name = "nsip-skills"
 dynamic = ["version"]
 description = "Breeding decision support tools for sheep genetics using NSIP EBV data"
 authors = [
-    {name = "Allen R", email = "allenr1@example.com"}
+    {name = "Robert Allen", email = "bob@epicpastures.com"}
 ]
 license = {text = "MIT"}
 keywords = ["nsip", "sheep", "breeding", "genetics", "ebv", "livestock", "selection-index", "inbreeding"]

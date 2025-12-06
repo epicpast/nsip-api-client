@@ -7,7 +7,7 @@ name = "nsip-client"
 dynamic = ["version"]
 description = "Python client for the NSIP (National Sheep Improvement Program) Search API"
 authors = [
-    {name = "Allen R", email = "allenr1@example.com"}
+    {name = "Robert Allen", email = "bob@epicpastures.com"}
 ]
 license = {text = "MIT"}
 keywords = ["nsip", "sheep", "breeding", "genetics", "api-client", "livestock"]
