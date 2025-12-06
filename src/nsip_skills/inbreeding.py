@@ -118,6 +118,30 @@ def build_pedigree_tree(
             client.close()
 
 
+def _store_ancestor_node(tree: PedigreeTree, path: str, node: PedigreeNode) -> None:
+    """Store an ancestor node at the appropriate tree location."""
+    grandparent_paths = {"ss": "sire_sire", "sd": "sire_dam", "ds": "dam_sire", "dd": "dam_dam"}
+    if path in grandparent_paths:
+        setattr(tree, grandparent_paths[path], node)
+    else:
+        tree.extended[path] = node
+
+
+def _create_ancestor_node(lineage_animal: Any, gender: str, generation: int) -> PedigreeNode | None:
+    """Create a PedigreeNode from a lineage animal."""
+    if not lineage_animal:
+        return None
+    return PedigreeNode(
+        lpn_id=lineage_animal.lpn_id,
+        gender=gender,
+        date_of_birth=lineage_animal.date_of_birth,
+        status=lineage_animal.status,
+        farm_name=lineage_animal.farm_name,
+        us_index=lineage_animal.us_index,
+        generation=generation,
+    )
+
+
 def _fetch_ancestors_recursive(
     tree: PedigreeTree,
     client: CachedNSIPClient,
@@ -129,81 +153,57 @@ def _fetch_ancestors_recursive(
     if current_gen >= max_gen:
         return
 
-    # Determine which parent nodes to expand
-    nodes_to_expand = []
-    if current_path == "":
-        if tree.sire:
-            nodes_to_expand.append(("s", tree.sire))
-        if tree.dam:
-            nodes_to_expand.append(("d", tree.dam))
-    else:
-        node = tree.get_ancestor(current_path)
-        if node:
-            nodes_to_expand.append((current_path, node))
+    nodes_to_expand = _get_nodes_to_expand(tree, current_path)
 
     for path, parent_node in nodes_to_expand:
-        try:
-            lineage = client.get_lineage(parent_node.lpn_id)
+        _expand_parent_node(tree, client, max_gen, path, parent_node, current_gen)
 
-            # Add sire of this parent
-            if lineage.sire:
-                sire_path = path + "s"
-                sire_node = PedigreeNode(
-                    lpn_id=lineage.sire.lpn_id,
-                    gender="Male",
-                    date_of_birth=lineage.sire.date_of_birth,
-                    status=lineage.sire.status,
-                    farm_name=lineage.sire.farm_name,
-                    us_index=lineage.sire.us_index,
-                    generation=current_gen + 1,
-                )
 
-                # Store in appropriate location
-                if sire_path == "ss":
-                    tree.sire_sire = sire_node
-                elif sire_path == "sd":
-                    tree.sire_dam = sire_node
-                elif sire_path == "ds":
-                    tree.dam_sire = sire_node
-                elif sire_path == "dd":
-                    tree.dam_dam = sire_node
-                else:
-                    tree.extended[sire_path] = sire_node
+def _get_nodes_to_expand(tree: PedigreeTree, current_path: str) -> list[tuple[str, PedigreeNode]]:
+    """Get list of parent nodes to expand."""
+    if current_path == "":
+        nodes = []
+        if tree.sire:
+            nodes.append(("s", tree.sire))
+        if tree.dam:
+            nodes.append(("d", tree.dam))
+        return nodes
+    node = tree.get_ancestor(current_path)
+    return [(current_path, node)] if node else []
 
-                # Recurse for next generation
-                if current_gen + 1 < max_gen:
-                    _fetch_ancestors_recursive(tree, client, max_gen, sire_path, current_gen + 1)
 
-            # Add dam of this parent
-            if lineage.dam:
-                dam_path = path + "d"
-                dam_node = PedigreeNode(
-                    lpn_id=lineage.dam.lpn_id,
-                    gender="Female",
-                    date_of_birth=lineage.dam.date_of_birth,
-                    status=lineage.dam.status,
-                    farm_name=lineage.dam.farm_name,
-                    us_index=lineage.dam.us_index,
-                    generation=current_gen + 1,
-                )
+def _expand_parent_node(
+    tree: PedigreeTree,
+    client: CachedNSIPClient,
+    max_gen: int,
+    path: str,
+    parent_node: PedigreeNode,
+    current_gen: int,
+) -> None:
+    """Expand a single parent node by fetching its ancestors."""
+    try:
+        lineage = client.get_lineage(parent_node.lpn_id)
+        next_gen = current_gen + 1
 
-                if dam_path == "ss":
-                    tree.sire_sire = dam_node
-                elif dam_path == "sd":
-                    tree.sire_dam = dam_node
-                elif dam_path == "ds":
-                    tree.dam_sire = dam_node
-                elif dam_path == "dd":
-                    tree.dam_dam = dam_node
-                else:
-                    tree.extended[dam_path] = dam_node
+        # Add sire of this parent
+        sire_node = _create_ancestor_node(lineage.sire, "Male", next_gen)
+        if sire_node:
+            sire_path = path + "s"
+            _store_ancestor_node(tree, sire_path, sire_node)
+            if next_gen < max_gen:
+                _fetch_ancestors_recursive(tree, client, max_gen, sire_path, next_gen)
 
-                if current_gen + 1 < max_gen:
-                    _fetch_ancestors_recursive(tree, client, max_gen, dam_path, current_gen + 1)
+        # Add dam of this parent
+        dam_node = _create_ancestor_node(lineage.dam, "Female", next_gen)
+        if dam_node:
+            dam_path = path + "d"
+            _store_ancestor_node(tree, dam_path, dam_node)
+            if next_gen < max_gen:
+                _fetch_ancestors_recursive(tree, client, max_gen, dam_path, next_gen)
 
-        except Exception:
-            # Skip ancestors that can't be fetched
-            pass
+    except Exception:
+        # Skip ancestors that can't be fetched (not found or API error)
+        pass
 
 
 def find_common_ancestors(tree: PedigreeTree) -> list[str]:

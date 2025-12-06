@@ -76,6 +76,137 @@ class RecommendationReport:
         }
 
 
+def _get_index_for_goal(breeding_goal: BreedingGoal) -> Any:
+    """Select the appropriate index for the breeding goal."""
+    goal_to_index = {
+        BreedingGoal.TERMINAL: "terminal",
+        BreedingGoal.MATERNAL: "maternal",
+    }
+    return PRESET_INDEXES.get(goal_to_index.get(breeding_goal, "range"), PRESET_INDEXES["range"])
+
+
+def _generate_retention_recs(rankings: Any, report: RecommendationReport) -> list[Recommendation]:
+    """Generate retention and priority breeding recommendations."""
+    recs = []
+    n = len(rankings.results)
+    top_25_pct = max(1, n // 4)
+
+    for result in rankings.results[:top_25_pct]:
+        report.retain_list.append(result.lpn_id)
+
+        if result.rank <= 5:
+            report.priority_breeding.append(result.lpn_id)
+            recs.append(
+                Recommendation(
+                    type=RecommendationType.PRIORITY,
+                    subject=result.lpn_id,
+                    rationale=f"Top performer (Rank {result.rank}, Score {result.total_score:.1f})",
+                    impact="Maximize genetic contribution through premium matings",
+                    priority=1,
+                    action="Assign to top ewes, maximize mating opportunities",
+                )
+            )
+    return recs
+
+
+def _generate_cull_recs(rankings: Any, report: RecommendationReport) -> list[Recommendation]:
+    """Generate culling recommendations for bottom performers."""
+    recs: list[Recommendation] = []
+    n = len(rankings.results)
+    if n <= 10:  # Don't recommend culling if flock is too small
+        return recs
+
+    top_25_pct = max(1, n // 4)
+    bottom_25_pct = rankings.results[-top_25_pct:]
+
+    for result in bottom_25_pct:
+        report.cull_list.append(result.lpn_id)
+        recs.append(
+            Recommendation(
+                type=RecommendationType.CULL,
+                subject=result.lpn_id,
+                rationale=f"Bottom performer (Rank {result.rank}, Score {result.total_score:.1f})",
+                impact="Remove low-performing genetics from breeding pool",
+                priority=3,
+                action="Remove from breeding program; consider for market",
+            )
+        )
+    return recs
+
+
+def _generate_trait_recs(
+    summary: FlockSummary, report: RecommendationReport
+) -> list[Recommendation]:
+    """Generate trait improvement recommendations."""
+    recs: list[Recommendation] = []
+    if not summary.trait_summary:
+        return recs
+
+    trait_means = {t: s["mean"] for t, s in summary.trait_summary.items()}
+    sorted_traits = sorted(trait_means.items(), key=lambda x: x[1])
+
+    for trait, mean in sorted_traits[:3]:
+        if mean < 0:  # Below average
+            report.trait_priorities.append(trait)
+            recs.append(
+                Recommendation(
+                    type=RecommendationType.OUTSIDE_GENETICS,
+                    subject=trait,
+                    rationale=f"Flock average ({mean:.2f}) below breed average",
+                    impact=f"Improve {trait} through selection or outside genetics",
+                    priority=2,
+                    action=f"Search for rams with strong {trait} EBVs",
+                )
+            )
+    return recs
+
+
+def _generate_management_recs(summary: FlockSummary, philosophy: str) -> list[Recommendation]:
+    """Generate management and philosophy-specific recommendations."""
+    recs = []
+
+    # Ram ratio check
+    if summary.male_count > 0 and summary.female_count > 0:
+        ram_ratio = summary.male_count / (summary.male_count + summary.female_count)
+        if ram_ratio > 0.15:
+            recs.append(
+                Recommendation(
+                    type=RecommendationType.MANAGEMENT,
+                    subject="Ram:Ewe Ratio",
+                    rationale=f"High ram percentage ({ram_ratio:.1%})",
+                    impact="Reduce costs, focus resources on top rams",
+                    priority=2,
+                    action="Reduce ram numbers to 1:25-35 ratio with ewes",
+                )
+            )
+
+    # Philosophy-specific recommendations
+    if philosophy == "seedstock":
+        recs.append(
+            Recommendation(
+                type=RecommendationType.MANAGEMENT,
+                subject="Data Collection",
+                rationale="Seedstock operations benefit from comprehensive data",
+                impact="Improve accuracy of EBVs for sale animals",
+                priority=2,
+                action="Record all birth/weaning weights, submit to NSIP regularly",
+            )
+        )
+    elif philosophy == "commercial":
+        recs.append(
+            Recommendation(
+                type=RecommendationType.MANAGEMENT,
+                subject="Ram Purchases",
+                rationale="Commercial operations should focus on proven genetics",
+                impact="Faster genetic improvement with less risk",
+                priority=3,
+                action="Purchase rams from NSIP-participating flocks with high accuracy EBVs",
+            )
+        )
+
+    return recs
+
+
 def generate_recommendations(
     lpn_ids: list[str],
     breeding_goal: BreedingGoal | str = BreedingGoal.BALANCED,
@@ -103,20 +234,11 @@ def generate_recommendations(
     if isinstance(breeding_goal, str):
         breeding_goal = BreedingGoal(breeding_goal.lower())
 
-    # Select appropriate index
-    if breeding_goal == BreedingGoal.TERMINAL:
-        index = PRESET_INDEXES["terminal"]
-    elif breeding_goal == BreedingGoal.MATERNAL:
-        index = PRESET_INDEXES["maternal"]
-    else:
-        index = PRESET_INDEXES["range"]
+    index = _get_index_for_goal(breeding_goal)
 
     try:
-        # Get flock statistics
         dashboard = calculate_flock_stats(lpn_ids, client=client)
         summary = dashboard.summary
-
-        # Rank animals by index
         rankings = rank_by_index(lpn_ids, index, client=client)
 
         report = RecommendationReport(
@@ -124,114 +246,13 @@ def generate_recommendations(
             breeding_goal=breeding_goal.value,
         )
 
-        # Generate recommendations based on analysis
+        # Collect all recommendations from helper functions
         recs = []
+        recs.extend(_generate_retention_recs(rankings, report))
+        recs.extend(_generate_cull_recs(rankings, report))
+        recs.extend(_generate_trait_recs(summary, report))
+        recs.extend(_generate_management_recs(summary, philosophy))
 
-        # 1. Retention recommendations (top 25%)
-        n = len(rankings.results)
-        top_25_pct = max(1, n // 4)
-
-        for result in rankings.results[:top_25_pct]:
-            report.retain_list.append(result.lpn_id)
-
-            if result.rank <= 5:
-                report.priority_breeding.append(result.lpn_id)
-                recs.append(
-                    Recommendation(
-                        type=RecommendationType.PRIORITY,
-                        subject=result.lpn_id,
-                        rationale=(
-                            f"Top performer (Rank {result.rank}, "
-                            f"Score {result.total_score:.1f})"
-                        ),
-                        impact="Maximize genetic contribution through premium matings",
-                        priority=1,
-                        action="Assign to top ewes, maximize mating opportunities",
-                    )
-                )
-
-        # 2. Culling recommendations (bottom 25%)
-        bottom_25_pct = rankings.results[-top_25_pct:]
-
-        for result in bottom_25_pct:
-            # Don't recommend culling if they're the only ones
-            if n > 10:  # Only recommend culling if flock is large enough
-                report.cull_list.append(result.lpn_id)
-                recs.append(
-                    Recommendation(
-                        type=RecommendationType.CULL,
-                        subject=result.lpn_id,
-                        rationale=(
-                            f"Bottom performer (Rank {result.rank}, "
-                            f"Score {result.total_score:.1f})"
-                        ),
-                        impact="Remove low-performing genetics from breeding pool",
-                        priority=3,
-                        action="Remove from breeding program; consider for market",
-                    )
-                )
-
-        # 3. Trait improvement recommendations
-        if summary.trait_summary:
-            # Find weakest traits
-            trait_means = {t: s["mean"] for t, s in summary.trait_summary.items()}
-            sorted_traits = sorted(trait_means.items(), key=lambda x: x[1])
-
-            # Bottom 3 traits need improvement
-            for trait, mean in sorted_traits[:3]:
-                if mean < 0:  # Below average
-                    report.trait_priorities.append(trait)
-                    recs.append(
-                        Recommendation(
-                            type=RecommendationType.OUTSIDE_GENETICS,
-                            subject=trait,
-                            rationale=f"Flock average ({mean:.2f}) below breed average",
-                            impact=f"Improve {trait} through selection or outside genetics",
-                            priority=2,
-                            action=f"Search for rams with strong {trait} EBVs",
-                        )
-                    )
-
-        # 4. Management recommendations based on structure
-        if summary.male_count > 0 and summary.female_count > 0:
-            ram_ratio = summary.male_count / (summary.male_count + summary.female_count)
-            if ram_ratio > 0.15:
-                recs.append(
-                    Recommendation(
-                        type=RecommendationType.MANAGEMENT,
-                        subject="Ram:Ewe Ratio",
-                        rationale=f"High ram percentage ({ram_ratio:.1%})",
-                        impact="Reduce costs, focus resources on top rams",
-                        priority=2,
-                        action="Reduce ram numbers to 1:25-35 ratio with ewes",
-                    )
-                )
-
-        # 5. Philosophy-specific recommendations
-        if philosophy == "seedstock":
-            recs.append(
-                Recommendation(
-                    type=RecommendationType.MANAGEMENT,
-                    subject="Data Collection",
-                    rationale="Seedstock operations benefit from comprehensive data",
-                    impact="Improve accuracy of EBVs for sale animals",
-                    priority=2,
-                    action="Record all birth/weaning weights, submit to NSIP regularly",
-                )
-            )
-        elif philosophy == "commercial":
-            recs.append(
-                Recommendation(
-                    type=RecommendationType.MANAGEMENT,
-                    subject="Ram Purchases",
-                    rationale="Commercial operations should focus on proven genetics",
-                    impact="Faster genetic improvement with less risk",
-                    priority=3,
-                    action="Purchase rams from NSIP-participating flocks with high accuracy EBVs",
-                )
-            )
-
-        # Sort by priority
         recs.sort(key=lambda r: r.priority)
         report.recommendations = recs
 

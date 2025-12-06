@@ -43,6 +43,60 @@ class FlockDashboard:
         }
 
 
+def _update_gender_counts(summary: FlockSummary, gender: str | None) -> None:
+    """Update gender counts in summary."""
+    if gender:
+        if gender.lower().startswith("m"):
+            summary.male_count += 1
+        elif gender.lower().startswith("f"):
+            summary.female_count += 1
+
+
+def _process_animal_traits(
+    details: Any,
+    lpn_id: str,
+    trait_values: dict[str, list[float]],
+    indexes: list[SelectionIndex],
+    index_scores: dict[str, list[tuple[str, float]]],
+) -> tuple[TraitProfile, dict[str, float]]:
+    """Process animal traits and calculate index scores."""
+    ebvs: dict[str, float] = {}
+    trait_profile = TraitProfile(lpn_id=lpn_id, breed=details.breed)
+
+    for trait_name, trait_obj in details.traits.items():
+        if trait_name not in trait_values:
+            trait_values[trait_name] = []
+        trait_values[trait_name].append(trait_obj.value)
+        ebvs[trait_name] = trait_obj.value
+        trait_profile.traits[trait_name] = TraitValue(
+            name=trait_name, value=trait_obj.value, accuracy=trait_obj.accuracy
+        )
+
+    animal_index_scores = {}
+    for idx in indexes:
+        score = idx.calculate_score(ebvs)
+        index_scores[idx.name].append((lpn_id, score))
+        animal_index_scores[idx.name] = score
+
+    return trait_profile, animal_index_scores
+
+
+def _compute_trait_summary(trait_values: dict[str, list[float]]) -> dict[str, dict[str, float]]:
+    """Compute summary statistics for all traits."""
+    result: dict[str, dict[str, float]] = {}
+    for trait, values in trait_values.items():
+        if values:
+            result[trait] = {
+                "mean": statistics.mean(values),
+                "median": statistics.median(values),
+                "std": statistics.stdev(values) if len(values) > 1 else 0,
+                "min": min(values),
+                "max": max(values),
+                "count": len(values),
+            }
+    return result
+
+
 def calculate_flock_stats(
     lpn_ids: list[str],
     flock_name: str | None = None,
@@ -69,16 +123,9 @@ def calculate_flock_stats(
         indexes = list(PRESET_INDEXES.values())
 
     try:
-        # Fetch all animal data
         fetched = client.batch_get_animals(lpn_ids, on_error="skip")
+        summary = FlockSummary(flock_name=flock_name, total_animals=len(lpn_ids))
 
-        # Initialize summary
-        summary = FlockSummary(
-            flock_name=flock_name,
-            total_animals=len(lpn_ids),
-        )
-
-        # Collect data
         trait_values: dict[str, list[float]] = {}
         status_counts: Counter[str] = Counter()
         breed_counts: Counter[str] = Counter()
@@ -92,98 +139,51 @@ def calculate_flock_stats(
                 continue
 
             details = data["details"]
+            _update_gender_counts(summary, details.gender)
 
-            # Gender counts
-            if details.gender:
-                if details.gender.lower().startswith("m"):
-                    summary.male_count += 1
-                elif details.gender.lower().startswith("f"):
-                    summary.female_count += 1
-
-            # Status
             if details.status:
                 status_counts[details.status] += 1
-
-            # Breed
             if details.breed:
                 breed_counts[details.breed] += 1
-
-            # Birth year
             if details.date_of_birth:
-                year = details.date_of_birth[:4]
-                birth_years[year] += 1
+                birth_years[details.date_of_birth[:4]] += 1
 
-            # Collect traits
-            ebvs: dict[str, float] = {}
-            trait_profile = TraitProfile(lpn_id=lpn_id, breed=details.breed)
-
-            for trait_name, trait_obj in details.traits.items():
-                if trait_name not in trait_values:
-                    trait_values[trait_name] = []
-                trait_values[trait_name].append(trait_obj.value)
-                ebvs[trait_name] = trait_obj.value
-
-                trait_profile.traits[trait_name] = TraitValue(
-                    name=trait_name,
-                    value=trait_obj.value,
-                    accuracy=trait_obj.accuracy,
-                )
-
-            # Calculate index scores
-            animal_index_scores = {}
-            for idx in indexes:
-                score = idx.calculate_score(ebvs)
-                index_scores[idx.name].append((lpn_id, score))
-                animal_index_scores[idx.name] = score
-
-            # Build analysis
-            analysis = AnimalAnalysis(
-                lpn_id=lpn_id,
-                breed=details.breed,
-                gender=details.gender,
-                date_of_birth=details.date_of_birth,
-                status=details.status,
-                sire_lpn=details.sire,
-                dam_lpn=details.dam,
-                trait_profile=trait_profile,
-                progeny_count=details.total_progeny,
-                index_scores=animal_index_scores,
+            trait_profile, animal_index_scores = _process_animal_traits(
+                details, lpn_id, trait_values, indexes, index_scores
             )
-            animal_analyses.append(analysis)
 
-        # Compute summary statistics
+            animal_analyses.append(
+                AnimalAnalysis(
+                    lpn_id=lpn_id,
+                    breed=details.breed,
+                    gender=details.gender,
+                    date_of_birth=details.date_of_birth,
+                    status=details.status,
+                    sire_lpn=details.sire,
+                    dam_lpn=details.dam,
+                    trait_profile=trait_profile,
+                    progeny_count=details.total_progeny,
+                    index_scores=animal_index_scores,
+                )
+            )
+
         summary.status_breakdown = dict(status_counts)
         summary.breed_breakdown = dict(breed_counts)
         summary.age_distribution = dict(birth_years)
+        summary.trait_summary = _compute_trait_summary(trait_values)
 
-        for trait, values in trait_values.items():
-            if values:
-                summary.trait_summary[trait] = {
-                    "mean": statistics.mean(values),
-                    "median": statistics.median(values),
-                    "std": statistics.stdev(values) if len(values) > 1 else 0,
-                    "min": min(values),
-                    "max": max(values),
-                    "count": len(values),
-                }
-
-        # Sort index scores and identify top performers
         for idx_name in index_scores:
             index_scores[idx_name].sort(key=lambda x: x[1], reverse=True)
 
-        # Top performers (by first index)
         if indexes and index_scores[indexes[0].name]:
             top_lpns = [lpn for lpn, _ in index_scores[indexes[0].name][:10]]
             summary.top_performers = [a for a in animal_analyses if a.lpn_id in top_lpns][:5]
 
-        # Identify improvement opportunities
         opportunities = _identify_opportunities(summary, trait_values)
         summary.recommendations = opportunities
 
         return FlockDashboard(
-            summary=summary,
-            index_rankings=index_scores,
-            improvement_opportunities=opportunities,
+            summary=summary, index_rankings=index_scores, improvement_opportunities=opportunities
         )
 
     finally:

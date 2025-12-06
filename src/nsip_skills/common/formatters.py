@@ -172,7 +172,7 @@ def _format_node_short(node: PedigreeNode | None, max_len: int = 20) -> str:
         parts.append(f"({node.gender[0]})")
     result = " ".join(parts)
     if len(result) > max_len:
-        return result[:max_len - 2] + ".."
+        return result[: max_len - 2] + ".."
     return result
 
 

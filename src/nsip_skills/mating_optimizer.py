@@ -84,6 +84,65 @@ def score_mating(
     return base_score - inbreeding_cost
 
 
+def _get_breeding_index(
+    breeding_goal: BreedingGoal, custom_index: SelectionIndex | None
+) -> SelectionIndex:
+    """Get the appropriate selection index for the breeding goal."""
+    if custom_index:
+        return custom_index
+    goal_to_index = {
+        BreedingGoal.TERMINAL: "terminal",
+        BreedingGoal.MATERNAL: "maternal",
+    }
+    return PRESET_INDEXES.get(goal_to_index.get(breeding_goal, "range"), PRESET_INDEXES["range"])
+
+
+def _extract_ebvs(
+    lpns: list[str], fetched: dict[str, dict[str, Any]]
+) -> dict[str, dict[str, float]]:
+    """Extract EBV dictionaries from fetched animal data."""
+    ebvs: dict[str, dict[str, float]] = {}
+    for lpn in lpns:
+        data = fetched.get(lpn, {})
+        if "details" in data and data["details"].traits:
+            ebvs[lpn] = {name: trait.value for name, trait in data["details"].traits.items()}
+    return ebvs
+
+
+def _score_pairing(
+    ram: str,
+    ewe: str,
+    ram_ebvs: dict[str, float],
+    ewe_ebvs: dict[str, float],
+    index: SelectionIndex,
+    inbreeding_generations: int,
+    client: CachedNSIPClient,
+) -> MatingPair:
+    """Score a single ram-ewe pairing."""
+    projected = project_offspring_ebvs(ram_ebvs, ewe_ebvs)
+
+    try:
+        inbreeding_result = calculate_projected_offspring_inbreeding(
+            sire_lpn=ram, dam_lpn=ewe, generations=inbreeding_generations, client=client
+        )
+        coi = inbreeding_result.coefficient
+        risk = inbreeding_result.risk_level or RiskLevel.LOW
+    except Exception:
+        coi = 0.0
+        risk = RiskLevel.LOW
+
+    composite = score_mating(projected, index, coi)
+
+    return MatingPair(
+        ram_lpn=ram,
+        ewe_lpn=ewe,
+        projected_offspring_ebvs=projected,
+        projected_inbreeding=coi,
+        inbreeding_risk=risk,
+        composite_score=composite,
+    )
+
+
 def optimize_mating_plan(
     ram_lpns: list[str],
     ewe_lpns: list[str],
@@ -114,119 +173,49 @@ def optimize_mating_plan(
     if client is None:
         client = CachedNSIPClient()
 
-    # Normalize breeding goal
     if isinstance(breeding_goal, str):
         breeding_goal = BreedingGoal(breeding_goal.lower())
 
-    # Select index
-    if custom_index:
-        index = custom_index
-    elif breeding_goal == BreedingGoal.TERMINAL:
-        index = PRESET_INDEXES["terminal"]
-    elif breeding_goal == BreedingGoal.MATERNAL:
-        index = PRESET_INDEXES["maternal"]
-    else:
-        index = PRESET_INDEXES["range"]  # Balanced default
-
-    result = MatingPlanResult(
-        breeding_goal=breeding_goal.value,
-        max_inbreeding=max_inbreeding,
-    )
+    index = _get_breeding_index(breeding_goal, custom_index)
+    result = MatingPlanResult(breeding_goal=breeding_goal.value, max_inbreeding=max_inbreeding)
 
     try:
-        # Fetch EBVs for all animals
-        all_lpns = ram_lpns + ewe_lpns
-        fetched = client.batch_get_animals(all_lpns, on_error="skip")
-
-        # Extract EBVs
-        ram_ebvs: dict[str, dict[str, float]] = {}
-        ewe_ebvs: dict[str, dict[str, float]] = {}
-
-        for lpn in ram_lpns:
-            data = fetched.get(lpn, {})
-            if "details" in data and data["details"].traits:
-                ram_ebvs[lpn] = {
-                    name: trait.value for name, trait in data["details"].traits.items()
-                }
-
-        for lpn in ewe_lpns:
-            data = fetched.get(lpn, {})
-            if "details" in data and data["details"].traits:
-                ewe_ebvs[lpn] = {
-                    name: trait.value for name, trait in data["details"].traits.items()
-                }
+        fetched = client.batch_get_animals(ram_lpns + ewe_lpns, on_error="skip")
+        ram_ebvs = _extract_ebvs(ram_lpns, fetched)
+        ewe_ebvs = _extract_ebvs(ewe_lpns, fetched)
 
         # Score all possible pairings
         all_pairs: list[MatingPair] = []
-
-        for ram in ram_ebvs.keys():
-            for ewe in ewe_ebvs.keys():
-                # Project offspring EBVs
-                projected = project_offspring_ebvs(ram_ebvs[ram], ewe_ebvs[ewe])
-
-                # Calculate inbreeding (use simplified 3-gen by default for speed)
-                try:
-                    inbreeding_result = calculate_projected_offspring_inbreeding(
-                        sire_lpn=ram,
-                        dam_lpn=ewe,
-                        generations=inbreeding_generations,
-                        client=client,
-                    )
-                    coi = inbreeding_result.coefficient
-                    risk = inbreeding_result.risk_level or RiskLevel.LOW
-                except Exception:
-                    coi = 0.0
-                    risk = RiskLevel.LOW
-
-                # Score the pairing
-                composite = score_mating(projected, index, coi)
-
-                pair = MatingPair(
-                    ram_lpn=ram,
-                    ewe_lpn=ewe,
-                    projected_offspring_ebvs=projected,
-                    projected_inbreeding=coi,
-                    inbreeding_risk=risk,
-                    composite_score=composite,
+        for ram in ram_ebvs:
+            for ewe in ewe_ebvs:
+                pair = _score_pairing(
+                    ram, ewe, ram_ebvs[ram], ewe_ebvs[ewe], index, inbreeding_generations, client
                 )
-
-                # Flag high-risk pairs
-                if coi > max_inbreeding:
-                    pair.notes.append(f"High inbreeding risk: {coi * 100:.1f}%")
+                if pair.projected_inbreeding > max_inbreeding:
+                    pair.notes.append(
+                        f"High inbreeding risk: {pair.projected_inbreeding * 100:.1f}%"
+                    )
                     result.high_risk_pairs.append(pair)
-
                 all_pairs.append(pair)
 
-        # Greedy assignment: assign each ewe to best available ram
-        # Sort pairs by score (descending)
+        # Greedy assignment by score
         all_pairs.sort(key=lambda p: p.composite_score, reverse=True)
-
         assigned_ewes: set[str] = set()
-        ram_assignments: dict[str, int] = {ram: 0 for ram in ram_ebvs.keys()}
+        ram_assignments: dict[str, int] = {ram: 0 for ram in ram_ebvs}
 
         for pair in all_pairs:
             if pair.ewe_lpn in assigned_ewes:
                 continue
-
-            # Check inbreeding threshold
             if pair.projected_inbreeding > max_inbreeding:
                 continue
-
-            # Check ram capacity
             if max_ewes_per_ram and ram_assignments[pair.ram_lpn] >= max_ewes_per_ram:
                 continue
-
-            # Accept this pairing
             pair.rank = len(result.pairs) + 1
             result.pairs.append(pair)
             assigned_ewes.add(pair.ewe_lpn)
             ram_assignments[pair.ram_lpn] += 1
 
-        # Track unassigned ewes
-        for ewe in ewe_lpns:
-            if ewe not in assigned_ewes:
-                result.unassigned_ewes.append(ewe)
-
+        result.unassigned_ewes = [e for e in ewe_lpns if e not in assigned_ewes]
         return result
 
     finally:
