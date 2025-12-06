@@ -17,7 +17,7 @@ Available modules:
     - recommendation_engine: AI-powered breeding recommendations
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 # Re-export common utilities for convenience
 from nsip_skills.common.data_models import (
