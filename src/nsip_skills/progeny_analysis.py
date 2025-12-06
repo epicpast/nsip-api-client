@@ -200,7 +200,8 @@ def compare_sires(
                 analysis = analyze_progeny(lpn, traits=traits, index=index, client=client)
                 result.sires.append(analysis)
             except Exception:
-                pass
+                # Skip sires that can't be analyzed (not found or no progeny)
+                continue
 
         if not result.sires:
             return result

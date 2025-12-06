@@ -133,6 +133,7 @@ class CachedNSIPClient:
                 path.unlink()
                 count += 1
             except OSError:
+                # File may be locked or already deleted; continue clearing others
                 pass
         return count
 

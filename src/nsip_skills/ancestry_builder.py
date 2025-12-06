@@ -117,7 +117,8 @@ def identify_notable_ancestors(
                 )
 
         except Exception:
-            pass
+            # Skip ancestors whose details can't be fetched (not found or API error)
+            continue
 
     return notable
 
