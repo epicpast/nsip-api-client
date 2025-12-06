@@ -160,40 +160,76 @@ def _format_node(node: PedigreeNode | None, include_details: bool = True) -> str
     return " ".join(parts)
 
 
+def _format_node_short(node: PedigreeNode | None, max_len: int = 20) -> str:
+    """Format a pedigree node in short form for tree display."""
+    if node is None:
+        return "[Unknown]"
+
+    # Use last 6 chars of LPN for brevity
+    short_id = node.lpn_id[-10:] if len(node.lpn_id) > 10 else node.lpn_id
+    parts = [short_id]
+    if node.gender:
+        parts.append(f"({node.gender[0]})")
+    result = " ".join(parts)
+    if len(result) > max_len:
+        return result[:max_len - 2] + ".."
+    return result
+
+
 def _format_pedigree_ascii(tree: PedigreeTree) -> str:
-    """Format pedigree as ASCII art tree."""
+    """Format pedigree as ASCII art tree with visual branches."""
     lines = []
 
-    # Subject
-    lines.append(f"Subject: {_format_node(tree.subject)}")
+    # Get short node representations
+    subj = _format_node_short(tree.subject)
+    sire = _format_node_short(tree.sire)
+    dam = _format_node_short(tree.dam)
+    ss = _format_node_short(tree.sire_sire)
+    sd = _format_node_short(tree.sire_dam)
+    ds = _format_node_short(tree.dam_sire)
+    dd = _format_node_short(tree.dam_dam)
+
+    # Build the visual tree
+    # Row 1: Subject centered
+    lines.append("```")
+    lines.append(f"                         {subj}")
+    lines.append("                        /              \\")
+
+    # Row 2: Parents
+    lines.append(f"              {sire:<18}    {dam}")
+    lines.append("              /         \\          /         \\")
+
+    # Row 3: Grandparents
+    lines.append(f"       {ss:<12} {sd:<12} {ds:<12} {dd}")
+    lines.append("```")
     lines.append("")
 
-    # Parents
-    lines.append("Parents:")
-    lines.append(f"  Sire: {_format_node(tree.sire)}")
-    lines.append(f"  Dam:  {_format_node(tree.dam)}")
+    # Detailed list below the tree
+    lines.append("**Subject**: " + _format_node(tree.subject))
     lines.append("")
-
-    # Grandparents
-    lines.append("Grandparents:")
-    lines.append(f"  Sire's Sire: {_format_node(tree.sire_sire)}")
-    lines.append(f"  Sire's Dam:  {_format_node(tree.sire_dam)}")
-    lines.append(f"  Dam's Sire:  {_format_node(tree.dam_sire)}")
-    lines.append(f"  Dam's Dam:   {_format_node(tree.dam_dam)}")
+    lines.append("**Parents**:")
+    lines.append(f"  • Sire: {_format_node(tree.sire)}")
+    lines.append(f"  • Dam:  {_format_node(tree.dam)}")
+    lines.append("")
+    lines.append("**Grandparents**:")
+    lines.append(f"  • Sire's Sire: {_format_node(tree.sire_sire)}")
+    lines.append(f"  • Sire's Dam:  {_format_node(tree.sire_dam)}")
+    lines.append(f"  • Dam's Sire:  {_format_node(tree.dam_sire)}")
+    lines.append(f"  • Dam's Dam:   {_format_node(tree.dam_dam)}")
 
     # Extended generations if available
     if tree.extended:
         lines.append("")
-        lines.append("Great-grandparents:")
+        lines.append("**Great-grandparents**:")
         for path, node in sorted(tree.extended.items()):
             if len(path) == 3:
                 label = path.replace("s", "Sire's ").replace("d", "Dam's ").strip("' ")
-                lines.append(f"  {label}: {_format_node(node)}")
+                lines.append(f"  • {label}: {_format_node(node)}")
 
     # Common ancestors
     if tree.common_ancestors:
         lines.append("")
-        lines.append(f"Common Ancestors: {', '.join(tree.common_ancestors)}")
+        lines.append(f"**Common Ancestors**: {', '.join(tree.common_ancestors)}")
 
     return "\n".join(lines)
 
