@@ -156,7 +156,8 @@ class CachedNSIPClient:
         if not force_refresh:
             cached = self._get_cached(key)
             if cached is not None:
-                return AnimalDetails.from_api_response(cached)
+                # Use from_dict() for cached data (snake_case format from to_dict())
+                return AnimalDetails.from_dict(cached)
 
         result = self._client.get_animal_details(lpn_id)
         self._set_cached(key, result.to_dict())

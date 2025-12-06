@@ -96,6 +96,58 @@ class AnimalDetails:
         return asdict(self)
 
     @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "AnimalDetails":
+        """Reconstruct AnimalDetails from a to_dict() output.
+
+        This handles the snake_case format produced by to_dict(), which differs
+        from the API response format handled by from_api_response().
+        """
+        # Reconstruct traits from serialized dicts
+        traits = {}
+        if "traits" in data and isinstance(data["traits"], dict):
+            for name, trait_data in data["traits"].items():
+                if isinstance(trait_data, dict):
+                    traits[name] = Trait(
+                        name=trait_data.get("name", name),
+                        value=trait_data.get("value", 0.0),
+                        accuracy=trait_data.get("accuracy"),
+                        units=trait_data.get("units"),
+                    )
+
+        # Reconstruct contact info
+        contact = None
+        if "contact_info" in data and data["contact_info"]:
+            ci = data["contact_info"]
+            contact = ContactInfo(
+                farm_name=ci.get("farm_name"),
+                contact_name=ci.get("contact_name"),
+                phone=ci.get("phone"),
+                email=ci.get("email"),
+                address=ci.get("address"),
+                city=ci.get("city"),
+                state=ci.get("state"),
+                zip_code=ci.get("zip_code"),
+            )
+
+        return cls(
+            lpn_id=data.get("lpn_id", ""),
+            breed=data.get("breed"),
+            breed_group=data.get("breed_group"),
+            date_of_birth=data.get("date_of_birth"),
+            gender=data.get("gender"),
+            status=data.get("status"),
+            sire=data.get("sire"),
+            dam=data.get("dam"),
+            registration_number=data.get("registration_number"),
+            total_progeny=data.get("total_progeny"),
+            flock_count=data.get("flock_count"),
+            genotyped=data.get("genotyped"),
+            traits=traits,
+            contact_info=contact,
+            raw_data=data.get("raw_data", {}),
+        )
+
+    @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "AnimalDetails":
         """Create AnimalDetails from API response
 
