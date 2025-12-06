@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nsip-skills"
 dynamic = ["version"]
-description = "Breeding decision support tools for sheep genetics using NSIP data"
+description = "Breeding decision support tools for sheep genetics using NSIP EBV data"
 authors = [
     {name = "Allen R", email = "allenr1@example.com"}
 ]
