@@ -22,7 +22,7 @@ Example usage:
     >>> # Use client for cached NSIP API operations
 """
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 
 # Re-export common utilities for convenience
 from nsip_skills.common.data_models import (
