@@ -150,9 +150,8 @@ Thumbs.db
 
 # MCP and Personal Configuration (contains API keys and personal paths)
 .mcp.json
-.claude/
+.claude/settings.local.json
 .specify/
-CLAUDE.md
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .windsurf/rules/snyk_rules.md
