@@ -15,6 +15,11 @@ Available modules:
     - flock_stats: Calculate aggregate flock statistics
     - selection_index: Build and apply custom breeding indexes
     - recommendation_engine: AI-powered breeding recommendations
+
+Example usage:
+    >>> from nsip_skills import CachedNSIPClient
+    >>> client = CachedNSIPClient()
+    >>> # Use client for cached NSIP API operations
 """
 
 __version__ = "1.3.1"
