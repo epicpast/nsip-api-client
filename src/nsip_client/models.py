@@ -108,7 +108,7 @@ class AnimalDetails:
             for name, trait_data in data["traits"].items():
                 if isinstance(trait_data, dict):
                     traits[name] = Trait(
-                        name=trait_data.get("name", name),
+                        name=trait_data.get("name") or name,
                         value=trait_data.get("value", 0.0),
                         accuracy=trait_data.get("accuracy"),
                         units=trait_data.get("units"),
