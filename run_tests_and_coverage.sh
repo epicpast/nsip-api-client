@@ -100,7 +100,7 @@ echo ""
 
 echo "Step 6: Test Suite & Coverage"
 echo "------------------------------"
-if $PYTHON_CMD pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=80 -v; then
+if $PYTHON_CMD pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=95 -v; then
     echo "✅ pytest & coverage: PASS"
 else
     echo "❌ pytest & coverage: FAIL"
@@ -160,7 +160,7 @@ if [ $FAILED_CHECKS -eq 0 ]; then
     echo "  ✅ isort import sorting"
     echo "  ✅ flake8 linting (critical & full)"
     echo "  ✅ mypy type checking"
-    echo "  ✅ pytest & coverage (>80%)"
+    echo "  ✅ pytest & coverage (>95%)"
     echo ""
     echo "Optional Checks:"
 

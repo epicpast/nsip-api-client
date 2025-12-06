@@ -20,6 +20,12 @@ description = "Development workspace for nsip-client and nsip-mcp-server"
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
+skills = [
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",
+    "gspread>=5.10.0",
+    "numpy>=1.24.0",
+]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
@@ -39,6 +45,11 @@ dev = [
     "python-dateutil>=2.8.2",
     "fastmcp>=2.0",
     "tiktoken>=0.8.0",
+    # Skills dependencies for local development
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",
+    "gspread>=5.10.0",
+    "numpy>=1.24.0",
 ]
 docs = [
     "sphinx>=7.1.0",
@@ -48,15 +59,17 @@ docs = [
 
 # Hatch build configuration for development workspace
 [tool.hatch.build.targets.wheel]
-packages = ["src/nsip_client", "src/nsip_mcp"]
+packages = ["src/nsip_client", "src/nsip_mcp", "src/nsip_skills"]
 
 [tool.hatch.build.targets.sdist]
 include = [
     "src/nsip_client/**/*.py",
     "src/nsip_mcp/**/*.py",
+    "src/nsip_skills/**/*.py",
 ]
 
 [tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
@@ -64,6 +77,7 @@ python_functions = ["test_*"]
 addopts = [
     "--cov=nsip_client",
     "--cov=nsip_mcp",
+    "--cov=nsip_skills",
     "--cov-report=html",
     "--cov-report=term-missing",
     "--cov-report=xml",

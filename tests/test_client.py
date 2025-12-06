@@ -479,3 +479,153 @@ class TestNSIPClient:
 
             # The error should be raised (search_string is passed in params)
             assert exc_info.value is not None
+
+    def test_get_breed_groups_wrapped_response(self, client):
+        """Test breed groups with wrapped response format (lines 144-147)"""
+        wrapped_response = {
+            "success": True,
+            "data": [
+                {"breedGroupId": 61, "breedGroupName": "Range"},
+                {"breedGroupId": 64, "breedGroupName": "Hair"},
+            ],
+        }
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://nsipsearch.nsip.org/api/search/getAvailableBreedGroups",
+                json=wrapped_response,
+            )
+
+            groups = client.get_available_breed_groups()
+            assert len(groups) == 2
+            assert groups[0].id == 61
+            assert groups[0].name == "Range"
+            assert groups[1].id == 64
+            assert groups[1].name == "Hair"
+
+    def test_get_breed_groups_missing_fields(self, client):
+        """Test breed groups with missing/null fields"""
+        response = [
+            {"breedGroupId": 61},  # missing name
+            {"breedGroupName": "Hair"},  # missing id
+            {},  # missing both
+        ]
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://nsipsearch.nsip.org/api/search/getAvailableBreedGroups",
+                json=response,
+            )
+
+            groups = client.get_available_breed_groups()
+            assert len(groups) == 3
+            assert groups[0].id == 61
+            assert groups[0].name == ""  # default
+            assert groups[1].id == 0  # default
+            assert groups[1].name == "Hair"
+            assert groups[2].id == 0
+            assert groups[2].name == ""
+
+    def test_close_method(self, client):
+        """Test explicit close method (line 378)"""
+        # Just verify it doesn't raise
+        client.close()
+
+        # Can still access client attributes after close
+        assert client.timeout == 10
+
+    def test_context_manager_exit(self):
+        """Test context manager __exit__ method (lines 384-386)"""
+        client = NSIPClient()
+
+        # Simulate entering and exiting context
+        result = client.__enter__()
+        assert result is client
+
+        # Simulate exit with exception info (all None for normal exit)
+        client.__exit__(None, None, None)
+
+        # Session should be closed now
+
+    def test_context_manager_with_exception(self):
+        """Test context manager handles exceptions correctly"""
+        try:
+            with NSIPClient() as _client:  # noqa: F841
+                # Simulate an exception in the context
+                raise ValueError("Test exception")
+        except ValueError:
+            pass  # Expected
+
+        # Context manager should have closed the session
+
+    def test_not_found_without_params(self, client):
+        """Test 404 error without search params (covers line 94 else branch)"""
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://nsipsearch.nsip.org/api/search/getDateLastUpdated",
+                status_code=404,
+            )
+
+            with pytest.raises(NSIPNotFoundError) as exc_info:
+                client.get_date_last_updated()
+
+            # search_string should be None when no params
+            assert exc_info.value.search_string is None
+
+    def test_progeny_with_pagination(self, client, mock_progeny):
+        """Test progeny with explicit pagination parameters"""
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://nsipsearch.nsip.org/api/details/getPageOfProgeny",
+                json=mock_progeny,
+            )
+
+            progeny = client.get_progeny("TEST123", page=1, page_size=5)
+            assert isinstance(progeny, Progeny)
+
+            # Verify params were passed
+            assert m.last_request.qs["page"] == ["1"]
+            assert m.last_request.qs["pagesize"] == ["5"]
+
+    def test_search_animals_with_sorted_trait_only(self, client, mock_search_results):
+        """Test search with sorted_trait but no reverse parameter"""
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://nsipsearch.nsip.org/api/search/getPageOfSearchResults",
+                json=mock_search_results,
+            )
+
+            results = client.search_animals(sorted_trait="WWT")
+
+            assert isinstance(results, SearchResults)
+            assert "sortedbreedtrait" in m.last_request.qs
+            assert "reverse" not in m.last_request.qs
+
+    def test_search_animals_with_reverse_false(self, client, mock_search_results):
+        """Test search with reverse=False (explicit False value)"""
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://nsipsearch.nsip.org/api/search/getPageOfSearchResults",
+                json=mock_search_results,
+            )
+
+            results = client.search_animals(reverse=False)
+
+            assert isinstance(results, SearchResults)
+            # When reverse is explicitly False, it should be included
+            assert m.last_request.qs["reverse"] == ["false"]
+
+    def test_default_timeout(self):
+        """Test client with default timeout"""
+        client = NSIPClient()
+        assert client.timeout == 30  # Default timeout
+
+    def test_user_agent_header(self, client):
+        """Test that User-Agent header is set correctly"""
+        assert "User-Agent" in client.session.headers
+        assert "NSIP-Python-Client" in client.session.headers["User-Agent"]
+
+    def test_accept_header(self, client):
+        """Test that Accept header is set correctly"""
+        assert "Accept" in client.session.headers
+        assert "application/json" in client.session.headers["Accept"]

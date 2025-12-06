@@ -55,10 +55,10 @@ typecheck:  ## Run type checker (mypy)
 	@echo "Running mypy type checking..."
 	mypy src/ --ignore-missing-imports || uv run mypy src/ --ignore-missing-imports
 
-coverage:  ## Run tests with coverage (80% minimum)
+coverage:  ## Run tests with coverage (95% minimum)
 	@echo "Running pytest with coverage..."
-	pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-report=html --cov-fail-under=80 --override-ini="addopts=" -v || \
-	uv run pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-report=html --cov-fail-under=80 --override-ini="addopts=" -v
+	pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=term-missing --cov-report=html --cov-fail-under=95 --override-ini="addopts=" -v || \
+	uv run pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=term-missing --cov-report=html --cov-fail-under=95 --override-ini="addopts=" -v
 
 format:  ## Format code with black and isort
 	black src/ tests/ examples/
@@ -93,7 +93,7 @@ quality-gates:  ## Run ALL quality gates (matches CI/CD)
 	@mypy src/ --ignore-missing-imports
 	@echo "✅ mypy: PASS\n"
 	@echo "Step 6: pytest with coverage..."
-	@pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-fail-under=80 -v
+	@pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=term-missing --cov-fail-under=95 -v
 	@echo "\n✅ ALL QUALITY GATES PASSED"
 
 quality:  ## Run all quality checks (format, lint, typecheck, security, coverage)
@@ -114,9 +114,9 @@ quality:  ## Run all quality checks (format, lint, typecheck, security, coverage
 	@echo "Step 4: Security (bandit)..."
 	@bandit -r src/ -ll -q || uv run bandit -r src/ -ll -q
 	@echo "✅ Security: PASS\n"
-	@echo "Step 5: Tests with coverage (80% minimum)..."
-	@pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-fail-under=80 --override-ini="addopts=" -q || \
-	 uv run pytest --cov=nsip_client --cov=nsip_mcp --cov-report=term-missing --cov-fail-under=80 --override-ini="addopts=" -q
+	@echo "Step 5: Tests with coverage (95% minimum)..."
+	@pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=term-missing --cov-fail-under=95 --override-ini="addopts=" -q || \
+	 uv run pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=term-missing --cov-fail-under=95 --override-ini="addopts=" -q
 	@echo "\n========================================="
 	@echo "✅ ALL QUALITY CHECKS PASSED"
 	@echo "========================================="

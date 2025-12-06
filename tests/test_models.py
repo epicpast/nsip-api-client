@@ -6,9 +6,15 @@ import pytest
 
 from nsip_client.models import (
     AnimalDetails,
+    BreedGroup,
+    ContactInfo,
+    Lineage,
+    LineageAnimal,
     Progeny,
+    ProgenyAnimal,
     SearchCriteria,
     SearchResults,
+    Trait,
 )
 
 
@@ -303,3 +309,537 @@ class TestSearchResults:
 
         assert results.total_count == 0
         assert len(results.results) == 0
+
+    def test_from_api_response_camelcase(self):
+        """Test creating SearchResults from camelCase API response"""
+        data = {
+            "recordCount": 50,
+            "page": 1,
+            "pageSize": 20,
+            "records": [
+                {"lpnId": "ANIMAL1"},
+                {"lpnId": "ANIMAL2"},
+            ],
+        }
+        results = SearchResults.from_api_response(data)
+
+        assert results.total_count == 50
+        assert results.page == 1
+        assert results.page_size == 20
+        assert len(results.results) == 2
+
+
+class TestTrait:
+    """Test Trait dataclass"""
+
+    def test_basic_creation(self):
+        """Test creating a Trait with all fields"""
+        trait = Trait(name="BWT", value=0.5, accuracy=75, units="kg")
+
+        assert trait.name == "BWT"
+        assert trait.value == 0.5
+        assert trait.accuracy == 75
+        assert trait.units == "kg"
+
+    def test_minimal_creation(self):
+        """Test creating a Trait with minimal fields"""
+        trait = Trait(name="WWT", value=2.5)
+
+        assert trait.name == "WWT"
+        assert trait.value == 2.5
+        assert trait.accuracy is None
+        assert trait.units is None
+
+    def test_negative_value(self):
+        """Test trait with negative value (common for EBVs)"""
+        trait = Trait(name="BWT", value=-0.25, accuracy=80)
+
+        assert trait.value == -0.25
+
+
+class TestContactInfo:
+    """Test ContactInfo dataclass"""
+
+    def test_full_contact(self):
+        """Test creating ContactInfo with all fields"""
+        contact = ContactInfo(
+            farm_name="Happy Sheep Farm",
+            contact_name="John Smith",
+            phone="555-1234",
+            email="john@sheepfarm.com",
+            address="123 Farm Road",
+            city="Springfield",
+            state="IL",
+            zip_code="62701",
+        )
+
+        assert contact.farm_name == "Happy Sheep Farm"
+        assert contact.contact_name == "John Smith"
+        assert contact.phone == "555-1234"
+        assert contact.email == "john@sheepfarm.com"
+        assert contact.address == "123 Farm Road"
+        assert contact.city == "Springfield"
+        assert contact.state == "IL"
+        assert contact.zip_code == "62701"
+
+    def test_minimal_contact(self):
+        """Test creating ContactInfo with no fields"""
+        contact = ContactInfo()
+
+        assert contact.farm_name is None
+        assert contact.contact_name is None
+        assert contact.phone is None
+
+
+class TestLineageAnimal:
+    """Test LineageAnimal dataclass"""
+
+    def test_full_creation(self):
+        """Test creating LineageAnimal with all fields"""
+        animal = LineageAnimal(
+            lpn_id="6401492020TEST001",
+            farm_name="Test Farm",
+            us_index=110.5,
+            src_index=105.2,
+            date_of_birth="2020-01-15",
+            sex="M",
+            status="CURRENT",
+        )
+
+        assert animal.lpn_id == "6401492020TEST001"
+        assert animal.farm_name == "Test Farm"
+        assert animal.us_index == 110.5
+        assert animal.src_index == 105.2
+        assert animal.date_of_birth == "2020-01-15"
+        assert animal.sex == "M"
+        assert animal.status == "CURRENT"
+
+    def test_minimal_creation(self):
+        """Test creating LineageAnimal with only lpn_id"""
+        animal = LineageAnimal(lpn_id="TEST123")
+
+        assert animal.lpn_id == "TEST123"
+        assert animal.farm_name is None
+        assert animal.us_index is None
+
+
+class TestAnimalDetailsToDict:
+    """Test AnimalDetails.to_dict() method"""
+
+    def test_to_dict_basic(self):
+        """Test to_dict with basic fields"""
+        animal = AnimalDetails(
+            lpn_id="TEST123",
+            breed="Suffolk",
+            gender="Female",
+            status="CURRENT",
+        )
+
+        result = animal.to_dict()
+
+        assert result["lpn_id"] == "TEST123"
+        assert result["breed"] == "Suffolk"
+        assert result["gender"] == "Female"
+        assert result["status"] == "CURRENT"
+
+    def test_to_dict_with_traits(self):
+        """Test to_dict includes traits"""
+        animal = AnimalDetails(
+            lpn_id="TEST123",
+            traits={
+                "BWT": Trait(name="BWT", value=0.5, accuracy=75),
+                "WWT": Trait(name="WWT", value=2.5, accuracy=80),
+            },
+        )
+
+        result = animal.to_dict()
+
+        assert "traits" in result
+        assert "BWT" in result["traits"]
+        assert result["traits"]["BWT"]["value"] == 0.5
+        assert result["traits"]["BWT"]["accuracy"] == 75
+
+    def test_to_dict_with_contact(self):
+        """Test to_dict includes contact info"""
+        animal = AnimalDetails(
+            lpn_id="TEST123",
+            contact_info=ContactInfo(
+                farm_name="Test Farm",
+                email="test@example.com",
+            ),
+        )
+
+        result = animal.to_dict()
+
+        assert "contact_info" in result
+        assert result["contact_info"]["farm_name"] == "Test Farm"
+        assert result["contact_info"]["email"] == "test@example.com"
+
+    def test_to_dict_preserves_raw_data(self):
+        """Test to_dict includes raw_data"""
+        raw = {"originalField": "originalValue"}
+        animal = AnimalDetails(
+            lpn_id="TEST123",
+            raw_data=raw,
+        )
+
+        result = animal.to_dict()
+
+        assert result["raw_data"] == raw
+
+
+class TestProgenyAnimal:
+    """Test ProgenyAnimal model"""
+
+    def test_basic_creation(self):
+        """Test creating ProgenyAnimal"""
+        animal = ProgenyAnimal(
+            lpn_id="6401492022FLE059",
+            sex="F",
+            date_of_birth="02/17/2022",
+            traits={"BWT": 0.378, "WWT": 3.141},
+        )
+
+        assert animal.lpn_id == "6401492022FLE059"
+        assert animal.sex == "F"
+        assert animal.date_of_birth == "02/17/2022"
+        assert animal.traits["BWT"] == 0.378
+
+    def test_to_dict(self):
+        """Test ProgenyAnimal.to_dict()"""
+        animal = ProgenyAnimal(
+            lpn_id="TEST123",
+            sex="M",
+            date_of_birth="01/01/2023",
+            traits={"BWT": 0.5},
+        )
+
+        result = animal.to_dict()
+
+        assert result["lpn_id"] == "TEST123"
+        assert result["sex"] == "M"
+        assert result["date_of_birth"] == "01/01/2023"
+        assert result["traits"]["BWT"] == 0.5
+
+    def test_minimal_creation(self):
+        """Test creating ProgenyAnimal with only lpn_id"""
+        animal = ProgenyAnimal(lpn_id="MINIMAL")
+
+        assert animal.lpn_id == "MINIMAL"
+        assert animal.sex is None
+        assert animal.traits == {}
+
+
+class TestProgenyExtended:
+    """Extended tests for Progeny model"""
+
+    def test_from_api_response_lowercase(self):
+        """Test Progeny from camelCase API response"""
+        data = {
+            "recordCount": 5,
+            "records": [
+                {
+                    "lpnId": "6401492022FLE059",
+                    "sex": "F",
+                    "dob": "02/17/2022",
+                },
+                {
+                    "lpnId": "6401492022FLE060",
+                    "sex": "M",
+                    "dob": "02/18/2022",
+                },
+            ],
+        }
+        progeny = Progeny.from_api_response(data)
+
+        assert progeny.total_count == 5
+        assert len(progeny.animals) == 2
+        assert progeny.animals[0].lpn_id == "6401492022FLE059"
+        assert progeny.animals[0].sex == "F"
+        assert progeny.animals[0].date_of_birth == "02/17/2022"
+
+    def test_page_size_defaults_to_animal_count(self):
+        """Test page_size defaults to number of animals when not specified"""
+        data = {
+            "recordCount": 2,
+            "records": [
+                {"lpnId": "A1"},
+                {"lpnId": "A2"},
+            ],
+        }
+        progeny = Progeny.from_api_response(data)
+
+        assert progeny.page_size == 2
+
+
+class TestLineage:
+    """Test Lineage model"""
+
+    def test_basic_creation(self):
+        """Test creating Lineage with subject"""
+        subject = LineageAnimal(lpn_id="SUBJECT123", sex="M", status="CURRENT")
+        lineage = Lineage(subject=subject)
+
+        assert lineage.subject.lpn_id == "SUBJECT123"
+        assert lineage.sire is None
+        assert lineage.dam is None
+        assert lineage.generations == []
+
+    def test_with_parents(self):
+        """Test Lineage with sire and dam"""
+        subject = LineageAnimal(lpn_id="CHILD")
+        sire = LineageAnimal(lpn_id="SIRE", sex="M")
+        dam = LineageAnimal(lpn_id="DAM", sex="F")
+
+        lineage = Lineage(subject=subject, sire=sire, dam=dam)
+
+        assert lineage.subject.lpn_id == "CHILD"
+        assert lineage.sire.lpn_id == "SIRE"
+        assert lineage.dam.lpn_id == "DAM"
+
+    def test_to_dict(self):
+        """Test Lineage.to_dict()"""
+        subject = LineageAnimal(lpn_id="SUBJECT123", sex="M")
+        lineage = Lineage(
+            subject=subject,
+            raw_data={"test": "value"},
+        )
+
+        result = lineage.to_dict()
+
+        assert result["subject"]["lpn_id"] == "SUBJECT123"
+        assert result["subject"]["sex"] == "M"
+        assert result["raw_data"]["test"] == "value"
+
+    def test_to_dict_with_generations(self):
+        """Test Lineage.to_dict() with generations"""
+        subject = LineageAnimal(lpn_id="SUBJECT")
+        gen1 = [LineageAnimal(lpn_id="SIRE"), LineageAnimal(lpn_id="DAM")]
+        gen2 = [
+            LineageAnimal(lpn_id="SS"),
+            LineageAnimal(lpn_id="SD"),
+            LineageAnimal(lpn_id="DS"),
+            LineageAnimal(lpn_id="DD"),
+        ]
+
+        lineage = Lineage(
+            subject=subject,
+            generations=[gen1, gen2],
+        )
+
+        result = lineage.to_dict()
+
+        assert len(result["generations"]) == 2
+        assert len(result["generations"][0]) == 2
+        assert len(result["generations"][1]) == 4
+        assert result["generations"][0][0]["lpn_id"] == "SIRE"
+
+    def test_from_api_response(self):
+        """Test Lineage.from_api_response()"""
+        data = {
+            "subject": {"lpnId": "TEST123"},
+            "sire": {"lpnId": "SIRE123"},
+            "dam": {"lpnId": "DAM123"},
+        }
+
+        lineage = Lineage.from_api_response(data)
+
+        # Current implementation stores raw_data
+        assert lineage.raw_data == data
+
+
+class TestBreedGroup:
+    """Test BreedGroup model"""
+
+    def test_basic_creation(self):
+        """Test creating BreedGroup"""
+        group = BreedGroup(
+            id=64,
+            name="Hair",
+            breeds=[
+                {"breedId": 640, "breedName": "Katahdin"},
+                {"breedId": 645, "breedName": "St. Croix"},
+            ],
+        )
+
+        assert group.id == 64
+        assert group.name == "Hair"
+        assert len(group.breeds) == 2
+        assert group.breeds[0]["breedName"] == "Katahdin"
+
+    def test_empty_breeds(self):
+        """Test BreedGroup with no breeds"""
+        group = BreedGroup(id=99, name="Unknown")
+
+        assert group.id == 99
+        assert group.name == "Unknown"
+        assert group.breeds == []
+
+
+class TestSearchCriteriaExtended:
+    """Extended tests for SearchCriteria"""
+
+    def test_trait_ranges_in_to_dict(self):
+        """Test trait_ranges are included in to_dict"""
+        criteria = SearchCriteria(
+            trait_ranges={
+                "BWT": {"min": -0.5, "max": 0.5},
+                "WWT": {"min": 0, "max": 10},
+            }
+        )
+
+        data = criteria.to_dict()
+
+        assert "traitRanges" in data
+        assert data["traitRanges"]["BWT"]["min"] == -0.5
+        assert data["traitRanges"]["BWT"]["max"] == 0.5
+
+    def test_flock_id_in_to_dict(self):
+        """Test flock_id is included in to_dict"""
+        criteria = SearchCriteria(flock_id="FLOCK123")
+
+        data = criteria.to_dict()
+
+        assert data["flockId"] == "FLOCK123"
+
+    def test_date_filters(self):
+        """Test born_after and born_before in to_dict"""
+        criteria = SearchCriteria(
+            born_after="2020-01-01",
+            born_before="2022-12-31",
+        )
+
+        data = criteria.to_dict()
+
+        assert data["bornAfter"] == "2020-01-01"
+        assert data["bornBefore"] == "2022-12-31"
+
+    def test_status_filter(self):
+        """Test status filter in to_dict"""
+        criteria = SearchCriteria(status="SOLD")
+
+        data = criteria.to_dict()
+
+        assert data["status"] == "SOLD"
+
+
+class TestAnimalDetailsEdgeCases:
+    """Edge case tests for AnimalDetails"""
+
+    def test_flock_count_as_non_digit_string(self):
+        """Test flock_count with non-digit string returns None"""
+        data = {
+            "success": True,
+            "data": {
+                "flockCount": "multiple",
+                "searchResultViewModel": {"lpnId": "TEST123"},
+            },
+        }
+        animal = AnimalDetails.from_api_response(data)
+
+        assert animal.flock_count is None
+
+    def test_empty_registration_number(self):
+        """Test empty registration number is preserved"""
+        data = {
+            "success": True,
+            "data": {
+                "searchResultViewModel": {
+                    "lpnId": "TEST123",
+                    "regNumber": "",
+                },
+            },
+        }
+        animal = AnimalDetails.from_api_response(data)
+
+        assert animal.registration_number == ""
+
+    def test_all_traits_parsed(self):
+        """Test all supported traits are parsed from nested format"""
+        data = {
+            "success": True,
+            "data": {
+                "searchResultViewModel": {
+                    "lpnId": "TEST123",
+                    "bwt": 0.5,
+                    "accbwt": 0.80,
+                    "wwt": 2.5,
+                    "accwwt": 0.75,
+                    "pwwt": 3.0,
+                    "accpwwt": 0.70,
+                    "ywt": 4.0,
+                    "accywt": 0.65,
+                    "fat": 0.1,
+                    "accfat": 0.60,
+                    "emd": 0.2,
+                    "accemd": 0.55,
+                    "nlb": 0.05,
+                    "accnlb": 0.50,
+                    "nwt": 1.0,
+                    "accnwt": 0.45,
+                    "pwt": 2.0,
+                    "accpwt": 0.40,
+                    "dag": 0.3,
+                    "accdag": 0.35,
+                    "wgr": 0.4,
+                    "accwgr": 0.30,
+                    "wec": 0.5,
+                    "accwec": 0.25,
+                    "fec": 0.6,
+                    "accfec": 0.20,
+                },
+            },
+        }
+        animal = AnimalDetails.from_api_response(data)
+
+        # All 13 traits should be parsed
+        expected_traits = [
+            "BWT",
+            "WWT",
+            "PWWT",
+            "YWT",
+            "FAT",
+            "EMD",
+            "NLB",
+            "NWT",
+            "PWT",
+            "DAG",
+            "WGR",
+            "WEC",
+            "FEC",
+        ]
+        for trait in expected_traits:
+            assert trait in animal.traits, f"Missing trait: {trait}"
+
+    def test_accuracy_none_handled(self):
+        """Test None accuracy is handled correctly"""
+        data = {
+            "success": True,
+            "data": {
+                "searchResultViewModel": {
+                    "lpnId": "TEST123",
+                    "bwt": 0.5,
+                    "accbwt": None,
+                },
+            },
+        }
+        animal = AnimalDetails.from_api_response(data)
+
+        assert animal.traits["BWT"].accuracy is None
+
+    def test_accuracy_zero_handled(self):
+        """Test zero accuracy is handled correctly"""
+        data = {
+            "success": True,
+            "data": {
+                "searchResultViewModel": {
+                    "lpnId": "TEST123",
+                    "bwt": 0.5,
+                    "accbwt": 0,
+                },
+            },
+        }
+        animal = AnimalDetails.from_api_response(data)
+
+        # 0 accuracy should result in None (since 0 is falsy in the condition)
+        assert animal.traits["BWT"].accuracy is None
