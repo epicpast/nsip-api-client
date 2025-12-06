@@ -13,7 +13,7 @@ This client provides programmatic access to sheep breeding data including:
 
 ## Installation
 
-> **⚠️ Important:** This package is **NOT** published to PyPI. It is only available through GitHub Releases.
+> **Important:** This package is **NOT** published to PyPI. It is only available through GitHub Releases.
 > See [DISTRIBUTION.md](DISTRIBUTION.md) for our distribution policy.
 
 ### From GitHub Release (Recommended)
@@ -45,6 +45,125 @@ git clone https://github.com/epicpast/nsip-api-client.git
 cd nsip-api-client
 pip install -e .
 ```
+
+---
+
+## NSIP Skills: Breeding Decision Support Tools
+
+The NSIP Skills module provides a suite of breeding decision support tools designed to help sheep breeders make data-driven genetic improvement decisions. These tools are available as both Python modules and Claude Code slash commands.
+
+### Why Use NSIP Skills?
+
+Genetic improvement in sheep breeding requires balancing multiple factors: growth traits, maternal ability, carcass quality, and inbreeding risk. The NSIP Skills module automates complex calculations that would otherwise require extensive spreadsheet work or specialized software.
+
+**Key Benefits:**
+- **Data-driven decisions**: Replace guesswork with EBV-based analysis
+- **Inbreeding management**: Automatically calculate and flag high-risk matings
+- **Multi-trait optimization**: Balance competing breeding goals
+- **Time savings**: Automate repetitive analysis tasks
+- **Accessible genetics**: Make NSIP data actionable for all breeders
+
+### Quick Start
+
+All tools can be run as Python modules or through Claude Code slash commands:
+
+```bash
+# Python module usage
+uv run python -m nsip_skills.ebv_analysis LPN_ID1 LPN_ID2 LPN_ID3
+
+# Claude Code slash command (when using Claude Code)
+/nsip:ebv-analyzer LPN_ID1 LPN_ID2 LPN_ID3
+```
+
+### The 10 NSIP Skills
+
+| Command | Purpose | Key Use Case |
+|---------|---------|--------------|
+| `/nsip:flock-import` | Import spreadsheet data and enrich with NSIP EBVs | Getting started with your flock data |
+| `/nsip:ebv-analyzer` | Compare EBVs across animals | Evaluating purchase candidates |
+| `/nsip:inbreeding` | Calculate inbreeding coefficients | Pre-mating risk assessment |
+| `/nsip:mating-plan` | Optimize ram-ewe pairings | Breeding season planning |
+| `/nsip:progeny-report` | Evaluate sires by offspring | Sire selection and evaluation |
+| `/nsip:trait-improvement` | Multi-generation selection planning | Long-term genetic goals |
+| `/nsip:ancestry` | Generate pedigree trees | Understanding genetic background |
+| `/nsip:flock-dashboard` | Aggregate flock statistics | Flock performance overview |
+| `/nsip:selection-index` | Calculate breeding indexes | Ranking animals by composite merit |
+| `/nsip:breeding-recs` | AI-powered recommendations | Comprehensive breeding advice |
+
+### Example Workflows
+
+#### Workflow 1: Evaluating Ram Purchase Candidates
+
+```bash
+# Compare EBVs of rams you're considering
+uv run python -m nsip_skills.ebv_analysis RAM_LPN_1 RAM_LPN_2 RAM_LPN_3
+
+# Check progeny performance for proven sires
+uv run python -m nsip_skills.progeny_analysis RAM_LPN_1 --compare RAM_LPN_2,RAM_LPN_3
+
+# Calculate inbreeding risk with your ewes
+uv run python -m nsip_skills.inbreeding --mating RAM_LPN_1,EWE_LPN_1
+```
+
+#### Workflow 2: Breeding Season Planning
+
+```bash
+# Import your flock data
+uv run python -m nsip_skills.flock_import my_flock.csv
+
+# Generate optimized mating plan
+uv run python -m nsip_skills.mating_optimizer --rams rams.csv --ewes ewes.csv --goal terminal
+
+# Get AI-powered recommendations
+uv run python -m nsip_skills.recommendation_engine my_flock.csv --goal terminal
+```
+
+#### Workflow 3: Long-term Genetic Planning
+
+```bash
+# Analyze current flock performance
+uv run python -m nsip_skills.flock_stats my_flock.csv --name "Valley Farm"
+
+# Plan multi-generation improvement
+uv run python -m nsip_skills.trait_planner my_flock.csv --targets '{"WWT": 5.0, "NLW": 0.20}'
+```
+
+### Understanding EBVs
+
+Estimated Breeding Values (EBVs) predict an animal's genetic merit for specific traits. Key traits include:
+
+| Trait | Description | Breeding Impact |
+|-------|-------------|-----------------|
+| BWT | Birth Weight | Lower values = easier lambing |
+| WWT | Weaning Weight | Growth to weaning age |
+| PWWT | Post-Weaning Weight | Growth potential |
+| MWWT | Maternal Weaning Weight | Dam's milk/mothering effect |
+| NLW | Number of Lambs Weaned | Fertility and lamb survival |
+| YEMD | Yearling Eye Muscle Depth | Carcass muscling |
+| YFAT | Yearling Fat Depth | Carcass fat cover |
+
+### Selection Indexes
+
+Selection indexes combine multiple traits into a single score based on economic weights:
+
+| Index | Focus | Best For |
+|-------|-------|----------|
+| Terminal | Growth + carcass | Market lamb production |
+| Maternal | Reproduction + milk | Replacement ewe selection |
+| Range | Balanced traits | Extensive operations |
+| Hair | Growth without wool | Hair sheep breeds |
+
+### Detailed Documentation
+
+For comprehensive documentation including:
+- Detailed tool descriptions
+- Input/output formats
+- Real-world use cases
+- Genetic concepts explained
+
+See **[docs/nsip-skills.md](docs/nsip-skills.md)**
+
+---
 
 ## API Endpoints Discovered
 
@@ -220,19 +339,19 @@ MCP_TRANSPORT=websocket MCP_PORT=9000 nsip-mcp-server
 
 The server automatically manages response sizes to prevent LLM context overflow:
 
-**Responses ≤2000 tokens**: Pass through unmodified
+**Responses <=2000 tokens**: Pass through unmodified
 **Responses >2000 tokens**: Automatically summarized to ~70% reduction
 
 **What's preserved in summaries**:
-- ✅ Identity: LPN ID, breed, sire, dam
-- ✅ Progeny: Total count (not full list)
-- ✅ Contact: All breeder information
-- ✅ Top 3 traits by accuracy (≥50% accuracy only)
+- Identity: LPN ID, breed, sire, dam
+- Progeny: Total count (not full list)
+- Contact: All breeder information
+- Top 3 traits by accuracy (>=50% accuracy only)
 
 **What's omitted**:
-- ❌ Low-accuracy traits (<50%)
-- ❌ Verbose metadata
-- ❌ Full progeny lists (count only)
+- Low-accuracy traits (<50%)
+- Verbose metadata
+- Full progeny lists (count only)
 
 **Example summarized response**:
 ```json
@@ -314,9 +433,9 @@ curl http://localhost:8000/health
 
 Response includes:
 - Discovery times (target: <5s)
-- Summarization reduction (target: ≥70%)
-- Validation success rate (target: ≥95%)
-- Cache hit rate (target: ≥40%)
+- Summarization reduction (target: >=70%)
+- Validation success rate (target: >=95%)
+- Cache hit rate (target: >=40%)
 - Concurrent connections (support: 50+)
 - Startup time (target: <3s)
 
@@ -327,9 +446,9 @@ The MCP server is designed to meet these targets:
 | Metric | Target |
 |--------|--------|
 | Tool Discovery | <5 seconds |
-| Summarization Reduction | ≥70% token reduction |
-| Validation Success | ≥95% caught before API |
-| Cache Hit Rate | ≥40% |
+| Summarization Reduction | >=70% token reduction |
+| Validation Success | >=95% caught before API |
+| Cache Hit Rate | >=40% |
 | Concurrent Connections | 50+ without degradation |
 | Startup Time | <3 seconds |
 

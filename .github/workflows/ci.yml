@@ -71,7 +71,7 @@ jobs:
         pip install -e ".[dev]"
 
     - name: Run tests with pytest
-      run: pytest --cov=nsip_client --cov=nsip_mcp --cov-report=xml --cov-report=term-missing --cov-fail-under=80 -v
+      run: pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=xml --cov-report=term-missing --cov-fail-under=95 -v
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4

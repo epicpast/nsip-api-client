@@ -156,3 +156,6 @@ CLAUDE.md
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .windsurf/rules/snyk_rules.md
+
+# Test output files (enriched flock data)
+enriched_*.csv
