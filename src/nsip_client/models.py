@@ -321,6 +321,49 @@ class Progeny:
         )
 
 
+def _parse_lineage_content(content: str) -> dict[str, Any]:
+    """Extract fields from HTML content string in lineage response.
+
+    The NSIP lineage API returns data embedded in HTML divs like:
+    <div>Farm Name</div><div>US Hair Index: 102.03</div><div>DOB: 2/13/2024</div>...
+    """
+    import re
+
+    result: dict[str, Any] = {}
+
+    # Farm name (first div content)
+    farm_match = re.search(r"<div>([^<]+)</div>", content)
+    if farm_match:
+        result["farm_name"] = farm_match.group(1)
+
+    # US Hair Index or US Index
+    us_match = re.search(r"US (?:Hair )?Index: ([\d.]+)", content)
+    if us_match:
+        result["us_index"] = float(us_match.group(1))
+
+    # SRC$ Index
+    src_match = re.search(r"SRC\$ Index: ([\d.]+)", content)
+    if src_match:
+        result["src_index"] = float(src_match.group(1))
+
+    # Date of Birth
+    dob_match = re.search(r"DOB: ([^<]+)", content)
+    if dob_match:
+        result["date_of_birth"] = dob_match.group(1).strip()
+
+    # Sex
+    sex_match = re.search(r"Sex: ([^<]+)", content)
+    if sex_match:
+        result["sex"] = sex_match.group(1).strip()
+
+    # Status
+    status_match = re.search(r"Status: ([^<]+)", content)
+    if status_match:
+        result["status"] = status_match.group(1).strip()
+
+    return result
+
+
 @dataclass
 class LineageAnimal:
     """Individual animal in lineage/pedigree"""
@@ -352,10 +395,77 @@ class Lineage:
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "Lineage":
-        """Create Lineage from API response"""
-        # This is a simplified implementation
-        # The actual lineage structure may be more complex
-        return cls(raw_data=data)
+        """Create Lineage from API response.
+
+        Parses the nested HTML structure returned by NSIP lineage endpoint.
+        Structure: {lpnId, content (HTML), children: [sire, dam]}
+
+        The API returns a tree where each node has:
+        - lpnId: Animal identifier
+        - content: HTML string with farm name, indexes, DOB, etc.
+        - children: Array of [sire_node, dam_node] (recursive)
+        """
+        # Handle wrapped response format
+        if "data" in data and isinstance(data["data"], dict):
+            node = data["data"]
+        else:
+            node = data
+
+        def parse_node(n: dict[str, Any] | None) -> LineageAnimal | None:
+            """Parse a single node into LineageAnimal."""
+            if not n or "lpnId" not in n:
+                return None
+            content = n.get("content", "")
+            parsed = _parse_lineage_content(content)
+            return LineageAnimal(
+                lpn_id=n["lpnId"],
+                farm_name=parsed.get("farm_name"),
+                us_index=parsed.get("us_index"),
+                src_index=parsed.get("src_index"),
+                date_of_birth=parsed.get("date_of_birth"),
+                sex=parsed.get("sex"),
+                status=parsed.get("status"),
+            )
+
+        def collect_generations(
+            n: dict[str, Any], generations: list[list[LineageAnimal]], depth: int = 0
+        ) -> None:
+            """Recursively collect ancestors by generation depth."""
+            children = n.get("children", [])
+            if not children:
+                return
+
+            # Ensure generation list exists for this depth
+            while len(generations) <= depth:
+                generations.append([])
+
+            # Add children (sire, dam) to this generation
+            for child in children:
+                animal = parse_node(child)
+                if animal:
+                    generations[depth].append(animal)
+                # Recurse into grandchildren
+                collect_generations(child, generations, depth + 1)
+
+        # Parse subject animal
+        subject = parse_node(node)
+
+        # Parse parents (first level children)
+        children = node.get("children", [])
+        sire = parse_node(children[0]) if len(children) > 0 else None
+        dam = parse_node(children[1]) if len(children) > 1 else None
+
+        # Collect all generations recursively
+        generations: list[list[LineageAnimal]] = []
+        collect_generations(node, generations)
+
+        return cls(
+            subject=subject,
+            sire=sire,
+            dam=dam,
+            generations=generations,
+            raw_data=data,
+        )
 
 
 @dataclass

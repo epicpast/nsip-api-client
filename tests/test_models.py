@@ -15,6 +15,7 @@ from nsip_client.models import (
     SearchCriteria,
     SearchResults,
     Trait,
+    _parse_lineage_content,
 )
 
 
@@ -634,18 +635,155 @@ class TestLineage:
         assert len(result["generations"][1]) == 4
         assert result["generations"][0][0]["lpn_id"] == "SIRE"
 
-    def test_from_api_response(self):
-        """Test Lineage.from_api_response()"""
+    def test_from_api_response_nested_html_format(self):
+        """Test Lineage.from_api_response() with real NSIP API format"""
+        # Real NSIP API response format with nested HTML
         data = {
-            "subject": {"lpnId": "TEST123"},
-            "sire": {"lpnId": "SIRE123"},
-            "dam": {"lpnId": "DAM123"},
+            "success": True,
+            "data": {
+                "lpnId": "6402382024NCS310",
+                "content": "<div>NC State Katahdins</div><div>US Hair Index: 102.03</div>"
+                "<div>SRC$ Index: 116.56</div><div>DOB: 2/13/2024</div>"
+                "<div>Sex: Male</div><div>Status: CURRENT</div>",
+                "children": [
+                    {
+                        "lpnId": "6400462020VPI007",
+                        "content": "<div>Virginia Tech</div><div>US Hair Index: 102.61</div>",
+                        "children": [
+                            {
+                                "lpnId": "6400522018NWT012",
+                                "content": "<div>Hound River</div><div>US Hair Index: 106.53</div>",
+                                "children": [],
+                            },
+                            {
+                                "lpnId": "6400522017NWT082",
+                                "content": "<div>Hound River</div><div>US Hair Index: 101.07</div>",
+                                "children": [],
+                            },
+                        ],
+                    },
+                    {
+                        "lpnId": "6402382022NCS087",
+                        "content": "<div>NC State</div><div>US Hair Index: 101.89</div>",
+                        "children": [],
+                    },
+                ],
+            },
         }
 
         lineage = Lineage.from_api_response(data)
 
-        # Current implementation stores raw_data
+        # Subject should be parsed
+        assert lineage.subject is not None
+        assert lineage.subject.lpn_id == "6402382024NCS310"
+        assert lineage.subject.farm_name == "NC State Katahdins"
+        assert lineage.subject.us_index == 102.03
+        assert lineage.subject.date_of_birth == "2/13/2024"
+        assert lineage.subject.sex == "Male"
+        assert lineage.subject.status == "CURRENT"
+
+        # Parents should be parsed
+        assert lineage.sire is not None
+        assert lineage.sire.lpn_id == "6400462020VPI007"
+        assert lineage.sire.farm_name == "Virginia Tech"
+        assert lineage.sire.us_index == 102.61
+
+        assert lineage.dam is not None
+        assert lineage.dam.lpn_id == "6402382022NCS087"
+        assert lineage.dam.farm_name == "NC State"
+
+        # Generations should be collected
+        assert len(lineage.generations) >= 1
+        # Generation 0 = parents (2 animals)
+        assert len(lineage.generations[0]) == 2
+        # Generation 1 = grandparents on sire side (2 animals)
+        assert len(lineage.generations[1]) == 2
+
+        # Raw data preserved
         assert lineage.raw_data == data
+
+    def test_from_api_response_unwrapped(self):
+        """Test Lineage.from_api_response() without wrapper"""
+        data = {
+            "lpnId": "TEST123",
+            "content": "<div>Test Farm</div><div>US Hair Index: 100.0</div>",
+            "children": [],
+        }
+
+        lineage = Lineage.from_api_response(data)
+
+        assert lineage.subject is not None
+        assert lineage.subject.lpn_id == "TEST123"
+        assert lineage.subject.farm_name == "Test Farm"
+        assert lineage.sire is None
+        assert lineage.dam is None
+
+    def test_from_api_response_empty_children(self):
+        """Test Lineage.from_api_response() with no children"""
+        data = {
+            "success": True,
+            "data": {
+                "lpnId": "TEST123",
+                "content": "<div>Farm</div>",
+                "children": [],
+            },
+        }
+
+        lineage = Lineage.from_api_response(data)
+
+        assert lineage.subject.lpn_id == "TEST123"
+        assert lineage.sire is None
+        assert lineage.dam is None
+        assert lineage.generations == []
+
+
+class TestParseLineageContent:
+    """Tests for _parse_lineage_content helper function"""
+
+    def test_parse_all_fields(self):
+        """Test parsing HTML content with all fields"""
+        content = (
+            "<div>Test Farm Name</div>"
+            "<div>US Hair Index: 105.25</div>"
+            "<div>SRC$ Index: 112.50</div>"
+            "<div>DOB: 1/15/2023</div>"
+            "<div>Sex: Female</div>"
+            "<div>Status: CURRENT</div>"
+        )
+
+        result = _parse_lineage_content(content)
+
+        assert result["farm_name"] == "Test Farm Name"
+        assert result["us_index"] == 105.25
+        assert result["src_index"] == 112.5
+        assert result["date_of_birth"] == "1/15/2023"
+        assert result["sex"] == "Female"
+        assert result["status"] == "CURRENT"
+
+    def test_parse_us_index_without_hair(self):
+        """Test parsing US Index (without 'Hair')"""
+        content = "<div>Farm</div><div>US Index: 99.5</div>"
+
+        result = _parse_lineage_content(content)
+
+        assert result["us_index"] == 99.5
+
+    def test_parse_partial_content(self):
+        """Test parsing content with only some fields"""
+        content = "<div>Just Farm Name</div><div>US Hair Index: 101.0</div>"
+
+        result = _parse_lineage_content(content)
+
+        assert result["farm_name"] == "Just Farm Name"
+        assert result["us_index"] == 101.0
+        assert "src_index" not in result
+        assert "date_of_birth" not in result
+
+    def test_parse_empty_content(self):
+        """Test parsing empty content string"""
+        result = _parse_lineage_content("")
+
+        assert result == {}
 
 
 class TestBreedGroup:
