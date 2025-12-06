@@ -25,6 +25,12 @@ from nsip_client.models import (
     SearchResults,
 )
 
+# Cache version - increment when model schemas change to auto-invalidate old entries
+# History:
+#   v2: Fixed Lineage.from_api_response() to parse nested HTML format (2025-12-06)
+#   v1: Initial cache format
+CACHE_VERSION = 2
+
 
 @dataclass
 class CacheEntry:
@@ -69,7 +75,8 @@ class CachedNSIPClient:
         """Generate a deterministic cache key from method and parameters."""
         # Sort params for consistent keys
         sorted_params = json.dumps(params, sort_keys=True, default=str)
-        key_string = f"{method}:{sorted_params}"
+        # Include cache version to auto-invalidate on schema changes
+        key_string = f"v{CACHE_VERSION}:{method}:{sorted_params}"
         return hashlib.sha256(key_string.encode()).hexdigest()[:16]
 
     def _cache_path(self, key: str) -> Path:

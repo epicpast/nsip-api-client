@@ -18,6 +18,7 @@ from nsip_skills_helpers import MockNSIPClient
 from nsip_skills.common.data_models import FlockSummary
 from nsip_skills.flock_stats import (
     FlockDashboard,
+    _extract_lpn_ids_from_source,
     _identify_opportunities,
     calculate_flock_stats,
     compare_to_breed_average,
@@ -410,3 +411,31 @@ class TestCalculateFlockStatsEdgeCases:
 
         # Should still work with available animals
         assert isinstance(dashboard, FlockDashboard)
+
+
+class TestExtractLpnIdsFromSource:
+    """Tests for _extract_lpn_ids_from_source helper function."""
+
+    def test_single_lpn_id_returned_as_list(self):
+        """Verify single LPN ID is returned as a list."""
+        result = _extract_lpn_ids_from_source("6401492020FLE249")
+
+        assert result == ["6401492020FLE249"]
+
+    def test_nonexistent_file_treated_as_lpn(self):
+        """Verify non-existent file is treated as LPN ID."""
+        result = _extract_lpn_ids_from_source("nonexistent.csv")
+
+        # Should return as-is since file doesn't exist
+        assert result == ["nonexistent.csv"]
+
+    def test_csv_file_extracts_lpn_ids(self, tmp_path):
+        """Verify CSV file extracts LPN IDs correctly."""
+        csv_file = tmp_path / "flock.csv"
+        csv_file.write_text("lpn_id,name\n6401492020FLE249,Ewe1\n6401492022FLE002,Ewe2\n")
+
+        result = _extract_lpn_ids_from_source(str(csv_file))
+
+        assert len(result) == 2
+        assert "6401492020FLE249" in result
+        assert "6401492022FLE002" in result

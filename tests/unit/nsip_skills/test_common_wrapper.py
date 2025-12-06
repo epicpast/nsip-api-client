@@ -104,6 +104,23 @@ class TestCacheKeyGeneration:
             path = client._cache_path("abc123")
             assert path == tmp_path / "abc123.json"
 
+    def test_cache_key_includes_version(self, tmp_path):
+        """Verify cache key includes version for auto-invalidation."""
+        from nsip_skills.common.nsip_wrapper import CACHE_VERSION
+
+        with patch("nsip_skills.common.nsip_wrapper.NSIPClient"):
+            client = CachedNSIPClient(cache_dir=tmp_path)
+
+            # Key should be deterministic based on version
+            key1 = client._cache_key("test_method", param="value")
+
+            # Simulate version change by patching
+            with patch("nsip_skills.common.nsip_wrapper.CACHE_VERSION", CACHE_VERSION + 1):
+                key2 = client._cache_key("test_method", param="value")
+
+            # Different versions should produce different keys
+            assert key1 != key2
+
 
 class TestCacheOperations:
     """Tests for cache get/set operations."""

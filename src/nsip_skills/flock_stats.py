@@ -304,20 +304,53 @@ def format_flock_dashboard(dashboard: FlockDashboard) -> str:
     return "\n".join(lines)
 
 
+def _extract_lpn_ids_from_source(source: str) -> list[str]:
+    """Extract LPN IDs from a file path or return as-is if already LPN IDs."""
+    from pathlib import Path
+
+    from nsip_skills.common.spreadsheet_io import extract_flock_records, read_spreadsheet
+
+    # Check if source looks like a file path
+    path = Path(source)
+    is_file = (
+        path.exists()
+        or source.endswith(".csv")
+        or source.endswith(".xlsx")
+        or source.startswith("http")
+    )
+
+    if is_file and path.exists():
+        # Read spreadsheet and extract LPN IDs
+        data = read_spreadsheet(source)
+        records = extract_flock_records(data)
+        return [r.lpn_id for r in records]
+
+    return [source]  # Treat as single LPN ID
+
+
 def main():
     """Command-line interface for flock statistics."""
     import argparse
     import json
 
     parser = argparse.ArgumentParser(description="Calculate flock statistics")
-    parser.add_argument("lpn_ids", nargs="+", help="Flock LPN IDs")
+    parser.add_argument(
+        "source",
+        nargs="+",
+        help="Flock data source: file path (CSV/Excel) or LPN IDs",
+    )
     parser.add_argument("--name", help="Flock name")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     args = parser.parse_args()
 
+    # Extract LPN IDs from source(s)
+    lpn_ids: list[str] = []
+    for src in args.source:
+        lpn_ids.extend(_extract_lpn_ids_from_source(src))
+
     dashboard = calculate_flock_stats(
-        lpn_ids=args.lpn_ids,
+        lpn_ids=lpn_ids,
         flock_name=args.name,
     )
 
