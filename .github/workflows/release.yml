@@ -19,7 +19,8 @@ jobs:
     outputs:
       client_changed: ${{ steps.changes.outputs.client }}
       server_changed: ${{ steps.changes.outputs.server }}
-      any_changed: ${{ steps.changes.outputs.client == 'true' || steps.changes.outputs.server == 'true' }}
+      skills_changed: ${{ steps.changes.outputs.skills }}
+      any_changed: ${{ steps.changes.outputs.client == 'true' || steps.changes.outputs.server == 'true' || steps.changes.outputs.skills == 'true' }}
 
     steps:
     - name: Checkout code
@@ -38,6 +39,9 @@ jobs:
           server:
             - 'src/nsip_mcp/**'
             - 'packaging/nsip-mcp-server/**'
+          skills:
+            - 'src/nsip_skills/**'
+            - 'packaging/nsip-skills/**'
 
   bump-and-tag:
     name: Bump Version and Tag
@@ -47,6 +51,7 @@ jobs:
     outputs:
       client_version: ${{ steps.versions.outputs.client_version }}
       server_version: ${{ steps.versions.outputs.server_version }}
+      skills_version: ${{ steps.versions.outputs.skills_version }}
       release_tag: ${{ steps.versions.outputs.release_tag }}
 
     steps:
@@ -66,16 +71,33 @@ jobs:
       env:
         CLIENT_CHANGED: ${{ needs.detect-changes.outputs.client_changed }}
         SERVER_CHANGED: ${{ needs.detect-changes.outputs.server_changed }}
+        SKILLS_CHANGED: ${{ needs.detect-changes.outputs.skills_changed }}
       run: |
-        if [ "$CLIENT_CHANGED" = "true" ] && [ "$SERVER_CHANGED" = "true" ]; then
-          echo "Bumping both packages"
-          python scripts/bump_version.py --package both --bump patch
+        # Determine which packages to bump based on changes
+        if [ "$CLIENT_CHANGED" = "true" ] && [ "$SERVER_CHANGED" = "true" ] && [ "$SKILLS_CHANGED" = "true" ]; then
+          echo "Bumping all packages"
+          python scripts/bump_version.py --package all --bump patch
+        elif [ "$CLIENT_CHANGED" = "true" ] && [ "$SERVER_CHANGED" = "true" ]; then
+          echo "Bumping client and server"
+          python scripts/bump_version.py --package client --bump patch
+          python scripts/bump_version.py --package server --bump patch
+        elif [ "$CLIENT_CHANGED" = "true" ] && [ "$SKILLS_CHANGED" = "true" ]; then
+          echo "Bumping client and skills"
+          python scripts/bump_version.py --package client --bump patch
+          python scripts/bump_version.py --package skills --bump patch
+        elif [ "$SERVER_CHANGED" = "true" ] && [ "$SKILLS_CHANGED" = "true" ]; then
+          echo "Bumping server and skills"
+          python scripts/bump_version.py --package server --bump patch
+          python scripts/bump_version.py --package skills --bump patch
         elif [ "$CLIENT_CHANGED" = "true" ]; then
           echo "Bumping client only"
           python scripts/bump_version.py --package client --bump patch
         elif [ "$SERVER_CHANGED" = "true" ]; then
           echo "Bumping server only"
           python scripts/bump_version.py --package server --bump patch
+        elif [ "$SKILLS_CHANGED" = "true" ]; then
+          echo "Bumping skills only"
+          python scripts/bump_version.py --package skills --bump patch
         fi
 
     - name: Extract versions
@@ -83,14 +105,13 @@ jobs:
       run: |
         CLIENT_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/nsip_client/__init__.py)
         SERVER_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/nsip_mcp/__init__.py)
+        SKILLS_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/nsip_skills/__init__.py)
         echo "client_version=$CLIENT_VERSION" >> "$GITHUB_OUTPUT"
         echo "server_version=$SERVER_VERSION" >> "$GITHUB_OUTPUT"
-        # Use the higher version as the release tag
-        if [ "$(printf '%s\n' "$CLIENT_VERSION" "$SERVER_VERSION" | sort -V | tail -n1)" = "$CLIENT_VERSION" ]; then
-          echo "release_tag=v$CLIENT_VERSION" >> "$GITHUB_OUTPUT"
-        else
-          echo "release_tag=v$SERVER_VERSION" >> "$GITHUB_OUTPUT"
-        fi
+        echo "skills_version=$SKILLS_VERSION" >> "$GITHUB_OUTPUT"
+        # Use the highest version as the release tag
+        HIGHEST=$(printf '%s\n' "$CLIENT_VERSION" "$SERVER_VERSION" "$SKILLS_VERSION" | sort -V | tail -n1)
+        echo "release_tag=v$HIGHEST" >> "$GITHUB_OUTPUT"
 
     - name: Commit version changes
       run: |
@@ -145,6 +166,12 @@ jobs:
         cp dist/* ../../dist/
         cd ../..
 
+        # Build skills
+        cd packaging/nsip-skills
+        python -m build
+        cp dist/* ../../dist/
+        cd ../..
+
         # Verify all packages
         twine check dist/*
 
@@ -152,9 +179,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RELEASE_TAG: ${{ needs.bump-and-tag.outputs.release_tag }}
-        CLIENT_VERSION: ${{ needs.bump-and-tag.outputs.client_version }}
-        SERVER_VERSION: ${{ needs.bump-and-tag.outputs.server_version }}
       with:
         tag_name: ${{ needs.bump-and-tag.outputs.release_tag }}
         name: Release ${{ needs.bump-and-tag.outputs.release_tag }}
@@ -163,6 +187,7 @@ jobs:
 
           - **nsip-client**: ${{ needs.bump-and-tag.outputs.client_version }}
           - **nsip-mcp-server**: ${{ needs.bump-and-tag.outputs.server_version }}
+          - **nsip-skills**: ${{ needs.bump-and-tag.outputs.skills_version }}
 
           ## Installation
 
@@ -172,6 +197,9 @@ jobs:
 
           # Install the MCP server (includes client as dependency)
           pip install ./nsip_mcp_server-${{ needs.bump-and-tag.outputs.server_version }}-py3-none-any.whl
+
+          # Install the breeding tools (includes client as dependency)
+          pip install ./nsip_skills-${{ needs.bump-and-tag.outputs.skills_version }}-py3-none-any.whl
           ```
 
           ## Changes
@@ -184,8 +212,6 @@ jobs:
 
     - name: Upload release artifacts
       uses: actions/upload-artifact@v4
-      env:
-        RELEASE_TAG: ${{ needs.bump-and-tag.outputs.release_tag }}
       with:
         name: release-${{ needs.bump-and-tag.outputs.release_tag }}
         path: dist/

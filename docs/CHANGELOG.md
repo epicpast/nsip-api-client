@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [nsip-skills 1.3.0] - 2025-12-06
+
+### Added
+
+#### NSIP Skills Package - Initial Release
+Breeding decision support tools for sheep genetics using NSIP data.
+
+- **10 Analysis Modules**:
+  1. `flock_import` - Import and enrich flock data from spreadsheets with NSIP breeding values
+  2. `ebv_analysis` - Compare and rank animals by EBV traits
+  3. `inbreeding` - Calculate pedigree-based inbreeding coefficients
+  4. `mating_optimizer` - Recommend optimal ram-ewe pairings
+  5. `progeny_analysis` - Evaluate sires by offspring performance
+  6. `trait_planner` - Design multi-generation improvement strategies
+  7. `ancestry_builder` - Generate pedigree reports and visualizations
+  8. `flock_stats` - Calculate aggregate flock statistics
+  9. `selection_index` - Build and apply custom breeding indexes
+  10. `recommendation_engine` - AI-powered breeding recommendations
+
+- **9 CLI Entry Points**:
+  - `nsip-ebv-analysis` - Compare and analyze EBV traits
+  - `nsip-flock-import` - Import flock data from spreadsheets
+  - `nsip-flock-stats` - Generate flock statistics
+  - `nsip-inbreeding` - Calculate inbreeding coefficients
+  - `nsip-mating-optimizer` - Generate mating recommendations
+  - `nsip-progeny-analysis` - Analyze progeny performance
+  - `nsip-trait-planner` - Plan trait improvement strategies
+  - `nsip-ancestry` - Build ancestry/pedigree reports
+  - `nsip-selection-index` - Calculate selection indexes
+
+- **Common Utilities**:
+  - `CachedNSIPClient` - Wrapper with caching for NSIP API calls
+  - Data models: `AnimalAnalysis`, `FlockSummary`, `InbreedingResult`, `MatingPair`, `PedigreeTree`, `TraitProfile`
+
+- **Optional Dependencies**:
+  - `gsheets` extra for Google Sheets integration via `gspread`
+
+### Dependencies
+- `nsip-client>=1.3.0,<2.0.0` (core API client)
+- `pandas>=2.0.0` (data manipulation)
+- `numpy>=1.24.0` (numerical operations)
+- `openpyxl>=3.1.0` (Excel file support)
+
+### Installation
+```bash
+# Basic installation
+pip install nsip-skills
+
+# With Google Sheets support
+pip install nsip-skills[gsheets]
+```
+
 ## [1.2.0] - 2025-10-13
 
 ### Changed
