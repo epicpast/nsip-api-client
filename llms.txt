@@ -7,9 +7,9 @@
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| nsip-client | 1.3.2 | Pure Python API client |
-| nsip-mcp-server | 1.3.2 | MCP server for LLM integration |
-| nsip-skills | 1.3.3 | Breeding decision support tools |
+| nsip-client | 1.3.4 | Pure Python API client |
+| nsip-mcp-server | 1.3.4 | MCP server for LLM integration |
+| nsip-skills | 1.3.4 | Breeding decision support tools |
 
 **Repository**: https://github.com/epicpast/nsip-api-client
 **API Base URL**: http://nsipsearch.nsip.org/api
@@ -24,10 +24,13 @@
 3. [Package: nsip-client](#package-nsip-client)
 4. [Package: nsip-mcp-server](#package-nsip-mcp-server)
 5. [Package: nsip-skills](#package-nsip-skills)
-6. [Data Models](#data-models)
-7. [Error Handling](#error-handling)
-8. [Common Patterns](#common-patterns)
-9. [Trait Reference](#trait-reference)
+6. [MCP Resources](#mcp-resources)
+7. [MCP Prompts](#mcp-prompts)
+8. [Shepherd Agent](#shepherd-agent)
+9. [Data Models](#data-models)
+10. [Error Handling](#error-handling)
+11. [Common Patterns](#common-patterns)
+12. [Trait Reference](#trait-reference)
 
 ---
 
@@ -52,7 +55,7 @@ pip install nsip-skills[gsheets]
 - Python 3.10+
 - Dependencies are auto-installed:
   - nsip-client: requests, python-dateutil
-  - nsip-mcp-server: nsip-client, fastmcp, tiktoken
+  - nsip-mcp-server: nsip-client, fastmcp, tiktoken, pyyaml
   - nsip-skills: nsip-client, pandas, openpyxl, numpy
 
 ---
@@ -153,15 +156,15 @@ Returns the last database update date.
 def get_available_breed_groups() -> list[BreedGroup]
 ```
 
-Returns all breed groups with their IDs.
+Returns all breed groups with their IDs and individual breeds within each group.
 
 **Returns**:
 ```python
 [
-    BreedGroup(id=61, name='Range'),
-    BreedGroup(id=62, name='Maternal Wool'),
-    BreedGroup(id=64, name='Hair'),
-    BreedGroup(id=69, name='Terminal')
+    BreedGroup(id=61, name='Range', breeds=[{'id': 486, 'name': 'South African Meat Merino'}, ...]),
+    BreedGroup(id=62, name='Maternal Wool', breeds=[...]),
+    BreedGroup(id=64, name='Hair', breeds=[{'id': 640, 'name': 'Katahdin'}, {'id': 641, 'name': 'St. Croix'}, ...]),
+    BreedGroup(id=69, name='Terminal', breeds=[...])
 ]
 ```
 
@@ -322,14 +325,16 @@ Convenience method: get details + lineage + progeny in one call.
 
 ## Package: nsip-mcp-server
 
-MCP (Model Context Protocol) server for LLM integration.
+MCP (Model Context Protocol) server for LLM integration with 14 tools, 26 resources, and 11 prompts.
 
-### MCP Tools
+### MCP Tools (14 Total)
 
 All tools support optional `summarize=True` to reduce token usage.
 By default, full data is preserved (`summarize=False`).
 
-#### nsip_get_last_update()
+#### Core API Tools (9)
+
+##### nsip_get_last_update()
 
 Get the NSIP database last update date.
 
@@ -337,26 +342,26 @@ Get the NSIP database last update date.
 
 ---
 
-#### nsip_list_breeds()
+##### nsip_list_breeds()
 
-Get available breed groups.
+Get available breed groups with individual breeds within each group.
 
 **Returns**:
 ```python
 {
     'success': True,
     'data': [
-        {'id': 61, 'name': 'Range'},
-        {'id': 62, 'name': 'Maternal Wool'},
-        {'id': 64, 'name': 'Hair'},
-        {'id': 69, 'name': 'Terminal'}
+        {'id': 61, 'name': 'Range', 'breeds': [{'id': 486, 'name': 'South African Meat Merino'}, ...]},
+        {'id': 62, 'name': 'Maternal Wool', 'breeds': [...]},
+        {'id': 64, 'name': 'Hair', 'breeds': [{'id': 640, 'name': 'Katahdin'}, ...]},
+        {'id': 69, 'name': 'Terminal', 'breeds': [...]}
     ]
 }
 ```
 
 ---
 
-#### nsip_get_statuses()
+##### nsip_get_statuses()
 
 Get available animal statuses.
 
@@ -370,7 +375,7 @@ Get available animal statuses.
 
 ---
 
-#### nsip_get_trait_ranges(breed_id)
+##### nsip_get_trait_ranges(breed_id: int)
 
 Get min/max trait values for a breed.
 
@@ -379,7 +384,7 @@ Get min/max trait values for a breed.
 
 ---
 
-#### nsip_search_animals(...)
+##### nsip_search_animals(...)
 
 Search animals with filtering.
 
@@ -394,7 +399,7 @@ Search animals with filtering.
 
 ---
 
-#### nsip_get_animal(search_string, summarize=False)
+##### nsip_get_animal(search_string: str, summarize: bool = False)
 
 Get animal details.
 
@@ -404,7 +409,7 @@ Get animal details.
 
 ---
 
-#### nsip_get_lineage(lpn_id, summarize=False)
+##### nsip_get_lineage(lpn_id: str, summarize: bool = False)
 
 Get pedigree information.
 
@@ -414,7 +419,7 @@ Get pedigree information.
 
 ---
 
-#### nsip_get_progeny(lpn_id, page=0, page_size=10, summarize=False)
+##### nsip_get_progeny(lpn_id: str, page: int = 0, page_size: int = 10, summarize: bool = False)
 
 Get offspring list.
 
@@ -426,13 +431,79 @@ Get offspring list.
 
 ---
 
-#### nsip_search_by_lpn(lpn_id, summarize=False)
+##### nsip_search_by_lpn(lpn_id: str, summarize: bool = False)
 
 Get complete profile (details + lineage + progeny).
 
 **Args**:
 - `lpn_id` (str): LPN ID
 - `summarize` (bool): Summarize response, default False
+
+---
+
+#### Shepherd Consultation Tools (5)
+
+##### shepherd_consult(question: str, region: str = "")
+
+Get general Shepherd consultation for any sheep husbandry question.
+
+**Args**:
+- `question` (str): Your sheep husbandry question (breeding, health, calendar, economics)
+- `region` (str): Optional NSIP region for context (northeast, southeast, midwest, southwest, mountain, pacific). Auto-detected if not provided.
+
+**Returns**: Expert guidance with evidence-based recommendations
+
+---
+
+##### shepherd_breeding(question: str, region: str = "midwest", production_goal: str = "balanced")
+
+Get expert breeding advice from the NSIP Shepherd.
+
+**Args**:
+- `question` (str): Your breeding question or scenario
+- `region` (str): NSIP region (northeast, southeast, midwest, southwest, mountain, pacific)
+- `production_goal` (str): Production focus (terminal, maternal, hair, balanced)
+
+**Returns**: Expert breeding guidance with genetic principles and recommendations
+
+---
+
+##### shepherd_health(question: str, region: str = "midwest", life_stage: str = "maintenance")
+
+Get expert health and nutrition advice from the NSIP Shepherd.
+
+**Args**:
+- `question` (str): Your health or nutrition question
+- `region` (str): NSIP region for disease risk context
+- `life_stage` (str): Life stage (maintenance, flushing, gestation, lactation)
+
+**Returns**: Expert health guidance with prevention and treatment approaches
+
+---
+
+##### shepherd_calendar(question: str, region: str = "midwest", task_type: str = "general")
+
+Get seasonal management advice from the NSIP Shepherd.
+
+**Args**:
+- `question` (str): Your calendar or planning question
+- `region` (str): NSIP region for timing context
+- `task_type` (str): Task category (breeding, lambing, shearing, health, general)
+
+**Returns**: Seasonal management guidance with timing and task priorities
+
+---
+
+##### shepherd_economics(question: str, flock_size: str = "medium", market_focus: str = "balanced")
+
+Get economic analysis from the NSIP Shepherd.
+
+**Args**:
+- `question` (str): Your economics or business question
+- `flock_size` (str): Flock size category (small: 25-75, medium: 100-300, large: 500+)
+- `market_focus` (str): Market focus (direct, auction, breeding_stock, balanced)
+
+**Returns**: Economic analysis with cost/revenue estimates and profitability strategies
 
 ---
 
@@ -454,6 +525,121 @@ Environment variables:
 |----------|---------|-------------|
 | `MCP_TRANSPORT` | `stdio` | Transport mode: `stdio`, `streamable-http`, `websocket` |
 | `MCP_PORT` | `8000` | Port for HTTP/WebSocket modes |
+
+---
+
+## MCP Resources
+
+Resources provide URI-based access to static and dynamic data via the `nsip://` scheme.
+
+### Static Resources (12)
+
+| URI Pattern | Description |
+|-------------|-------------|
+| `nsip://static/heritabilities` | Default heritability values for all traits |
+| `nsip://static/heritabilities/{breed}` | Breed-specific heritability values |
+| `nsip://static/traits` | List of all trait codes with basic info |
+| `nsip://static/traits/{trait_code}` | Detailed trait information (name, description, unit) |
+| `nsip://static/indexes` | List of all selection index names |
+| `nsip://static/indexes/{index_name}` | Selection index details (terminal, maternal, hair, balanced) |
+| `nsip://static/regions` | List of all NSIP member regions |
+| `nsip://static/regions/{region_id}` | Regional context (climate, breeds, challenges) |
+| `nsip://static/diseases/{region}` | Disease prevention guides by region |
+| `nsip://static/nutrition/{region}/{season}` | Nutrition guidelines by region and life stage |
+| `nsip://static/calendar/{task_type}` | Calendar templates (breeding, lambing, shearing, health) |
+| `nsip://static/economics/{category}` | Economics templates (feed_costs, cost_templates, revenue_templates) |
+
+### Animal Resources (4)
+
+| URI Pattern | Description |
+|-------------|-------------|
+| `nsip://animals/{lpn_id}/details` | Full animal details including EBVs |
+| `nsip://animals/{lpn_id}/lineage` | Pedigree tree (ancestors) |
+| `nsip://animals/{lpn_id}/progeny` | Offspring list |
+| `nsip://animals/{lpn_id}/profile` | Combined profile (details + lineage + progeny) |
+
+### Breeding Resources (3)
+
+| URI Pattern | Description |
+|-------------|-------------|
+| `nsip://breeding/{ram_lpn}/{ewe_lpn}/projection` | Projected offspring EBVs |
+| `nsip://breeding/{ram_lpn}/{ewe_lpn}/inbreeding` | Projected inbreeding coefficient |
+| `nsip://breeding/{ram_lpn}/{ewe_lpn}/recommendation` | Comprehensive mating recommendation |
+
+### Flock Resources (3)
+
+| URI Pattern | Description |
+|-------------|-------------|
+| `nsip://flock/search` | Search guidance for flock animals |
+| `nsip://flock/{flock_id}/summary` | Flock summary statistics |
+| `nsip://flock/{flock_id}/ebv_averages` | Average EBVs across flock |
+
+---
+
+## MCP Prompts
+
+Prompts provide structured workflows for breeding analysis.
+
+### Skill Prompts (6)
+
+| Prompt | Description | Parameters |
+|--------|-------------|------------|
+| `ebv_analyzer` | Compare EBVs across animals | `lpn_ids` (str), `traits` (str, default: "BWT,WWT,PWWT,YFAT,YEMD,NLW") |
+| `selection_index` | Calculate and rank by selection index | `lpn_ids` (str), `index_name` (str, default: "balanced") |
+| `ancestry` | Generate pedigree reports | `lpn_id` (str) |
+| `inbreeding` | Calculate projected inbreeding | `ram_lpn` (str), `ewe_lpn` (str) |
+| `progeny_report` | Evaluate sires by offspring | `sire_lpn` (str) |
+| `flock_dashboard` | Generate flock statistics | `flock_prefix` (str) |
+
+### Shepherd Prompts (5)
+
+| Prompt | Description | Parameters |
+|--------|-------------|------------|
+| `shepherd_consult` | General husbandry consultation | `question` (str), `region` (str, optional) |
+| `shepherd_breeding` | Expert breeding advice | `question` (str), `region` (str), `production_goal` (str) |
+| `shepherd_health` | Health and nutrition advice | `question` (str), `region` (str), `life_stage` (str) |
+| `shepherd_calendar` | Seasonal management advice | `question` (str), `region` (str), `task_type` (str) |
+| `shepherd_economics` | Economic analysis | `question` (str), `flock_size` (str), `market_focus` (str) |
+
+### Guided Interview Prompts (4)
+
+| Prompt | Description | Parameters |
+|--------|-------------|------------|
+| `guided_mating_plan` | Interactive mating optimization | `rams` (str), `ewes` (str), `goal` (str) |
+| `guided_trait_improvement` | Multi-generation selection planning | `trait` (str), `current_average` (str), `target_value` (str), `generations` (str), `region` (str) |
+| `guided_breeding_recommendations` | AI-powered recommendations | `flock_data` (str), `priorities` (str), `constraints` (str), `region` (str) |
+| `guided_flock_import` | Interactive flock data import | `file_path` (str), `flock_prefix` (str), `data_format` (str) |
+
+---
+
+## Shepherd Agent
+
+The Shepherd is an AI-powered breeding advisor with four domains.
+
+### Domains
+
+| Domain | Capabilities |
+|--------|--------------|
+| **Breeding** | EBV interpretation, mating advice, inbreeding management, selection strategies |
+| **Health** | Disease prevention, parasites, nutrition, vaccination schedules |
+| **Calendar** | Breeding dates, seasonal planning, task schedules, shearing timing |
+| **Economics** | Cost analysis, breakeven, RAM ROI, marketing strategies |
+
+### Regions
+
+Six NSIP regions: `northeast`, `southeast`, `midwest`, `southwest`, `mountain`, `pacific`
+
+### Persona
+
+Neutral expert (veterinarian-like), evidence-based, acknowledges uncertainty, cites data sources, gives actionable next steps.
+
+### Question Classification
+
+The Shepherd automatically routes questions to appropriate domains:
+- **Breeding keywords**: ebv, breeding, genetic, selection, mating, inbreeding, sire, ram, lineage, pedigree, heritability, trait, index, progeny
+- **Health keywords**: health, disease, parasite, worm, nutrition, feed, vaccination, sick, body condition, mineral, protein, famacha
+- **Calendar keywords**: when, schedule, timing, season, calendar, lambing, shearing, weaning, breeding season, month
+- **Economics keywords**: cost, price, profit, roi, return, breakeven, budget, market, sell, value, expense, revenue
 
 ---
 
@@ -494,16 +680,11 @@ cleared = client.clear_cache()
 
 ---
 
-### Skill Modules and CLI Commands
+### Skill Modules (10)
 
-#### 1. Flock Import (nsip-flock-import)
+#### 1. Flock Import (flock_import)
 
 Import and enrich flock data from spreadsheets.
-
-```bash
-nsip-flock-import input.xlsx --output enriched.xlsx
-nsip-flock-import input.xlsx --lpn-column "LPN ID" --output enriched.xlsx
-```
 
 ```python
 from nsip_skills.flock_import import import_flock, enrich_flock_data
@@ -517,14 +698,9 @@ enriched = enrich_flock_data(records, client)
 
 ---
 
-#### 2. EBV Analysis (nsip-ebv-analysis)
+#### 2. EBV Analysis (ebv_analysis)
 
 Compare and rank animals by EBV traits.
-
-```bash
-nsip-ebv-analysis LPN1 LPN2 LPN3 --traits BWT WWT PWWT
-nsip-ebv-analysis --file lpn_list.txt --output analysis.xlsx
-```
 
 ```python
 from nsip_skills.ebv_analysis import analyze_ebvs, compare_animals, rank_by_trait
@@ -541,14 +717,9 @@ ranked = rank_by_trait(lpn_ids, "WWT", client=client)
 
 ---
 
-#### 3. Inbreeding Calculator (nsip-inbreeding)
+#### 3. Inbreeding Calculator (inbreeding)
 
 Calculate inbreeding coefficients using Wright's path method.
-
-```bash
-nsip-inbreeding LPN123 --generations 4
-nsip-inbreeding --sire SIRE_LPN --dam DAM_LPN --projected
-```
 
 ```python
 from nsip_skills.inbreeding import (
@@ -573,14 +744,9 @@ projected = calculate_projected_inbreeding("SIRE_LPN", "DAM_LPN", client)
 
 ---
 
-#### 4. Mating Optimizer (nsip-mating-optimizer)
+#### 4. Mating Optimizer (mating_optimizer)
 
 Generate optimal ram-ewe mating recommendations.
-
-```bash
-nsip-mating-optimizer --rams rams.txt --ewes ewes.txt --output matings.xlsx
-nsip-mating-optimizer --rams rams.txt --ewes ewes.txt --max-inbreeding 6.25
-```
 
 ```python
 from nsip_skills.mating_optimizer import (
@@ -604,14 +770,9 @@ for pair in matings:
 
 ---
 
-#### 5. Progeny Analysis (nsip-progeny-analysis)
+#### 5. Progeny Analysis (progeny_analysis)
 
 Evaluate sires by analyzing offspring performance.
-
-```bash
-nsip-progeny-analysis SIRE_LPN --output progeny_report.xlsx
-nsip-progeny-analysis SIRE_LPN --traits BWT WWT NLB
-```
 
 ```python
 from nsip_skills.progeny_analysis import (
@@ -631,14 +792,9 @@ comparison = compare_sires(["SIRE1", "SIRE2"], client)
 
 ---
 
-#### 6. Trait Planner (nsip-trait-planner)
+#### 6. Trait Planner (trait_planner)
 
 Design multi-generation improvement strategies.
-
-```bash
-nsip-trait-planner --flock flock.xlsx --goals "WWT:+10%" "BWT:-5%"
-nsip-trait-planner --flock flock.xlsx --generations 3 --output plan.xlsx
-```
 
 ```python
 from nsip_skills.trait_planner import (
@@ -658,14 +814,9 @@ plan = create_improvement_plan(
 
 ---
 
-#### 7. Ancestry Builder (nsip-ancestry)
+#### 7. Ancestry Builder (ancestry_builder)
 
 Generate comprehensive pedigree reports.
-
-```bash
-nsip-ancestry LPN123 --generations 4
-nsip-ancestry LPN123 --output pedigree.json --format json
-```
 
 ```python
 from nsip_skills.ancestry_builder import (
@@ -685,14 +836,9 @@ common = find_common_ancestors(tree)
 
 ---
 
-#### 8. Flock Statistics (nsip-flock-stats)
+#### 8. Flock Statistics (flock_stats)
 
 Calculate aggregate flock statistics.
-
-```bash
-nsip-flock-stats flock.xlsx --output stats.xlsx
-nsip-flock-stats flock.xlsx --by-status --by-breed
-```
 
 ```python
 from nsip_skills.flock_stats import (
@@ -712,14 +858,9 @@ top = identify_top_performers(flock_data, trait="WWT", top_n=10)
 
 ---
 
-#### 9. Selection Index (nsip-selection-index)
+#### 9. Selection Index (selection_index)
 
 Build and apply custom breeding indexes.
-
-```bash
-nsip-selection-index flock.xlsx --index terminal --output ranked.xlsx
-nsip-selection-index flock.xlsx --weights "WWT:1.5,BWT:-0.5,NLB:2.0"
-```
 
 ```python
 from nsip_skills.selection_index import (
@@ -745,14 +886,14 @@ ranked = rank_by_index(flock_data, custom, client)
 ```
 
 **Preset Indexes**:
-- `terminal`: Meat production (growth, carcass)
-- `maternal`: Reproduction (lambing, milk)
-- `range`: Balanced for pastoral operations
-- `hair`: Hair sheep breeds (no wool traits)
+- `terminal`: Meat production (BWT: -0.5, WWT: 1.0, PWWT: 1.5, YWT: 1.0, YEMD: 0.8, YFAT: -0.3)
+- `maternal`: Reproduction (NLB: 2.0, NLW: 2.5, MWWT: 1.5, BWT: -1.0, WWT: 0.5)
+- `range`: Balanced for pastoral (BWT: -0.5, WWT: 1.0, PWWT: 1.0, NLW: 1.5, MWWT: 1.0)
+- `hair`: Hair sheep breeds (BWT: -0.5, WWT: 1.2, PWWT: 1.5, NLB: 1.5, NLW: 2.0, DAG: -0.5)
 
 ---
 
-#### 10. Recommendation Engine
+#### 10. Recommendation Engine (recommendation_engine)
 
 AI-powered breeding recommendations (used internally by other modules).
 
@@ -1084,6 +1225,22 @@ MCP tools return structured error responses:
 }
 ```
 
+### JSON-RPC Error Codes
+
+| Code | Constant | Usage |
+|------|----------|-------|
+| -32602 | `INVALID_PARAMS` | Bad input parameters |
+| -32000 | `NSIP_API_ERROR` | Upstream API failure |
+| -32001 | `CACHE_ERROR` | Cache operation failed |
+| -32002 | `SUMMARIZATION_ERROR` | Token reduction failed |
+| -32003 | `VALIDATION_ERROR` | Field validation failed |
+| -32004 | `TIMEOUT_ERROR` | Request timeout |
+| -32005 | `RESOURCE_NOT_FOUND` | MCP resource not found |
+| -32006 | `PROMPT_EXECUTION_ERROR` | Prompt failed |
+| -32007 | `SAMPLING_ERROR` | Rate limit / sampling issue |
+| -32008 | `REGION_UNKNOWN` | Invalid NSIP region |
+| -32009 | `KNOWLEDGE_BASE_ERROR` | KB file not found |
+
 ---
 
 ## Common Patterns
@@ -1209,8 +1366,27 @@ The upstream NSIP API has some inconsistencies to be aware of:
 
 ---
 
+## Server Health Metrics
+
+The MCP server tracks performance metrics for quality assurance:
+
+| Metric | Target | Description |
+|--------|--------|-------------|
+| SC-001 | <5s | Tool discovery time |
+| SC-002 | >=70% | Summarization reduction |
+| SC-003 | >=95% | Validation success rate |
+| SC-005 | 50+ | Concurrent connections |
+| SC-006 | >=40% | Cache hit rate |
+| SC-007 | <3s | Startup time |
+| SC-008 | <2s | Resource latency |
+| SC-009 | >=90% | Prompt success rate |
+| SC-010 | <3 | Sampling token ratio |
+
+---
+
 ## Version History
 
+- **1.3.4**: Added Shepherd agent tools (5 domain-specific tools), individual breeds returned in nsip_list_breeds, expanded MCP resources (26) and prompts (15)
 - **1.3.3** (nsip-skills): Added comprehensive CLI commands, selection index presets
 - **1.3.2** (nsip-client, nsip-mcp-server): Improved lineage parsing, cache versioning
 - **1.3.0**: Initial public release with all three packages

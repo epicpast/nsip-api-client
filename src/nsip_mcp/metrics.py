@@ -26,6 +26,15 @@ class ServerMetrics:
         concurrent_connections: Current number of active connections
         peak_connections: Maximum concurrent connections observed
         startup_time: Server startup time in seconds
+        resource_accesses: Count of resource accesses by URI pattern
+        resource_latencies: Resource access latencies in seconds
+        prompt_executions: Count of prompt executions by name
+        prompt_successes: Count of successful prompt completions
+        prompt_failures: Count of failed prompt executions
+        sampling_requests: Count of sampling requests
+        sampling_tokens_in: Total input tokens for sampling
+        sampling_tokens_out: Total output tokens from sampling
+        kb_accesses: Count of knowledge base accesses by file
     """
 
     discovery_times: list[float] = field(default_factory=list)
@@ -37,6 +46,24 @@ class ServerMetrics:
     concurrent_connections: int = 0
     peak_connections: int = 0
     startup_time: float = 0.0
+
+    # Resource metrics
+    resource_accesses: dict[str, int] = field(default_factory=dict)
+    resource_latencies: list[float] = field(default_factory=list)
+
+    # Prompt metrics
+    prompt_executions: dict[str, int] = field(default_factory=dict)
+    prompt_successes: int = 0
+    prompt_failures: int = 0
+
+    # Sampling metrics
+    sampling_requests: int = 0
+    sampling_tokens_in: int = 0
+    sampling_tokens_out: int = 0
+
+    # Knowledge base metrics
+    kb_accesses: dict[str, int] = field(default_factory=dict)
+
     _lock: RLock = field(default_factory=RLock, repr=False)
 
     def record_discovery_time(self, duration: float) -> None:
@@ -99,6 +126,52 @@ class ServerMetrics:
         with self._lock:
             self.startup_time = duration
 
+    def record_resource_access(self, uri_pattern: str, latency: float) -> None:
+        """Record a resource access.
+
+        Args:
+            uri_pattern: The resource URI pattern (e.g., 'nsip://animals/{lpn_id}')
+            latency: Access latency in seconds
+        """
+        with self._lock:
+            self.resource_accesses[uri_pattern] = self.resource_accesses.get(uri_pattern, 0) + 1
+            self.resource_latencies.append(latency)
+
+    def record_prompt_execution(self, prompt_name: str, success: bool) -> None:
+        """Record a prompt execution.
+
+        Args:
+            prompt_name: Name of the prompt executed
+            success: True if execution succeeded
+        """
+        with self._lock:
+            self.prompt_executions[prompt_name] = self.prompt_executions.get(prompt_name, 0) + 1
+            if success:
+                self.prompt_successes += 1
+            else:
+                self.prompt_failures += 1
+
+    def record_sampling(self, tokens_in: int, tokens_out: int) -> None:
+        """Record a sampling request.
+
+        Args:
+            tokens_in: Input tokens used
+            tokens_out: Output tokens generated
+        """
+        with self._lock:
+            self.sampling_requests += 1
+            self.sampling_tokens_in += tokens_in
+            self.sampling_tokens_out += tokens_out
+
+    def record_kb_access(self, filename: str) -> None:
+        """Record a knowledge base file access.
+
+        Args:
+            filename: Name of the KB file accessed
+        """
+        with self._lock:
+            self.kb_accesses[filename] = self.kb_accesses.get(filename, 0) + 1
+
     def get_avg_discovery_time(self) -> float:
         """Get average discovery time.
 
@@ -144,6 +217,67 @@ class ServerMetrics:
                 return 0.0
             return (self.cache_hits / total) * 100
 
+    def get_avg_resource_latency(self) -> float:
+        """Get average resource access latency.
+
+        Returns:
+            Average latency in seconds, or 0 if no data
+        """
+        with self._lock:
+            if not self.resource_latencies:
+                return 0.0
+            return sum(self.resource_latencies) / len(self.resource_latencies)
+
+    def get_total_resource_accesses(self) -> int:
+        """Get total number of resource accesses.
+
+        Returns:
+            Total resource access count
+        """
+        with self._lock:
+            return sum(self.resource_accesses.values())
+
+    def get_prompt_success_rate(self) -> float:
+        """Get prompt execution success rate.
+
+        Returns:
+            Success rate as percentage (0-100)
+        """
+        with self._lock:
+            total = self.prompt_successes + self.prompt_failures
+            if total == 0:
+                return 0.0
+            return (self.prompt_successes / total) * 100
+
+    def get_total_prompt_executions(self) -> int:
+        """Get total number of prompt executions.
+
+        Returns:
+            Total prompt execution count
+        """
+        with self._lock:
+            return sum(self.prompt_executions.values())
+
+    def get_sampling_token_ratio(self) -> float:
+        """Get output to input token ratio for sampling.
+
+        Returns:
+            Ratio of output to input tokens, or 0 if no sampling
+        """
+        with self._lock:
+            if self.sampling_tokens_in == 0:
+                return 0.0
+            return self.sampling_tokens_out / self.sampling_tokens_in
+
+    def get_total_kb_accesses(self) -> int:
+        """Get total number of knowledge base accesses.
+
+        Returns:
+            Total KB access count
+        """
+        with self._lock:
+            return sum(self.kb_accesses.values())
+
     def meets_success_criteria(self) -> dict:
         """Check if metrics meet all success criteria.
 
@@ -157,6 +291,9 @@ class ServerMetrics:
             SC-005: Support 50+ concurrent connections
             SC-006: Cache hit rate >=40%
             SC-007: Startup time <3 seconds
+            SC-008: Resource latency <2 seconds
+            SC-009: Prompt success rate >=90%
+            SC-010: Sampling token efficiency (output/input ratio <3)
         """
         with self._lock:
             return {
@@ -182,6 +319,17 @@ class ServerMetrics:
                     else None
                 ),
                 "SC-007 Startup <3s": self.startup_time < 3.0 if self.startup_time > 0 else None,
+                "SC-008 Resource <2s": (
+                    self.get_avg_resource_latency() < 2.0 if self.resource_latencies else None
+                ),
+                "SC-009 Prompt >=90%": (
+                    self.get_prompt_success_rate() >= 90.0
+                    if (self.prompt_successes + self.prompt_failures) > 0
+                    else None
+                ),
+                "SC-010 Sampling ratio <3": (
+                    self.get_sampling_token_ratio() < 3.0 if self.sampling_requests > 0 else None
+                ),
             }
 
     def to_dict(self) -> dict:
@@ -215,6 +363,28 @@ class ServerMetrics:
                     "peak": self.peak_connections,
                 },
                 "startup_time_seconds": self.startup_time,
+                "resources": {
+                    "total_accesses": self.get_total_resource_accesses(),
+                    "avg_latency_seconds": self.get_avg_resource_latency(),
+                    "by_uri": dict(self.resource_accesses),
+                },
+                "prompts": {
+                    "total_executions": self.get_total_prompt_executions(),
+                    "success_rate_percent": self.get_prompt_success_rate(),
+                    "successes": self.prompt_successes,
+                    "failures": self.prompt_failures,
+                    "by_name": dict(self.prompt_executions),
+                },
+                "sampling": {
+                    "requests": self.sampling_requests,
+                    "tokens_in": self.sampling_tokens_in,
+                    "tokens_out": self.sampling_tokens_out,
+                    "token_ratio": self.get_sampling_token_ratio(),
+                },
+                "knowledge_base": {
+                    "total_accesses": self.get_total_kb_accesses(),
+                    "by_file": dict(self.kb_accesses),
+                },
                 "success_criteria": self.meets_success_criteria(),
             }
 

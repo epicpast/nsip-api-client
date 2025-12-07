@@ -22,6 +22,18 @@ mcp = FastMCP("NSIP Sheep Breeding Data")
 # Import AFTER mcp instance creation to avoid circular import
 import nsip_mcp.mcp_tools  # noqa: F401, E402
 
+# Import prompts to register them with the MCP server
+# This ensures all @mcp.prompt() decorated functions are loaded
+import nsip_mcp.prompts  # noqa: F401, E402
+
+# Import resources to register them with the MCP server
+# This ensures all @mcp.resource() decorated functions are loaded
+import nsip_mcp.resources  # noqa: F401, E402
+
+# Import shepherd agent for comprehensive husbandry guidance
+# This makes the ShepherdAgent available for tool implementations
+import nsip_mcp.shepherd  # noqa: F401, E402
+
 
 def get_transport():
     """Get transport configuration from environment.

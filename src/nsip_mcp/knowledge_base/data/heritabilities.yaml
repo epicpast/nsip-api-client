@@ -1,0 +1,110 @@
+# Trait Heritability Estimates for Sheep
+#
+# Heritability (h²) represents the proportion of phenotypic variance
+# attributable to additive genetic effects. Values range from 0-1.
+# Higher values indicate traits that respond well to selection.
+#
+# Sources:
+# - NSIP Genetic Evaluation Documentation
+# - Sheep Genetics Australia
+# - Published breed research
+
+default:
+  # Growth traits (moderate to high heritability)
+  BWT: 0.30    # Birth weight
+  WWT: 0.25    # Weaning weight (60-day)
+  PWWT: 0.35   # Post-weaning weight (120-day)
+  YWT: 0.40    # Yearling weight
+
+  # Carcass/ultrasound traits (moderate to high)
+  YEMD: 0.35   # Yearling eye muscle depth
+  YFAT: 0.30   # Yearling fat depth
+  PFAT: 0.30   # Post-weaning fat depth
+
+  # Maternal traits (low to moderate - harder to improve)
+  NLB: 0.10    # Number of lambs born
+  NLW: 0.10    # Number of lambs weaned
+  MWWT: 0.15   # Maternal weaning weight (milk + mothering)
+
+  # Health/parasite resistance (moderate)
+  FEC: 0.25    # Fecal egg count (lower is better)
+  DAG: 0.20    # Dag score (lower is better)
+
+  # Wool traits (moderate to high - where applicable)
+  GFW: 0.40    # Greasy fleece weight
+  CFW: 0.35    # Clean fleece weight
+  FD: 0.50     # Fiber diameter
+  SL: 0.45     # Staple length
+
+by_breed:
+  # Katahdin - Hair sheep with enhanced maternal/parasite traits
+  katahdin:
+    NLW: 0.12     # Slightly higher due to breed selection focus
+    FEC: 0.28     # Higher response due to intensive selection
+    MWWT: 0.18    # Improved maternal ability
+
+  # Dorper/White Dorper - Meat breed emphasis
+  dorper:
+    WWT: 0.28
+    PWWT: 0.38
+    YEMD: 0.38
+
+  # Rambouillet - Wool and range emphasis
+  rambouillet:
+    GFW: 0.45
+    CFW: 0.40
+    FD: 0.55
+    WWT: 0.22     # Slightly lower in extensive systems
+
+  # Suffolk - Terminal sire breed
+  suffolk:
+    WWT: 0.28
+    PWWT: 0.40
+    YWT: 0.45
+    YEMD: 0.40
+
+  # Hampshire - Terminal sire breed
+  hampshire:
+    WWT: 0.27
+    PWWT: 0.38
+    YEMD: 0.38
+
+  # Targhee - Dual purpose (wool + meat)
+  targhee:
+    WWT: 0.24
+    GFW: 0.42
+    NLW: 0.11
+
+  # Columbia - Large range breed
+  columbia:
+    WWT: 0.23
+    PWWT: 0.33
+    GFW: 0.40
+
+  # Polypay - Prolific maternal breed
+  polypay:
+    NLB: 0.12
+    NLW: 0.13
+    MWWT: 0.17
+
+  # St. Croix - Hair sheep, parasite resistant
+  st_croix:
+    FEC: 0.30
+    DAG: 0.25
+    NLW: 0.11
+
+# Notes on using heritability estimates:
+notes:
+  selection_response: |
+    Expected genetic gain per generation = h² × selection intensity × phenotypic SD
+    Example: WWT with h²=0.25, intensity=1.4, SD=5 lbs → gain = 0.25 × 1.4 × 5 = 1.75 lbs/generation
+
+  accuracy_relationship: |
+    Accuracy of EBV increases with more data (own records, progeny, relatives).
+    Heritability affects how quickly accuracy builds - high h² traits reach
+    high accuracy faster with own performance data.
+
+  environmental_factors: |
+    Heritability estimates assume adequate nutrition and management.
+    Stressful environments may reduce expressed heritability.
+    Within-flock h² may differ from published estimates.

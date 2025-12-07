@@ -6,7 +6,7 @@ Test Scenarios:
 US1 (API Discovery & Invocation):
 - Tool discovery (<5 seconds per SC-001)
 - Tool invocation with valid parameters
-- All 9 tools callable
+- All 15 tools callable (9 NSIP + 5 Shepherd + 1 health)
 
 US2 (Context Management):
 - Pass-through behavior (≤2000 tokens, FR-015)
@@ -74,12 +74,12 @@ class TestUS1ToolDiscovery:
         assert len(tools) > 0, "No tools discovered"
 
     @pytest.mark.integration
-    def test_all_9_tools_discoverable(self):
-        """Verify all 9 NSIP tools are discoverable by MCP client."""
+    def test_all_tools_discoverable(self):
+        """Verify all NSIP and Shepherd tools are discoverable by MCP client."""
         tools = asyncio.run(mcp.get_tools())
         tool_names = list(tools.keys())
 
-        expected_tools = [
+        expected_nsip_tools = [
             "nsip_get_last_update",
             "nsip_list_breeds",
             "nsip_get_statuses",
@@ -91,12 +91,35 @@ class TestUS1ToolDiscovery:
             "nsip_search_by_lpn",
         ]
 
-        for tool_name in expected_tools:
+        expected_shepherd_tools = [
+            "shepherd_consult",
+            "shepherd_breeding",
+            "shepherd_health",
+            "shepherd_calendar",
+            "shepherd_economics",
+        ]
+
+        expected_utility_tools = [
+            "get_server_health",
+        ]
+
+        for tool_name in expected_nsip_tools:
             assert tool_name in tool_names, f"Tool {tool_name} not discovered"
 
-        # Verify we found exactly 9 NSIP tools (plus get_server_health = 10 total)
+        for tool_name in expected_shepherd_tools:
+            assert tool_name in tool_names, f"Tool {tool_name} not discovered"
+
+        for tool_name in expected_utility_tools:
+            assert tool_name in tool_names, f"Tool {tool_name} not discovered"
+
+        # Verify we found exactly 9 NSIP tools + 5 Shepherd tools + 1 health = 15 total
         nsip_tools = [name for name in tool_names if name.startswith("nsip_")]
         assert len(nsip_tools) == 9, f"Expected 9 NSIP tools, found {len(nsip_tools)}"
+
+        shepherd_tools = [name for name in tool_names if name.startswith("shepherd_")]
+        assert len(shepherd_tools) == 5, f"Expected 5 Shepherd tools, found {len(shepherd_tools)}"
+
+        assert len(tools) == 15, f"Expected 15 total tools, found {len(tools)}"
 
     @pytest.mark.integration
     def test_tool_descriptions_present(self):
@@ -156,8 +179,8 @@ class TestUS1ToolInvocation:
 
     @pytest.mark.integration
     @patch("nsip_mcp.tools.NSIPClient")
-    def test_all_tools_invocable(self, mock_client_class):
-        """Verify all 9 tools can be invoked successfully."""
+    def test_all_nsip_tools_invocable(self, mock_client_class):
+        """Verify all 9 NSIP tools can be invoked successfully."""
         # Setup comprehensive mocks
         mock_client = MagicMock()
 
@@ -1027,11 +1050,12 @@ class TestEndToEndWorkflow:
         tools = asyncio.run(mcp.get_tools())
         discovery_time = time.time() - start_time
 
-        assert len(tools) == 10, "Should discover all 10 tools"
+        assert len(tools) == 15, "Should discover all 15 tools"
         assert discovery_time < 5.0, f"Discovery took {discovery_time}s, should be <5s (SC-001)"
 
-        # Verify NSIP tools exist
-        nsip_tools = [
+        # Verify all expected tools exist
+        expected_tools = [
+            # NSIP tools
             "nsip_get_last_update",
             "nsip_list_breeds",
             "nsip_get_statuses",
@@ -1041,9 +1065,16 @@ class TestEndToEndWorkflow:
             "nsip_get_lineage",
             "nsip_get_progeny",
             "nsip_search_by_lpn",
+            # Shepherd tools
+            "shepherd_consult",
+            "shepherd_breeding",
+            "shepherd_health",
+            "shepherd_calendar",
+            "shepherd_economics",
+            # Utility tools
             "get_server_health",
         ]
-        for tool_name in nsip_tools:
+        for tool_name in expected_tools:
             assert tool_name in tools, f"Tool {tool_name} not discovered"
 
         # === 3. Invoke Tool ===

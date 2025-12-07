@@ -1,0 +1,281 @@
+# Trait Glossary for NSIP Estimated Breeding Values (EBVs)
+#
+# This glossary defines all traits used in NSIP genetic evaluations,
+# including their units, interpretation, and category.
+#
+# Interpretation:
+#   higher_better: Higher EBV values are desirable
+#   lower_better: Lower EBV values are desirable
+
+traits:
+  # ==========================================================================
+  # Growth Traits
+  # ==========================================================================
+  BWT:
+    name: "Birth Weight"
+    description: >
+      Genetic potential for lamb birth weight. Higher values indicate
+      heavier lambs at birth. Moderate values preferred - too high
+      increases dystocia risk, too low may reduce survival.
+    unit: "lbs"
+    interpretation: "context_dependent"
+    category: "growth"
+    notes: >
+      Target depends on breed and management. Terminal sires mated to
+      mature ewes can tolerate higher BWT. First-time ewe lambs need
+      rams with lower BWT.
+
+  WWT:
+    name: "Weaning Weight"
+    description: >
+      Genetic potential for weight at weaning (60-day adjusted).
+      Higher values indicate faster pre-weaning growth.
+    unit: "lbs"
+    interpretation: "higher_better"
+    category: "growth"
+    notes: >
+      Heavily influenced by maternal effects (milk, mothering).
+      Direct WWT measures lamb's own growth genes; MWWT measures
+      dam's contribution.
+
+  PWWT:
+    name: "Post-Weaning Weight"
+    description: >
+      Genetic potential for weight at 120 days. Measures growth
+      after weaning when lamb is on its own without maternal support.
+    unit: "lbs"
+    interpretation: "higher_better"
+    category: "growth"
+    notes: >
+      More heritable than WWT since maternal effects removed.
+      Key trait for terminal sire selection.
+
+  YWT:
+    name: "Yearling Weight"
+    description: >
+      Genetic potential for weight at one year of age. Important
+      for mature size and overall growth trajectory.
+    unit: "lbs"
+    interpretation: "higher_better"
+    category: "growth"
+    notes: >
+      Correlated with mature size. Very high YWT may indicate
+      larger mature ewes requiring more feed for maintenance.
+
+  # ==========================================================================
+  # Carcass/Ultrasound Traits
+  # ==========================================================================
+  YEMD:
+    name: "Yearling Eye Muscle Depth"
+    description: >
+      Genetic potential for loin eye (longissimus) muscle depth
+      measured by ultrasound at yearling age.
+    unit: "mm"
+    interpretation: "higher_better"
+    category: "carcass"
+    notes: >
+      Indicator of muscling and meat yield. Correlated with
+      carcass merit. Important for terminal sires.
+
+  YFAT:
+    name: "Yearling Fat Depth"
+    description: >
+      Genetic potential for subcutaneous fat depth measured by
+      ultrasound at yearling age.
+    unit: "mm"
+    interpretation: "lower_better"
+    category: "carcass"
+    notes: >
+      Excess fat is wasteful. However, some fat cover needed
+      for carcass quality and ewe body reserves.
+
+  PFAT:
+    name: "Post-Weaning Fat Depth"
+    description: >
+      Genetic potential for fat depth at 120 days (post-weaning).
+    unit: "mm"
+    interpretation: "lower_better"
+    category: "carcass"
+    notes: >
+      Earlier measurement than YFAT. Indicates tendency for
+      early fat deposition.
+
+  # ==========================================================================
+  # Maternal Traits
+  # ==========================================================================
+  NLB:
+    name: "Number of Lambs Born"
+    description: >
+      Genetic potential for litter size at birth. Higher values
+      indicate more prolific ewes.
+    unit: "lambs"
+    interpretation: "higher_better"
+    category: "maternal"
+    notes: >
+      Low heritability (h²=0.10). Slow to improve but economically
+      important. Very high values may reduce lamb survival.
+
+  NLW:
+    name: "Number of Lambs Weaned"
+    description: >
+      Genetic potential for number of lambs weaned per ewe lambing.
+      Combines prolificacy with lamb survival and mothering ability.
+    unit: "lambs"
+    interpretation: "higher_better"
+    category: "maternal"
+    notes: >
+      Most important maternal trait economically. Reflects both
+      reproduction and maternal ability. Low heritability.
+
+  MWWT:
+    name: "Maternal Weaning Weight"
+    description: >
+      Genetic effect of the dam on lamb weaning weight through
+      milk production and mothering ability.
+    unit: "lbs"
+    interpretation: "higher_better"
+    category: "maternal"
+    notes: >
+      Measures dam's contribution independent of lamb's own
+      growth genes. Important for replacement ewe selection.
+
+  # ==========================================================================
+  # Health/Parasite Traits
+  # ==========================================================================
+  FEC:
+    name: "Fecal Egg Count"
+    description: >
+      Genetic potential for internal parasite resistance as measured
+      by fecal egg counts. Lower values indicate more resistant animals.
+    unit: "eggs per gram (transformed)"
+    interpretation: "lower_better"
+    category: "health"
+    notes: >
+      Moderately heritable (h²=0.25). Important in regions with
+      high Haemonchus pressure. Reduces deworming costs.
+
+  DAG:
+    name: "Dag Score"
+    description: >
+      Genetic potential for fecal soiling around the breech.
+      Lower scores indicate cleaner animals less prone to flystrike.
+    unit: "score (1-5)"
+    interpretation: "lower_better"
+    category: "health"
+    notes: >
+      Related to parasite burden and wool type. Important for
+      animal welfare and reducing flystrike risk.
+
+  # ==========================================================================
+  # Wool Traits
+  # ==========================================================================
+  GFW:
+    name: "Greasy Fleece Weight"
+    description: >
+      Genetic potential for total fleece weight before washing.
+    unit: "lbs"
+    interpretation: "higher_better"
+    category: "wool"
+    notes: >
+      Important for wool income. Must balance with other traits.
+      High GFW may indicate heavy grease content.
+
+  CFW:
+    name: "Clean Fleece Weight"
+    description: >
+      Genetic potential for fleece weight after scouring (washing).
+      More accurate measure of saleable wool.
+    unit: "lbs"
+    interpretation: "higher_better"
+    category: "wool"
+    notes: >
+      Better indicator of wool value than GFW. Yield is CFW/GFW.
+
+  FD:
+    name: "Fiber Diameter"
+    description: >
+      Genetic potential for wool fiber diameter (fineness).
+      Finer wool commands premium prices.
+    unit: "microns"
+    interpretation: "lower_better"
+    category: "wool"
+    notes: >
+      Highly heritable (h²=0.50). Major determinant of wool price.
+      Must balance with fleece weight - very fine wool often lighter.
+
+  SL:
+    name: "Staple Length"
+    description: >
+      Genetic potential for annual wool growth length.
+    unit: "mm"
+    interpretation: "higher_better"
+    category: "wool"
+    notes: >
+      Longer staples preferred for worsted processing. Must meet
+      minimum for processing requirements.
+
+  SS:
+    name: "Staple Strength"
+    description: >
+      Genetic potential for resistance to fiber breakage.
+      Stronger fibers maintain value through processing.
+    unit: "N/ktex"
+    interpretation: "higher_better"
+    category: "wool"
+    notes: >
+      Affected by nutrition during growth. Weak point (tender wool)
+      reduces value significantly.
+
+# Categories for filtering and grouping
+categories:
+  growth:
+    description: "Traits measuring body weight and growth rate"
+    traits: ["BWT", "WWT", "PWWT", "YWT"]
+
+  carcass:
+    description: "Traits measuring meat yield and quality"
+    traits: ["YEMD", "YFAT", "PFAT"]
+
+  maternal:
+    description: "Traits measuring reproduction and mothering"
+    traits: ["NLB", "NLW", "MWWT"]
+
+  health:
+    description: "Traits measuring disease and parasite resistance"
+    traits: ["FEC", "DAG"]
+
+  wool:
+    description: "Traits measuring fleece production and quality"
+    traits: ["GFW", "CFW", "FD", "SL", "SS"]
+
+# Common trait combinations by production system
+trait_bundles:
+  terminal:
+    description: "Key traits for terminal sire selection"
+    primary: ["PWWT", "YEMD"]
+    secondary: ["WWT", "YWT", "YFAT"]
+    watch: ["BWT"]  # Monitor for dystocia risk
+
+  maternal:
+    description: "Key traits for replacement ewe selection"
+    primary: ["NLW", "MWWT"]
+    secondary: ["NLB", "WWT"]
+    watch: ["BWT"]  # Lower preferred for easy lambing
+
+  range:
+    description: "Key traits for range flock management"
+    primary: ["NLW", "WWT"]
+    secondary: ["MWWT", "PWWT"]
+    watch: ["BWT"]  # Unassisted lambing requires moderate BWT
+
+  hair_sheep:
+    description: "Key traits for hair sheep breeds"
+    primary: ["NLW", "FEC"]
+    secondary: ["WWT", "PWWT", "DAG"]
+    watch: ["BWT"]
+
+  dual_purpose:
+    description: "Key traits for wool and meat production"
+    primary: ["CFW", "WWT", "NLW"]
+    secondary: ["FD", "PWWT", "MWWT"]
+    watch: ["BWT", "YFAT"]

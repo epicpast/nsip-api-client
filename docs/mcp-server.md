@@ -24,7 +24,7 @@ The NSIP MCP Server is a Model Context Protocol (MCP) implementation that provid
 
 ### Key Features
 
-- **9 MCP Tools**: Complete access to NSIP API operations
+- **15 MCP Tools**: 10 NSIP API tools + 5 Shepherd consultation tools
 - **Context Management**: Automatic response summarization to prevent context overflow (70% token reduction)
 - **Smart Caching**: 1-hour TTL cache with 40%+ hit rate target
 - **Multiple Transports**: stdio (CLI), HTTP SSE (web), WebSocket (real-time)
@@ -197,7 +197,7 @@ Once configured in Claude Desktop, you can use the NSIP tools naturally:
 
 ## Available Tools
 
-The NSIP MCP Server provides 10 tools (9 NSIP API operations + 1 health check):
+The NSIP MCP Server provides 15 tools (10 NSIP API tools + 5 Shepherd consultation tools):
 
 ### Tool Summary Table
 
@@ -673,6 +673,148 @@ Get server health status and performance metrics.
 
 ---
 
+### Shepherd Consultation Tools (5)
+
+The Shepherd is an AI-powered breeding advisor with expertise across four domains. These tools provide expert guidance based on NSIP best practices and regional considerations.
+
+#### 11. shepherd_consult
+
+Get general sheep husbandry advice from the NSIP Shepherd.
+
+**Parameters:**
+- `question` (str, required): Your question about sheep management
+- `region` (str, optional): NSIP region (northeast, southeast, midwest, southwest, mountain, pacific)
+
+**Example Usage:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "shepherd_consult",
+    "arguments": {
+      "question": "What are the best practices for introducing a new ram to my flock?",
+      "region": "midwest"
+    }
+  },
+  "id": 11
+}
+```
+
+---
+
+#### 12. shepherd_breeding
+
+Get expert breeding advice covering EBV interpretation, mating strategies, and genetic improvement.
+
+**Parameters:**
+- `question` (str, required): Your breeding-related question
+- `region` (str, optional): NSIP region (default: "midwest")
+- `production_goal` (str, optional): Production focus - "terminal", "maternal", or "balanced" (default: "balanced")
+
+**Example Usage:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "shepherd_breeding",
+    "arguments": {
+      "question": "How should I interpret negative BWT EBVs when selecting a terminal sire?",
+      "region": "southeast",
+      "production_goal": "terminal"
+    }
+  },
+  "id": 12
+}
+```
+
+---
+
+#### 13. shepherd_health
+
+Get expert health and nutrition advice covering disease prevention, parasite management, and feeding programs.
+
+**Parameters:**
+- `question` (str, required): Your health-related question
+- `region` (str, optional): NSIP region (default: "midwest")
+- `life_stage` (str, optional): Animal life stage - "maintenance", "breeding", "gestation", "lactation", "growing" (default: "maintenance")
+
+**Example Usage:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "shepherd_health",
+    "arguments": {
+      "question": "What is the best deworming strategy for my Southeast flock?",
+      "region": "southeast",
+      "life_stage": "lactation"
+    }
+  },
+  "id": 13
+}
+```
+
+---
+
+#### 14. shepherd_calendar
+
+Get seasonal management advice covering breeding schedules, lambing preparation, and task planning.
+
+**Parameters:**
+- `question` (str, required): Your calendar/scheduling question
+- `region` (str, optional): NSIP region (default: "midwest")
+- `task_type` (str, optional): Task focus - "general", "breeding", "lambing", "shearing", "health" (default: "general")
+
+**Example Usage:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "shepherd_calendar",
+    "arguments": {
+      "question": "When should I start preparing for fall lambing in the Southeast?",
+      "region": "southeast",
+      "task_type": "lambing"
+    }
+  },
+  "id": 14
+}
+```
+
+---
+
+#### 15. shepherd_economics
+
+Get economic analysis covering costs, ROI calculations, and marketing strategies.
+
+**Parameters:**
+- `question` (str, required): Your economics-related question
+- `flock_size` (str, optional): Flock size category - "small" (<50), "medium" (50-200), "large" (>200) (default: "medium")
+- `market_focus` (str, optional): Market focus - "breeding_stock", "market_lambs", "balanced" (default: "balanced")
+
+**Example Usage:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "shepherd_economics",
+    "arguments": {
+      "question": "What is the typical ROI on purchasing a proven terminal sire?",
+      "flock_size": "medium",
+      "market_focus": "market_lambs"
+    }
+  },
+  "id": 15
+}
+```
+
+---
+
 ## Transport Configuration
 
 The NSIP MCP Server supports three transport mechanisms for different integration scenarios:
@@ -703,13 +845,15 @@ nsip-mcp-server
 
 ---
 
-### 2. HTTP SSE (Server-Sent Events)
+### 2. Streamable HTTP (recommended for web applications)
 
 **Use Case:** Web applications, browser-based clients, HTTP-only environments
 
+> **Note:** FastMCP 2.0+ uses `streamable-http` transport. The legacy `http-sse` is still supported for backward compatibility.
+
 **Configuration:**
 ```bash
-MCP_TRANSPORT=http-sse MCP_PORT=8000 nsip-mcp-server
+MCP_TRANSPORT=streamable-http MCP_PORT=8000 nsip-mcp-server
 ```
 
 **Endpoints:**

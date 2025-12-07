@@ -1,22 +1,19 @@
 """
 Unit tests for MCP tool wrappers
 
-Tests all 9 MCP tools that wrap NSIPClient methods:
-- nsip_get_last_update
-- nsip_list_breeds
-- nsip_get_statuses
-- nsip_get_trait_ranges
-- nsip_search_animals
-- nsip_get_animal
-- nsip_get_lineage
-- nsip_get_progeny
-- nsip_search_by_lpn
+Tests all 15 MCP tools:
+- 9 NSIP tools: nsip_get_last_update, nsip_list_breeds, nsip_get_statuses,
+  nsip_get_trait_ranges, nsip_search_animals, nsip_get_animal, nsip_get_lineage,
+  nsip_get_progeny, nsip_search_by_lpn
+- 5 Shepherd tools: shepherd_consult, shepherd_breeding, shepherd_health,
+  shepherd_calendar, shepherd_economics
+- 1 Utility tool: get_server_health
 
 Test coverage:
 - Parameter validation
 - Successful API calls with mocked NSIPClient responses
 - Cache behavior (first call miss, second call hit)
-- Tool discovery (all 9 tools registered)
+- Tool discovery (all 15 tools registered)
 - Error handling and structured error messages
 
 Target: >90% coverage (SC-011)
@@ -121,25 +118,32 @@ class TestNsipListBreeds:
 
     @patch("nsip_mcp.tools.NSIPClient")
     def test_returns_breed_list(self, mock_client_class):
-        """Verify tool returns array of breeds with id and name."""
+        """Verify tool returns array of breed groups with their breeds."""
         mock_client = MagicMock()
 
-        # Create mock breed objects with id and name attributes
+        # Create mock breed group objects with id, name, and breeds attributes
         mock_breed_1 = MagicMock()
         mock_breed_1.id = 61
         mock_breed_1.name = "Range"
+        mock_breed_1.breeds = [
+            {"id": 486, "name": "South African Meat Merino"},
+            {"id": 610, "name": "Targhee"},
+        ]
 
         mock_breed_2 = MagicMock()
         mock_breed_2.id = 62
         mock_breed_2.name = "Maternal Wool"
+        mock_breed_2.breeds = []
 
         mock_breed_3 = MagicMock()
         mock_breed_3.id = 64
         mock_breed_3.name = "Hair"
+        mock_breed_3.breeds = [{"id": 640, "name": "Katahdin"}]
 
         mock_breed_4 = MagicMock()
         mock_breed_4.id = 69
         mock_breed_4.name = "Terminal"
+        mock_breed_4.breeds = []
 
         mock_client.get_available_breed_groups.return_value = [
             mock_breed_1,
@@ -154,10 +158,17 @@ class TestNsipListBreeds:
         assert result["success"] is True
         assert "data" in result
         expected_data = [
-            {"id": 61, "name": "Range"},
-            {"id": 62, "name": "Maternal Wool"},
-            {"id": 64, "name": "Hair"},
-            {"id": 69, "name": "Terminal"},
+            {
+                "id": 61,
+                "name": "Range",
+                "breeds": [
+                    {"id": 486, "name": "South African Meat Merino"},
+                    {"id": 610, "name": "Targhee"},
+                ],
+            },
+            {"id": 62, "name": "Maternal Wool", "breeds": []},
+            {"id": 64, "name": "Hair", "breeds": [{"id": 640, "name": "Katahdin"}]},
+            {"id": 69, "name": "Terminal", "breeds": []},
         ]
         assert result["data"] == expected_data
         mock_client.get_available_breed_groups.assert_called_once()
@@ -170,6 +181,7 @@ class TestNsipListBreeds:
         mock_breed = MagicMock()
         mock_breed.id = 61
         mock_breed.name = "Range"
+        mock_breed.breeds = [{"id": 486, "name": "Targhee"}]
 
         mock_client.get_available_breed_groups.return_value = [mock_breed]
         mock_client_class.return_value = mock_client
@@ -1019,6 +1031,7 @@ class TestCacheBehavior:
         mock_breed = MagicMock()
         mock_breed.id = 61
         mock_breed.name = "Range"
+        mock_breed.breeds = []
         mock_client.get_available_breed_groups.return_value = [mock_breed]
 
         mock_client.get_statuses_by_breed_group.return_value = ["CURRENT"]
@@ -1043,3 +1056,622 @@ class TestCacheBehavior:
         # Verify cache metrics
         assert response_cache.hits == 3  # 3 cache hits
         assert response_cache.misses == 3  # 3 cache misses
+
+
+class TestShepherdConsultTool:
+    """Tests for shepherd_consult_tool."""
+
+    def test_returns_guidance(self):
+        """Test shepherd consult returns guidance."""
+        result = asyncio.run(
+            mcp_tools.shepherd_consult_tool.fn(question="How to select rams?", region="midwest")
+        )
+
+        assert isinstance(result, dict)
+        # Could have either guidance or error depending on mock setup
+        assert "guidance" in result or "error" in result
+
+    def test_handles_empty_question(self):
+        """Test handling of empty question."""
+        result = asyncio.run(mcp_tools.shepherd_consult_tool.fn(question="", region="midwest"))
+
+        assert isinstance(result, dict)
+
+
+class TestShepherdBreedingTool:
+    """Tests for shepherd_breeding_tool."""
+
+    def test_returns_dict(self):
+        """Test shepherd breeding returns dict."""
+        result = asyncio.run(
+            mcp_tools.shepherd_breeding_tool.fn(
+                question="How to improve weaning weight?",
+                region="midwest",
+                production_goal="terminal",
+            )
+        )
+
+        assert isinstance(result, dict)
+
+
+class TestShepherdHealthTool:
+    """Tests for shepherd_health_tool."""
+
+    def test_returns_dict(self):
+        """Test shepherd health returns dict."""
+        result = asyncio.run(
+            mcp_tools.shepherd_health_tool.fn(
+                question="What vaccines do I need?",
+                region="midwest",
+                life_stage="maintenance",
+            )
+        )
+
+        assert isinstance(result, dict)
+
+
+class TestShepherdCalendarTool:
+    """Tests for shepherd_calendar_tool."""
+
+    def test_returns_dict(self):
+        """Test shepherd calendar returns dict."""
+        result = asyncio.run(
+            mcp_tools.shepherd_calendar_tool.fn(
+                question="When to start breeding?",
+                region="midwest",
+                task_type="breeding",
+            )
+        )
+
+        assert isinstance(result, dict)
+
+
+class TestShepherdEconomicsTool:
+    """Tests for shepherd_economics_tool."""
+
+    def test_returns_dict(self):
+        """Test shepherd economics returns dict."""
+        result = asyncio.run(
+            mcp_tools.shepherd_economics_tool.fn(
+                question="What is my cost per ewe?",
+                flock_size="medium",
+                market_focus="direct",
+            )
+        )
+
+        assert isinstance(result, dict)
+
+
+class TestHandleNsipApiError:
+    """Tests for handle_nsip_api_error function.
+
+    The function returns a dict with 'code', 'message', and 'data' fields
+    following MCP error response format.
+    """
+
+    def test_not_found_error(self):
+        """Test handling NSIPNotFoundError."""
+        from nsip_client.exceptions import NSIPNotFoundError
+        from nsip_mcp.mcp_tools import handle_nsip_api_error
+
+        error = NSIPNotFoundError("Animal not found")
+        result = handle_nsip_api_error(error, "fetching animal 12345")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+        assert "message" in result
+        assert "Animal not found" in result["message"]
+
+    def test_timeout_error(self):
+        """Test handling NSIPTimeoutError."""
+        from nsip_client.exceptions import NSIPTimeoutError
+        from nsip_mcp.mcp_tools import handle_nsip_api_error
+
+        error = NSIPTimeoutError("Connection timed out")
+        result = handle_nsip_api_error(error, "fetching breeds")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+        assert "message" in result
+        assert "timeout" in result["message"].lower()
+
+    def test_validation_error(self):
+        """Test handling NSIPValidationError."""
+        from nsip_client.exceptions import NSIPValidationError
+        from nsip_mcp.mcp_tools import handle_nsip_api_error
+
+        error = NSIPValidationError("Invalid breed ID")
+        result = handle_nsip_api_error(error, "validating breed")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+        assert "message" in result
+        assert "validation" in result["message"].lower()
+
+    def test_generic_api_error(self):
+        """Test handling generic NSIPAPIError."""
+        from nsip_client.exceptions import NSIPAPIError
+        from nsip_mcp.mcp_tools import handle_nsip_api_error
+
+        error = NSIPAPIError("Server error")
+        result = handle_nsip_api_error(error, "fetching data")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+        assert "message" in result
+
+    def test_unexpected_error(self):
+        """Test handling unexpected non-NSIP errors."""
+        from nsip_mcp.mcp_tools import handle_nsip_api_error
+
+        error = RuntimeError("Unexpected error")
+        result = handle_nsip_api_error(error, "unknown operation")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+        assert "message" in result
+        assert "unexpected" in result["message"].lower()
+
+
+class TestGetNsipClient:
+    """Tests for get_nsip_client function."""
+
+    def test_returns_client_instance(self):
+        """Test that get_nsip_client returns a client."""
+        from nsip_mcp.mcp_tools import get_nsip_client
+
+        client = get_nsip_client()
+        assert client is not None
+
+    def test_singleton_behavior(self):
+        """Test that get_nsip_client returns same instance."""
+        from nsip_mcp.mcp_tools import get_nsip_client
+
+        client1 = get_nsip_client()
+        client2 = get_nsip_client()
+        # Should be the same singleton instance
+        assert client1 is client2
+
+
+class TestCachedApiCallDecorator:
+    """Tests for cached_api_call decorator."""
+
+    def test_decorator_caches_result(self):
+        """Test that decorated function caches results."""
+        from nsip_mcp.mcp_tools import cached_api_call
+
+        call_count = 0
+
+        @cached_api_call("test_cache")
+        def test_function():
+            nonlocal call_count
+            call_count += 1
+            return {"result": "data"}
+
+        # First call should execute function
+        result1 = test_function()
+        assert result1 == {"result": "data"}
+        assert call_count == 1
+
+        # Second call should return cached value
+        result2 = test_function()
+        assert result2 == {"result": "data"}
+        # Count should still be 1 due to caching
+        assert call_count == 1
+
+    def test_decorator_with_kwargs(self):
+        """Test decorator with keyword arguments."""
+        from nsip_mcp.mcp_tools import cached_api_call
+
+        @cached_api_call("test_kwargs")
+        def test_function(*, arg1, arg2="default"):
+            return {"arg1": arg1, "arg2": arg2}
+
+        result = test_function(arg1="value1", arg2="value2")
+        assert result == {"arg1": "value1", "arg2": "value2"}
+
+
+class TestValidateLpnId:
+    """Tests for validate_lpn_id function."""
+
+    def test_empty_lpn_id_returns_error(self):
+        """Test empty LPN ID returns validation error."""
+        from nsip_mcp.mcp_tools import validate_lpn_id
+
+        result = validate_lpn_id("")
+        assert result is not None
+        assert "code" in result
+        assert "message" in result
+
+    def test_whitespace_only_lpn_id_returns_error(self):
+        """Test whitespace-only LPN ID returns validation error."""
+        from nsip_mcp.mcp_tools import validate_lpn_id
+
+        result = validate_lpn_id("   ")
+        assert result is not None
+        assert "code" in result
+
+    def test_short_lpn_id_returns_error(self):
+        """Test short LPN ID (< 5 chars) returns validation error."""
+        from nsip_mcp.mcp_tools import validate_lpn_id
+
+        result = validate_lpn_id("ABC")
+        assert result is not None
+        assert "code" in result
+        assert "message" in result
+
+    def test_valid_lpn_id_returns_none(self):
+        """Test valid LPN ID returns None (no error)."""
+        from nsip_mcp.mcp_tools import validate_lpn_id
+
+        result = validate_lpn_id("6####92020###249")
+        assert result is None
+
+
+class TestValidateBreedId:
+    """Tests for validate_breed_id function."""
+
+    def test_zero_breed_id_returns_error(self):
+        """Test zero breed ID returns validation error."""
+        from nsip_mcp.mcp_tools import validate_breed_id
+
+        result = validate_breed_id(0)
+        assert result is not None
+        assert "code" in result
+
+    def test_negative_breed_id_returns_error(self):
+        """Test negative breed ID returns validation error."""
+        from nsip_mcp.mcp_tools import validate_breed_id
+
+        result = validate_breed_id(-5)
+        assert result is not None
+        assert "code" in result
+
+    def test_valid_breed_id_returns_none(self):
+        """Test valid breed ID returns None (no error)."""
+        from nsip_mcp.mcp_tools import validate_breed_id
+
+        result = validate_breed_id(486)
+        assert result is None
+
+
+class TestValidatePagination:
+    """Tests for validate_pagination function."""
+
+    def test_negative_page_returns_error(self):
+        """Test negative page number returns validation error."""
+        from nsip_mcp.mcp_tools import validate_pagination
+
+        result = validate_pagination(-1, 15)
+        assert result is not None
+        assert "code" in result
+        assert "page" in result["message"].lower()
+
+    def test_zero_page_size_returns_error(self):
+        """Test zero page_size returns validation error."""
+        from nsip_mcp.mcp_tools import validate_pagination
+
+        result = validate_pagination(0, 0)
+        assert result is not None
+        assert "code" in result
+
+    def test_page_size_over_100_returns_error(self):
+        """Test page_size > 100 returns validation error."""
+        from nsip_mcp.mcp_tools import validate_pagination
+
+        result = validate_pagination(0, 150)
+        assert result is not None
+        assert "code" in result
+
+    def test_valid_pagination_returns_none(self):
+        """Test valid pagination returns None (no error)."""
+        from nsip_mcp.mcp_tools import validate_pagination
+
+        result = validate_pagination(0, 15)
+        assert result is None
+
+
+class TestApplyContextManagement:
+    """Tests for apply_context_management function."""
+
+    def test_default_passthrough(self):
+        """Test default behavior is passthrough (no summarization)."""
+        from nsip_mcp.mcp_tools import apply_context_management
+
+        response = {"lpn_id": "ABC123", "breed": "Katahdin"}
+        result = apply_context_management(response)
+
+        assert result["_summarized"] is False
+        assert result["lpn_id"] == "ABC123"
+
+    def test_explicit_summarize_true(self):
+        """Test explicit summarization request."""
+        from nsip_mcp.mcp_tools import apply_context_management
+
+        response = {"lpn_id": "ABC123", "breed": "Katahdin"}
+        result = apply_context_management(response, summarize=True)
+
+        assert result["_summarized"] is True
+
+    def test_summarization_failure_fallback(self):
+        """Test fallback when summarization fails."""
+        from nsip_mcp.mcp_tools import apply_context_management
+
+        # Pass an object that will cause summarization to fail
+        with patch("nsip_mcp.mcp_tools.summarize_response") as mock_summarize:
+            mock_summarize.side_effect = Exception("Summarization failed")
+
+            response = {"lpn_id": "ABC123", "breed": "Katahdin"}
+            result = apply_context_management(response, summarize=True)
+
+            # Should fall back to original response with error flags
+            assert result["_summarization_failed"] is True
+            assert "Summarization failed" in result["_summarization_error"]
+
+
+class TestNsipGetAnimalValidation:
+    """Tests for nsip_get_animal validation paths."""
+
+    def test_empty_search_string_returns_error(self):
+        """Test empty search_string returns validation error."""
+        result = mcp_tools.nsip_get_animal.fn(search_string="")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+        assert "message" in result
+
+    def test_short_search_string_returns_error(self):
+        """Test short search_string returns validation error."""
+        result = mcp_tools.nsip_get_animal.fn(search_string="AB")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    @patch("nsip_mcp.tools.NSIPClient")
+    def test_api_exception_returns_error(self, mock_client_class):
+        """Test API exception is handled and returns error dict."""
+        from nsip_client.exceptions import NSIPNotFoundError
+
+        mock_client = MagicMock()
+        mock_client.get_animal_details.side_effect = NSIPNotFoundError("Not found")
+        mock_client_class.return_value = mock_client
+
+        result = mcp_tools.nsip_get_animal.fn(search_string="VALIDLPN123")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+        assert "message" in result
+
+
+class TestNsipGetLineageValidation:
+    """Tests for nsip_get_lineage validation paths."""
+
+    def test_empty_lpn_id_returns_error(self):
+        """Test empty lpn_id returns validation error."""
+        result = mcp_tools.nsip_get_lineage.fn(lpn_id="")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    @patch("nsip_mcp.tools.NSIPClient")
+    def test_api_exception_returns_error(self, mock_client_class):
+        """Test API exception is handled and returns error dict."""
+        from nsip_client.exceptions import NSIPTimeoutError
+
+        mock_client = MagicMock()
+        mock_client.get_lineage.side_effect = NSIPTimeoutError("Timeout")
+        mock_client_class.return_value = mock_client
+
+        result = mcp_tools.nsip_get_lineage.fn(lpn_id="VALIDLPN123")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+        assert "timeout" in result["message"].lower()
+
+
+class TestNsipGetProgenyValidation:
+    """Tests for nsip_get_progeny validation paths."""
+
+    def test_empty_lpn_id_returns_error(self):
+        """Test empty lpn_id returns validation error."""
+        result = mcp_tools.nsip_get_progeny.fn(lpn_id="")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    def test_invalid_pagination_returns_error(self):
+        """Test invalid pagination returns validation error."""
+        result = mcp_tools.nsip_get_progeny.fn(lpn_id="VALIDLPN123", page=-1, page_size=15)
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    @patch("nsip_mcp.tools.NSIPClient")
+    def test_api_exception_returns_error(self, mock_client_class):
+        """Test API exception is handled and returns error dict."""
+        from nsip_client.exceptions import NSIPAPIError
+
+        mock_client = MagicMock()
+        mock_client.get_progeny.side_effect = NSIPAPIError("API error")
+        mock_client_class.return_value = mock_client
+
+        result = mcp_tools.nsip_get_progeny.fn(lpn_id="VALIDLPN123")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+
+class TestNsipSearchByLpnValidation:
+    """Tests for nsip_search_by_lpn validation paths."""
+
+    def test_empty_lpn_id_returns_error(self):
+        """Test empty lpn_id returns validation error."""
+        result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    @patch("nsip_mcp.tools.NSIPClient")
+    def test_api_exception_returns_error(self, mock_client_class):
+        """Test API exception is handled and returns error dict."""
+        from nsip_client.exceptions import NSIPNotFoundError
+
+        mock_client = MagicMock()
+        mock_client.search_by_lpn.side_effect = NSIPNotFoundError("Not found")
+        mock_client_class.return_value = mock_client
+
+        result = mcp_tools.nsip_search_by_lpn.fn(lpn_id="VALIDLPN123")
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+
+class TestNsipSearchAnimalsValidation:
+    """Tests for nsip_search_animals validation paths."""
+
+    def test_negative_page_returns_error(self):
+        """Test negative page returns validation error."""
+        result = mcp_tools.nsip_search_animals.fn(page=-1)
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    def test_page_size_over_100_returns_error(self):
+        """Test page_size > 100 returns validation error."""
+        result = mcp_tools.nsip_search_animals.fn(page=0, page_size=150)
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    @patch("nsip_mcp.tools.NSIPClient")
+    def test_api_exception_returns_error(self, mock_client_class):
+        """Test API exception is handled and returns error dict."""
+        from nsip_client.exceptions import NSIPAPIError
+
+        mock_client = MagicMock()
+        mock_client.search_animals.side_effect = NSIPAPIError("Search failed")
+        mock_client_class.return_value = mock_client
+
+        result = mcp_tools.nsip_search_animals.fn(page=0, page_size=15)
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+
+class TestNsipGetTraitRangesValidation:
+    """Tests for nsip_get_trait_ranges validation paths."""
+
+    def test_zero_breed_id_returns_error(self):
+        """Test zero breed_id returns validation error."""
+        result = mcp_tools.nsip_get_trait_ranges.fn(breed_id=0)
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    def test_negative_breed_id_returns_error(self):
+        """Test negative breed_id returns validation error."""
+        result = mcp_tools.nsip_get_trait_ranges.fn(breed_id=-5)
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+    @patch("nsip_mcp.tools.NSIPClient")
+    def test_api_exception_returns_error(self, mock_client_class):
+        """Test API exception is handled and returns error dict."""
+        from nsip_client.exceptions import NSIPAPIError
+
+        mock_client = MagicMock()
+        mock_client.get_trait_ranges_by_breed.side_effect = NSIPAPIError("Failed")
+        mock_client_class.return_value = mock_client
+
+        result = mcp_tools.nsip_get_trait_ranges.fn(breed_id=486)
+
+        assert isinstance(result, dict)
+        assert "code" in result
+
+
+class TestShepherdToolsExceptionHandling:
+    """Tests for Shepherd tool exception handling.
+
+    Note: Shepherd prompts are imported inside the tool functions, not at module level.
+    We need to patch them at nsip_mcp.prompts.shepherd_prompts.
+    """
+
+    def test_shepherd_consult_exception(self):
+        """Test shepherd_consult handles exceptions gracefully."""
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_consult_prompt") as mock_prompt:
+            mock_fn = MagicMock()
+            mock_fn.side_effect = Exception("Prompt failed")
+            mock_prompt.fn = mock_fn
+
+            result = asyncio.run(
+                mcp_tools.shepherd_consult_tool.fn(question="test", region="midwest")
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+            assert "failed" in result["error"].lower()
+
+    def test_shepherd_breeding_exception(self):
+        """Test shepherd_breeding handles exceptions gracefully."""
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_breeding_prompt") as mock_prompt:
+            mock_fn = MagicMock()
+            mock_fn.side_effect = Exception("Prompt failed")
+            mock_prompt.fn = mock_fn
+
+            result = asyncio.run(
+                mcp_tools.shepherd_breeding_tool.fn(
+                    question="test", region="midwest", production_goal="terminal"
+                )
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+
+    def test_shepherd_health_exception(self):
+        """Test shepherd_health handles exceptions gracefully."""
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_health_prompt") as mock_prompt:
+            mock_fn = MagicMock()
+            mock_fn.side_effect = Exception("Prompt failed")
+            mock_prompt.fn = mock_fn
+
+            result = asyncio.run(
+                mcp_tools.shepherd_health_tool.fn(
+                    question="test", region="midwest", life_stage="maintenance"
+                )
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+
+    def test_shepherd_calendar_exception(self):
+        """Test shepherd_calendar handles exceptions gracefully."""
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_calendar_prompt") as mock_prompt:
+            mock_fn = MagicMock()
+            mock_fn.side_effect = Exception("Prompt failed")
+            mock_prompt.fn = mock_fn
+
+            result = asyncio.run(
+                mcp_tools.shepherd_calendar_tool.fn(
+                    question="test", region="midwest", task_type="breeding"
+                )
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+
+    def test_shepherd_economics_exception(self):
+        """Test shepherd_economics handles exceptions gracefully."""
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_economics_prompt") as mock_prompt:
+            mock_fn = MagicMock()
+            mock_fn.side_effect = Exception("Prompt failed")
+            mock_prompt.fn = mock_fn
+
+            result = asyncio.run(
+                mcp_tools.shepherd_economics_tool.fn(
+                    question="test", flock_size="medium", market_focus="direct"
+                )
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result

@@ -471,3 +471,44 @@ class TestCacheEdgeCases:
         key = cache.make_key("method", param="データ")
         # Accept either raw Unicode or JSON-encoded Unicode (\uXXXX format)
         assert "データ" in key or "\\u30c7\\u30fc\\u30bf" in key
+
+    def test_get_exception_handling(self):
+        """Verify cache.get handles exceptions gracefully."""
+        cache = TtlCache()
+
+        # Manually corrupt the cache to cause an exception
+        # Store a value with a corrupted expiration
+        cache._cache["bad_key"] = "not_a_tuple"  # Should be (value, expiration)
+
+        # get should not raise, should return None and count as miss
+        result = cache.get("bad_key")
+        assert result is None
+        assert cache.misses == 1
+
+    def test_set_exception_handling(self):
+        """Verify cache.set handles exceptions gracefully."""
+        cache = TtlCache(max_size=2)
+
+        # Store values before we replace the cache dict
+        cache.set("key1", "value1")
+        cache.set("key2", "value2")
+
+        # Create a mock dict that raises on setitem for key3
+        original_cache = cache._cache.copy()
+
+        class FailingDict(dict):
+            def __setitem__(self, key, value):
+                if key == "key3":
+                    raise RuntimeError("Mock error")
+                super().__setitem__(key, value)
+
+        failing_dict = FailingDict(original_cache)
+        cache._cache = failing_dict
+
+        # This should not raise - just skip caching
+        cache.set("key3", "value3")
+
+        # Restore original cache and check values
+        cache._cache = original_cache
+        assert cache.get("key1") == "value1"
+        assert cache.get("key2") == "value2"

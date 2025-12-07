@@ -2,6 +2,14 @@
 
 A Python client for the NSIP (National Sheep Improvement Program) Search API, reverse-engineered from http://nsipsearch.nsip.org
 
+---
+
+> **🐑 New to NSIP Tools?** Check out the **[Getting Started Guide](docs/getting-started-guide.md)** for step-by-step instructions on using these tools with Claude Desktop or other AI assistants. No programming experience required!
+>
+> **📚 Example Prompts**: Browse the **[Examples Library](docs/examples/)** for copy-paste prompts covering tools, workflows, resources, and skills.
+
+---
+
 ## Overview
 
 This client provides programmatic access to sheep breeding data including:
@@ -254,7 +262,7 @@ The NSIP API Client includes an MCP (Model Context Protocol) server that exposes
 
 ### Features
 
-- **9 MCP Tools**: Complete access to NSIP API through MCP protocol
+- **15 MCP Tools**: 10 NSIP API tools + 5 Shepherd consultation tools
 - **Context Management**: Automatic summarization of large responses (>2000 tokens)
 - **Smart Caching**: 1-hour TTL cache with 40%+ hit rate target
 - **Multiple Transports**: stdio (CLI), HTTP SSE (web), WebSocket (real-time)
@@ -293,19 +301,32 @@ nsip-mcp-server
 }
 ```
 
-### Available MCP Tools
+### Available MCP Tools (15 Total)
+
+#### NSIP API Tools (10)
 
 | Tool Name | Description | May Be Summarized |
 |-----------|-------------|-------------------|
 | `nsip_get_last_update` | Get database last updated timestamp | No |
-| `nsip_list_breeds` | List available breed groups | No |
+| `nsip_list_breeds` | List breed groups with individual breeds | No |
 | `nsip_get_statuses` | Get status options for breed group | No |
 | `nsip_get_trait_ranges` | Get trait value ranges for breed | No |
 | `nsip_search_animals` | Search animals by breed and traits | Yes |
 | `nsip_get_animal` | Get detailed animal information | Yes |
 | `nsip_get_lineage` | Get animal lineage/pedigree | Yes |
 | `nsip_get_progeny` | Get animal progeny list | Yes |
-| `nsip_search_by_lpn` | Comprehensive animal lookup | Always |
+| `nsip_search_by_lpn` | Comprehensive animal lookup | Optional |
+| `get_server_health` | Get server metrics and health status | No |
+
+#### Shepherd Consultation Tools (5)
+
+| Tool Name | Description | Parameters |
+|-----------|-------------|------------|
+| `shepherd_consult` | General sheep husbandry advice | `question`, `region` |
+| `shepherd_breeding` | EBV interpretation, mating advice | `question`, `region`, `production_goal` |
+| `shepherd_health` | Disease prevention, nutrition, parasites | `question`, `region`, `life_stage` |
+| `shepherd_calendar` | Seasonal planning, breeding schedules | `question`, `region`, `task_type` |
+| `shepherd_economics` | Cost analysis, ROI, marketing | `question`, `flock_size`, `market_focus` |
 
 ### Transport Options
 
@@ -316,9 +337,9 @@ nsip-mcp-server
 MCP_TRANSPORT=stdio nsip-mcp-server
 ```
 
-**HTTP SSE (for web applications)**:
+**Streamable HTTP (for web applications)**:
 ```bash
-MCP_TRANSPORT=http-sse MCP_PORT=8000 nsip-mcp-server
+MCP_TRANSPORT=streamable-http MCP_PORT=8000 nsip-mcp-server
 ```
 
 **WebSocket (for real-time bidirectional communication)**:
