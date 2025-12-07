@@ -6,10 +6,13 @@ NSIP sheep breeding data API capabilities to LLM applications in a
 context-efficient manner.
 
 Key Features:
-- 9 MCP tools wrapping NSIPClient methods
+- 15 MCP tools (10 NSIP API + 5 Shepherd consultation)
+- MCP Resources via nsip:// URI scheme
+- MCP Prompts for guided breeding workflows
+- Shepherd AI advisor with 4 domains (breeding, health, calendar, economics)
 - Automatic response summarization for large payloads (>2000 tokens)
 - In-memory caching with 1-hour TTL
-- Multiple transport support (stdio, HTTP SSE, WebSocket)
+- Multiple transport support (stdio, streamable-http, WebSocket)
 - Context-aware token management using tiktoken (cl100k_base)
 
 Usage:
@@ -17,9 +20,10 @@ Usage:
     $ nsip-mcp-server
 
     Or with custom transport:
-    $ MCP_TRANSPORT=http-sse MCP_PORT=8000 nsip-mcp-server
+    $ MCP_TRANSPORT=streamable-http MCP_PORT=8000 nsip-mcp-server
 
-For detailed usage, see quickstart.md in the specs/001-create-an-mcp/ directory.
+For detailed documentation, see docs/mcp-resources.md, docs/mcp-prompts.md,
+and docs/shepherd-agent.md.
 """
 
 __version__ = "1.3.5"
