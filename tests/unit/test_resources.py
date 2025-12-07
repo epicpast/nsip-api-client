@@ -124,9 +124,7 @@ class TestAnimalResourcesLogic:
         }
         return animal
 
-    def test_animal_mock_returns_dict(
-        self, mock_client: MagicMock, mock_animal: MagicMock
-    ) -> None:
+    def test_animal_mock_returns_dict(self, mock_client: MagicMock, mock_animal: MagicMock) -> None:
         """Test mock animal returns expected dict structure."""
         mock_client.get_animal_details.return_value = mock_animal
         animal = mock_client.get_animal_details("6332-12345")
@@ -250,9 +248,7 @@ class TestBreedingResourcesLogic:
 
         assert projected_ww == 4.0
 
-    def test_inbreeding_coefficient_structure(
-        self, mock_client: MagicMock
-    ) -> None:
+    def test_inbreeding_coefficient_structure(self, mock_client: MagicMock) -> None:
         """Test inbreeding coefficient calculation structure."""
         mock_lineage = MagicMock()
         mock_lineage.to_dict.return_value = {

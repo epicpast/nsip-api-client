@@ -65,6 +65,7 @@ def _find_common_ancestors(lineage1: dict, lineage2: dict, depth: int = 4) -> li
 
     Returns list of LPN IDs that appear in both lineages.
     """
+
     def extract_ancestors(lineage: dict, current_depth: int = 0) -> set[str]:
         if not lineage or current_depth >= depth:
             return set()
@@ -292,9 +293,7 @@ async def get_breeding_recommendation(ram_lpn: str, ewe_lpn: str) -> dict[str, A
         common_ancestors = []
         f_coefficient = 0.0
         if ram_lineage and ewe_lineage:
-            common_ancestors = _find_common_ancestors(
-                ram_lineage.to_dict(), ewe_lineage.to_dict()
-            )
+            common_ancestors = _find_common_ancestors(ram_lineage.to_dict(), ewe_lineage.to_dict())
             f_coefficient = _estimate_inbreeding(common_ancestors)
 
         # Project key EBVs

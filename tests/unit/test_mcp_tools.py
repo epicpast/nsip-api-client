@@ -1,22 +1,19 @@
 """
 Unit tests for MCP tool wrappers
 
-Tests all 9 MCP tools that wrap NSIPClient methods:
-- nsip_get_last_update
-- nsip_list_breeds
-- nsip_get_statuses
-- nsip_get_trait_ranges
-- nsip_search_animals
-- nsip_get_animal
-- nsip_get_lineage
-- nsip_get_progeny
-- nsip_search_by_lpn
+Tests all 15 MCP tools:
+- 9 NSIP tools: nsip_get_last_update, nsip_list_breeds, nsip_get_statuses,
+  nsip_get_trait_ranges, nsip_search_animals, nsip_get_animal, nsip_get_lineage,
+  nsip_get_progeny, nsip_search_by_lpn
+- 5 Shepherd tools: shepherd_consult, shepherd_breeding, shepherd_health,
+  shepherd_calendar, shepherd_economics
+- 1 Utility tool: get_server_health
 
 Test coverage:
 - Parameter validation
 - Successful API calls with mocked NSIPClient responses
 - Cache behavior (first call miss, second call hit)
-- Tool discovery (all 9 tools registered)
+- Tool discovery (all 15 tools registered)
 - Error handling and structured error messages
 
 Target: >90% coverage (SC-011)

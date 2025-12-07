@@ -76,7 +76,8 @@ class HealthDomain:
         # Filter by season if provided
         if season:
             seasonal_diseases = [
-                d for d in diseases_list
+                d
+                for d in diseases_list
                 if season.lower() in str(d.get("season", "")).lower()
                 or d.get("season") == "year-round"
             ]
@@ -96,13 +97,15 @@ class HealthDomain:
 
         for disease in seasonal_diseases[:10]:  # Top 10 diseases
             if isinstance(disease, dict):
-                prevention["diseases"].append({
-                    "name": disease.get("name", "Unknown"),
-                    "risk_level": disease.get("risk_level", "moderate"),
-                    "prevention": disease.get("prevention", "Consult veterinarian"),
-                    "signs": disease.get("signs", []),
-                    "treatment": disease.get("treatment", "Veterinary care required"),
-                })
+                prevention["diseases"].append(
+                    {
+                        "name": disease.get("name", "Unknown"),
+                        "risk_level": disease.get("risk_level", "moderate"),
+                        "prevention": disease.get("prevention", "Consult veterinarian"),
+                        "signs": disease.get("signs", []),
+                        "treatment": disease.get("treatment", "Veterinary care required"),
+                    }
+                )
 
         # Add regional challenges
         if region_info and "challenges" in region_info:
@@ -353,11 +356,15 @@ class HealthDomain:
             season_risk = max(season_risk, 3)
 
         # Adjust for stocking rate
-        stocking_adjustment = {
-            "low": -1,
-            "moderate": 0,
-            "high": 2,
-        }.get(stocking_rate, 0) if stocking_rate else 0
+        stocking_adjustment = (
+            {
+                "low": -1,
+                "moderate": 0,
+                "high": 2,
+            }.get(stocking_rate, 0)
+            if stocking_rate
+            else 0
+        )
 
         total_risk = season_risk + stocking_adjustment
 
@@ -424,12 +431,14 @@ class HealthDomain:
 
         # Seedstock/show additional
         if flock_type in ["seedstock", "show"]:
-            risk_based.append({
-                "vaccine": "Caseous lymphadenitis (CL)",
-                "timing": "Per label",
-                "frequency": "Annual",
-                "when_recommended": "CL prevention programs",
-            })
+            risk_based.append(
+                {
+                    "vaccine": "Caseous lymphadenitis (CL)",
+                    "timing": "Per label",
+                    "frequency": "Annual",
+                    "when_recommended": "CL prevention programs",
+                }
+            )
 
         schedule = {
             "flock_type": flock_type,

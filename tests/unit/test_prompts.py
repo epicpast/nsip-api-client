@@ -121,20 +121,14 @@ class TestShepherdPromptLogic:
 
     def test_format_response_with_recommendations(self) -> None:
         """Test format_shepherd_response with recommendations."""
-        result = format_shepherd_response(
-            "Answer here.",
-            recommendations=["Do this", "Try that"]
-        )
+        result = format_shepherd_response("Answer here.", recommendations=["Do this", "Try that"])
 
         assert isinstance(result, str)
         assert "Recommendations" in result or "Do this" in result
 
     def test_format_response_with_next_steps(self) -> None:
         """Test format_shepherd_response with next steps."""
-        result = format_shepherd_response(
-            "Answer here.",
-            next_steps=["Step 1", "Step 2"]
-        )
+        result = format_shepherd_response("Answer here.", next_steps=["Step 1", "Step 2"])
 
         assert isinstance(result, str)
 

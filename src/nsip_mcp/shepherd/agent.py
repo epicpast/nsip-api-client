@@ -20,6 +20,7 @@ from nsip_mcp.metrics import server_metrics
 
 class Domain(Enum):
     """Available Shepherd domains."""
+
     BREEDING = "breeding"
     HEALTH = "health"
     CALENDAR = "calendar"
@@ -99,37 +100,82 @@ class ShepherdAgent:
 
         # Breeding keywords
         breeding_keywords = [
-            "ebv", "breeding", "genetic", "selection", "mating",
-            "inbreeding", "sire", "ram", "lineage", "pedigree",
-            "heritability", "trait", "index", "progeny",
+            "ebv",
+            "breeding",
+            "genetic",
+            "selection",
+            "mating",
+            "inbreeding",
+            "sire",
+            "ram",
+            "lineage",
+            "pedigree",
+            "heritability",
+            "trait",
+            "index",
+            "progeny",
         ]
         if any(kw in question_lower for kw in breeding_keywords):
             return Domain.BREEDING
 
         # Health keywords
         health_keywords = [
-            "health", "disease", "parasite", "worm", "nutrition",
-            "feed", "feeding", "vaccination", "vaccine", "sick",
-            "body condition", "bcs", "mineral", "protein",
-            "famacha", "drench", "anthelmintic",
+            "health",
+            "disease",
+            "parasite",
+            "worm",
+            "nutrition",
+            "feed",
+            "feeding",
+            "vaccination",
+            "vaccine",
+            "sick",
+            "body condition",
+            "bcs",
+            "mineral",
+            "protein",
+            "famacha",
+            "drench",
+            "anthelmintic",
         ]
         if any(kw in question_lower for kw in health_keywords):
             return Domain.HEALTH
 
         # Calendar keywords
         calendar_keywords = [
-            "when", "schedule", "timing", "season", "calendar",
-            "lambing", "shearing", "weaning", "breeding season",
-            "month", "spring", "summer", "fall", "winter",
+            "when",
+            "schedule",
+            "timing",
+            "season",
+            "calendar",
+            "lambing",
+            "shearing",
+            "weaning",
+            "breeding season",
+            "month",
+            "spring",
+            "summer",
+            "fall",
+            "winter",
         ]
         if any(kw in question_lower for kw in calendar_keywords):
             return Domain.CALENDAR
 
         # Economics keywords
         economics_keywords = [
-            "cost", "price", "profit", "roi", "return",
-            "breakeven", "budget", "market", "sell", "value",
-            "expense", "revenue", "investment",
+            "cost",
+            "price",
+            "profit",
+            "roi",
+            "return",
+            "breakeven",
+            "budget",
+            "market",
+            "sell",
+            "value",
+            "expense",
+            "revenue",
+            "investment",
         ]
         if any(kw in question_lower for kw in economics_keywords):
             return Domain.ECONOMICS

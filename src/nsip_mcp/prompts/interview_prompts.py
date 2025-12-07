@@ -36,7 +36,7 @@ summarize what you've collected and confirm with the user before proceeding."""
 
 @mcp.prompt(
     name="guided_mating_plan",
-    description="Interactive guided interview for optimizing ram-ewe pairings"
+    description="Interactive guided interview for optimizing ram-ewe pairings",
 )
 async def guided_mating_plan_prompt(
     rams: str = "",
@@ -138,9 +138,7 @@ I have all the information needed. Shall I proceed with the mating optimization?
 
 Reply "proceed" to run the analysis or provide corrections.
 """.format(
-                ram_count=len(rams.split(",")),
-                ewe_count=len(ewes.split(",")),
-                goal=goal
+                ram_count=len(rams.split(",")), ewe_count=len(ewes.split(",")), goal=goal
             )
 
         _record_prompt_execution("guided_mating_plan", True)
@@ -151,15 +149,20 @@ Reply "proceed" to run the analysis or provide corrections.
 
     except Exception as e:
         _record_prompt_execution("guided_mating_plan", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error starting mating plan interview: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {
+                    "type": "text",
+                    "text": f"Error starting mating plan interview: {str(e)}",
+                },
+            }
+        ]
 
 
 @mcp.prompt(
     name="guided_trait_improvement",
-    description="Interactive multi-generation trait selection planning"
+    description="Interactive multi-generation trait selection planning",
 )
 async def guided_trait_improvement_prompt(
     trait: str = "",
@@ -292,15 +295,20 @@ Reply "proceed" or provide any corrections.
 
     except Exception as e:
         _record_prompt_execution("guided_trait_improvement", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error starting trait improvement interview: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {
+                    "type": "text",
+                    "text": f"Error starting trait improvement interview: {str(e)}",
+                },
+            }
+        ]
 
 
 @mcp.prompt(
     name="guided_breeding_recommendations",
-    description="AI-powered breeding recommendations with guided input gathering"
+    description="AI-powered breeding recommendations with guided input gathering",
 )
 async def guided_breeding_recommendations_prompt(
     flock_data: str = "",
@@ -417,15 +425,20 @@ Reply "proceed" to generate recommendations or add more details.
 
     except Exception as e:
         _record_prompt_execution("guided_breeding_recommendations", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error starting breeding recommendations interview: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {
+                    "type": "text",
+                    "text": f"Error starting breeding recommendations interview: {str(e)}",
+                },
+            }
+        ]
 
 
 @mcp.prompt(
     name="guided_flock_import",
-    description="Interactive flock data import with validation and enrichment"
+    description="Interactive flock data import with validation and enrichment",
 )
 async def guided_flock_import_prompt(
     file_path: str = "",
@@ -527,7 +540,12 @@ Reply "proceed" to start the import or provide corrections.
 
     except Exception as e:
         _record_prompt_execution("guided_flock_import", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error starting flock import interview: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {
+                    "type": "text",
+                    "text": f"Error starting flock import interview: {str(e)}",
+                },
+            }
+        ]

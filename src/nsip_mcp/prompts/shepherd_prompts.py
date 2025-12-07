@@ -35,7 +35,7 @@ and give actionable next steps. You respect regional differences in sheep produc
 
 @mcp.prompt(
     name="shepherd_breeding",
-    description="Get expert advice on breeding decisions and genetic improvement"
+    description="Get expert advice on breeding decisions and genetic improvement",
 )
 async def shepherd_breeding_prompt(
     question: str,
@@ -59,10 +59,7 @@ async def shepherd_breeding_prompt(
         index_info = get_selection_index(production_goal)
 
         region_name = region_info.get("name", region) if region_info else region
-        breeds_list = (
-            ", ".join(region_info.get("primary_breeds", []))
-            if region_info else "Various"
-        )
+        breeds_list = ", ".join(region_info.get("primary_breeds", [])) if region_info else "Various"
 
         context = f"""
 {SHEPHERD_PERSONA}
@@ -105,15 +102,17 @@ Please provide evidence-based breeding advice addressing this question. Include:
 
     except Exception as e:
         _record_prompt_execution("shepherd_breeding", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error preparing breeding advice: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error preparing breeding advice: {str(e)}"},
+            }
+        ]
 
 
 @mcp.prompt(
     name="shepherd_health",
-    description="Get expert advice on sheep health, disease prevention, and nutrition"
+    description="Get expert advice on sheep health, disease prevention, and nutrition",
 )
 async def shepherd_health_prompt(
     question: str,
@@ -156,12 +155,10 @@ async def shepherd_health_prompt(
             # diseases is a dict: {disease_name: {description, prevention, ...}}
             for disease_name, disease_info in list(diseases.items())[:5]:
                 if isinstance(disease_info, dict):
-                    prevention_list = disease_info.get('prevention', [])
+                    prevention_list = disease_info.get("prevention", [])
                     # prevention may be a list or string
                     if isinstance(prevention_list, list):
-                        prevention = (
-                            prevention_list[0] if prevention_list else 'Consult vet'
-                        )
+                        prevention = prevention_list[0] if prevention_list else "Consult vet"
                     else:
                         prevention = str(prevention_list)
                     context += f"- **{disease_name.replace('_', ' ').title()}**: {prevention}\n"
@@ -171,9 +168,9 @@ async def shepherd_health_prompt(
 
 """
         if nutrition:
-            energy = nutrition.get('energy', 'Varies by condition')
-            protein = nutrition.get('protein', 'Varies by stage')
-            minerals = nutrition.get('minerals', 'Sheep-specific mineral required')
+            energy = nutrition.get("energy", "Varies by condition")
+            protein = nutrition.get("protein", "Varies by stage")
+            minerals = nutrition.get("minerals", "Sheep-specific mineral required")
             context += f"- Energy: {energy}\n"
             context += f"- Protein: {protein}\n"
             context += f"- Minerals: {minerals}\n"
@@ -198,15 +195,16 @@ Please provide evidence-based health/nutrition advice. Include:
 
     except Exception as e:
         _record_prompt_execution("shepherd_health", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error preparing health advice: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error preparing health advice: {str(e)}"},
+            }
+        ]
 
 
 @mcp.prompt(
-    name="shepherd_calendar",
-    description="Get seasonal management advice and task planning"
+    name="shepherd_calendar", description="Get seasonal management advice and task planning"
 )
 async def shepherd_calendar_prompt(
     question: str,
@@ -254,8 +252,8 @@ async def shepherd_calendar_prompt(
 
 """
         if region_info:
-            climate = region_info.get('climate', 'varies')
-            challenges = ', '.join(region_info.get('challenges', []))
+            climate = region_info.get("climate", "varies")
+            challenges = ", ".join(region_info.get("challenges", []))
             context += f"- Climate: {climate}\n"
             context += f"- Challenges: {challenges}\n"
 
@@ -279,15 +277,17 @@ Please provide seasonal management advice. Include:
 
     except Exception as e:
         _record_prompt_execution("shepherd_calendar", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error preparing calendar advice: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error preparing calendar advice: {str(e)}"},
+            }
+        ]
 
 
 @mcp.prompt(
     name="shepherd_economics",
-    description="Get advice on sheep operation economics and profitability"
+    description="Get advice on sheep operation economics and profitability",
 )
 async def shepherd_economics_prompt(
     question: str,
@@ -332,10 +332,10 @@ async def shepherd_economics_prompt(
         components = ewe_costs.get("components", {}) if ewe_costs else {}
         for component, values in components.items():
             if isinstance(values, dict) and "average" in values:
-                avg = values.get('average', 0)
-                low = values.get('low', 0)
-                high = values.get('high', 0)
-                desc = values.get('description', '')
+                avg = values.get("average", 0)
+                low = values.get("low", 0)
+                high = values.get("high", 0)
+                desc = values.get("description", "")
                 context += f"- **{component.title()}**: ${avg} (range: ${low}-${high})"
                 if desc:
                     context += f" - {desc}"
@@ -400,15 +400,17 @@ Please provide economic analysis and advice. Include:
 
     except Exception as e:
         _record_prompt_execution("shepherd_economics", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error preparing economics advice: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error preparing economics advice: {str(e)}"},
+            }
+        ]
 
 
 @mcp.prompt(
     name="shepherd_consult",
-    description="General Shepherd consultation for any sheep husbandry question"
+    description="General Shepherd consultation for any sheep husbandry question",
 )
 async def shepherd_consult_prompt(
     question: str,
@@ -435,8 +437,7 @@ async def shepherd_consult_prompt(
         # Build regions list for display
         # list_regions() returns list of strings like ['northeast', 'southeast', ...]
         regions_list = (
-            ", ".join([r.title() for r in all_regions])
-            if all_regions else "Various US regions"
+            ", ".join([r.title() for r in all_regions]) if all_regions else "Various US regions"
         )
 
         context = f"""
@@ -484,7 +485,9 @@ Please provide comprehensive guidance. I'll:
 
     except Exception as e:
         _record_prompt_execution("shepherd_consult", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error preparing consultation: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error preparing consultation: {str(e)}"},
+            }
+        ]

@@ -197,12 +197,14 @@ class BreedingDomain:
             else:
                 priority = "Consider - moderate weight"
 
-            strategy["recommendations"].append({
-                "trait": trait,
-                "priority": priority,
-                "heritability": h2,
-                "expected_progress": self._selection_response_note(h2),
-            })
+            strategy["recommendations"].append(
+                {
+                    "trait": trait,
+                    "priority": priority,
+                    "heritability": h2,
+                    "expected_progress": self._selection_response_note(h2),
+                }
+            )
 
         return strategy
 
@@ -256,11 +258,13 @@ class BreedingDomain:
 
         for gen in range(1, generations + 1):
             cumulative += response_per_gen
-            projections.append({
-                "generation": gen,
-                "expected_mean": round(cumulative, 3),
-                "gain_from_start": round(cumulative - current_mean, 3),
-            })
+            projections.append(
+                {
+                    "generation": gen,
+                    "expected_mean": round(cumulative, 3),
+                    "gain_from_start": round(cumulative - current_mean, 3),
+                }
+            )
 
         return {
             "trait": trait,
@@ -310,17 +314,21 @@ class BreedingDomain:
         recommendations = []
 
         if risk_level in ["High", "Very High"]:
-            recommendations.extend([
-                "Introduce unrelated rams from different flocks",
-                "Avoid mating animals sharing grandparents",
-                "Consider AI with unrelated sires",
-            ])
+            recommendations.extend(
+                [
+                    "Introduce unrelated rams from different flocks",
+                    "Avoid mating animals sharing grandparents",
+                    "Consider AI with unrelated sires",
+                ]
+            )
         elif risk_level == "Moderate":
-            recommendations.extend([
-                "Plan matings to avoid close relatives",
-                "Track pedigrees carefully",
-                "Consider occasional outside genetics",
-            ])
+            recommendations.extend(
+                [
+                    "Plan matings to avoid close relatives",
+                    "Track pedigrees carefully",
+                    "Consider occasional outside genetics",
+                ]
+            )
         else:
             recommendations.append("Continue current management; maintain pedigree records")
 

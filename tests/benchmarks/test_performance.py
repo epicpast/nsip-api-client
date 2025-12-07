@@ -35,7 +35,8 @@ class TestDiscoveryPerformance:
         print("  Status: {}".format("PASS" if discovery_time < 5.0 else "FAIL"))
 
         assert discovery_time < 5.0, f"Discovery took {discovery_time:.3f}s (target: <5s)"
-        assert len(tools_dict) == 10
+        # 9 NSIP tools + 5 Shepherd tools + 1 health tool = 15 total
+        assert len(tools_dict) == 15
 
 
 class TestSummarizationPerformance:

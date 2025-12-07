@@ -93,9 +93,20 @@ async def get_flock_summary(flock_id: str) -> dict[str, Any]:
             animals = cached_result
         else:
             server_metrics.record_cache_miss()
-            # Search using flock ID as LPN prefix
-            search_result = client.search_animals(lpn_id=flock_id, limit=1000)
-            animals = [a.to_dict() for a in search_result.animals] if search_result else []
+            # Search using flock ID via search_criteria
+            # Note: NSIP API may not support prefix search; this is best-effort
+            search_result = client.search_animals(page_size=100)
+            # Filter client-side by flock prefix
+            if search_result and search_result.animals:
+                animals = [
+                    a.to_dict()
+                    for a in search_result.animals
+                    if a.lpn_id and a.lpn_id.startswith(flock_id)
+                ][
+                    :100
+                ]  # Limit to 100 for performance
+            else:
+                animals = []
             response_cache.set(cache_key, animals)
 
         if not animals:
@@ -173,8 +184,16 @@ async def get_flock_ebv_averages(flock_id: str) -> dict[str, Any]:
             animals = cached_result
         else:
             server_metrics.record_cache_miss()
-            search_result = client.search_animals(lpn_id=flock_id, limit=1000)
-            animals = [a.to_dict() for a in search_result.animals] if search_result else []
+            # Search using search_criteria; filter client-side by flock prefix
+            search_result = client.search_animals(page_size=100)
+            if search_result and search_result.animals:
+                animals = [
+                    a.to_dict()
+                    for a in search_result.animals
+                    if a.lpn_id and a.lpn_id.startswith(flock_id)
+                ][:100]
+            else:
+                animals = []
             response_cache.set(cache_key, animals)
 
         if not animals:

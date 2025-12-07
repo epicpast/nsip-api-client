@@ -59,15 +59,15 @@ class EconomicsDomain:
 
         # Scale adjustments based on flock size
         scale_factor = {
-            "small": 1.15,   # Higher per-unit costs
-            "medium": 1.0,   # Baseline
-            "large": 0.85,   # Economies of scale
+            "small": 1.15,  # Higher per-unit costs
+            "medium": 1.0,  # Baseline
+            "large": 0.85,  # Economies of scale
         }.get(flock_size, 1.0)
 
         # System adjustments
         system_factor = {
             "pasture": 1.0,
-            "drylot": 1.25,      # Higher feed costs
+            "drylot": 1.25,  # Higher feed costs
             "accelerated": 1.20,  # More intensive management
         }.get(production_system, 1.0)
 
@@ -90,7 +90,7 @@ class EconomicsDomain:
                 breakdown["annual_per_ewe"][category] = {
                     "amount": round(adjusted, 2),
                     "range": f"${values.get('low', 0) * combined_factor:.2f}-"
-                             f"${values.get('high', 0) * combined_factor:.2f}",
+                    f"${values.get('high', 0) * combined_factor:.2f}",
                 }
                 ewe_total += adjusted
 
@@ -262,8 +262,11 @@ class EconomicsDomain:
                 "net_benefit": round(total_net_benefit, 2),
                 "roi_percent": round(roi_percent, 1),
                 "annual_benefit": round(annual_benefit, 2),
-                "payback_years": round(ram_cost / (annual_benefit + annual_cost), 1)
-                if annual_benefit > 0 else "N/A",
+                "payback_years": (
+                    round(ram_cost / (annual_benefit + annual_cost), 1)
+                    if annual_benefit > 0
+                    else "N/A"
+                ),
             },
             "inputs": {
                 "ram_cost": ram_cost,
@@ -371,23 +374,15 @@ class EconomicsDomain:
         improvements = []
 
         if lambs_per_ewe < 1.3:
-            improvements.append(
-                "Lamb crop below average (<1.3) - review breeding management"
-            )
+            improvements.append("Lamb crop below average (<1.3) - review breeding management")
         elif lambs_per_ewe < 1.5:
-            improvements.append(
-                "Lamb crop moderate - evaluate ewe nutrition and ram fertility"
-            )
+            improvements.append("Lamb crop moderate - evaluate ewe nutrition and ram fertility")
 
         if cost_per_ewe > 175:
-            improvements.append(
-                "Costs above typical range - review feed, health, labor efficiency"
-            )
+            improvements.append("Costs above typical range - review feed, health, labor efficiency")
 
         if margin < 10:
-            improvements.append(
-                "Thin margins - consider premium markets or cost reduction"
-            )
+            improvements.append("Thin margins - consider premium markets or cost reduction")
 
         if not improvements:
             improvements.append("Operation performing well across key metrics")
@@ -430,13 +425,15 @@ class EconomicsDomain:
             costs = opt.get("costs", 0)
             net = gross - costs
 
-            comparisons.append({
-                "option": opt.get("name", "Unknown"),
-                "gross_revenue": round(gross, 2),
-                "costs": costs,
-                "net_revenue": round(net, 2),
-                "net_per_lb": round(net / weight, 2) if weight > 0 else 0,
-            })
+            comparisons.append(
+                {
+                    "option": opt.get("name", "Unknown"),
+                    "gross_revenue": round(gross, 2),
+                    "costs": costs,
+                    "net_revenue": round(net, 2),
+                    "net_per_lb": round(net / weight, 2) if weight > 0 else 0,
+                }
+            )
 
         # Sort by net revenue
         comparisons.sort(key=lambda x: x["net_revenue"], reverse=True)

@@ -320,9 +320,7 @@ class ServerMetrics:
                 ),
                 "SC-007 Startup <3s": self.startup_time < 3.0 if self.startup_time > 0 else None,
                 "SC-008 Resource <2s": (
-                    self.get_avg_resource_latency() < 2.0
-                    if self.resource_latencies
-                    else None
+                    self.get_avg_resource_latency() < 2.0 if self.resource_latencies else None
                 ),
                 "SC-009 Prompt >=90%": (
                     self.get_prompt_success_rate() >= 90.0
@@ -330,9 +328,7 @@ class ServerMetrics:
                     else None
                 ),
                 "SC-010 Sampling ratio <3": (
-                    self.get_sampling_token_ratio() < 3.0
-                    if self.sampling_requests > 0
-                    else None
+                    self.get_sampling_token_ratio() < 3.0 if self.sampling_requests > 0 else None
                 ),
             }
 

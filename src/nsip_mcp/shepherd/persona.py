@@ -11,6 +11,7 @@ from typing import Optional
 
 class Tone(Enum):
     """Available communication tones for the Shepherd."""
+
     NEUTRAL_EXPERT = "neutral_expert"
     EDUCATIONAL = "educational"
     PRACTICAL = "practical"

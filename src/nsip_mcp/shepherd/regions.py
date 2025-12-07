@@ -103,12 +103,12 @@ def detect_region(
             "1": "northeast",  # 1xxxx - Northeast
             "2": "southeast",  # 2xxxx - Mid-Atlantic/Southeast
             "3": "southeast",  # 3xxxx - Southeast
-            "4": "midwest",    # 4xxxx - Midwest
-            "5": "midwest",    # 5xxxx - Midwest/Plains
-            "6": "midwest",    # 6xxxx - Midwest/Plains
+            "4": "midwest",  # 4xxxx - Midwest
+            "5": "midwest",  # 5xxxx - Midwest/Plains
+            "6": "midwest",  # 6xxxx - Midwest/Plains
             "7": "southwest",  # 7xxxx - Southwest
-            "8": "mountain",   # 8xxxx - Mountain West
-            "9": "pacific",    # 9xxxx - Pacific/West
+            "8": "mountain",  # 8xxxx - Mountain West
+            "9": "pacific",  # 9xxxx - Pacific/West
         }
         if prefix in zip_region_map:
             return zip_region_map[prefix]

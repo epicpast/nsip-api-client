@@ -18,13 +18,14 @@ class TestServerIntegration:
     """Test core server integration - tool discovery (SC-001)."""
 
     def test_all_tools_discoverable(self):
-        """Verify all 10 MCP tools are discoverable."""
+        """Verify all 15 MCP tools are discoverable."""
         tools_dict = asyncio.run(mcp.get_tools())
 
-        # Should have 9 API tools + get_server_health
-        assert len(tools_dict) == 10
+        # Should have 9 NSIP tools + 5 Shepherd tools + 1 health tool = 15 total
+        assert len(tools_dict) == 15
 
         expected_tools = [
+            # NSIP tools
             "nsip_get_last_update",
             "nsip_list_breeds",
             "nsip_get_statuses",
@@ -34,6 +35,13 @@ class TestServerIntegration:
             "nsip_get_lineage",
             "nsip_get_progeny",
             "nsip_search_by_lpn",
+            # Shepherd tools
+            "shepherd_consult",
+            "shepherd_breeding",
+            "shepherd_health",
+            "shepherd_calendar",
+            "shepherd_economics",
+            # Utility tools
             "get_server_health",
         ]
 

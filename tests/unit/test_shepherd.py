@@ -40,8 +40,7 @@ class TestShepherdPersona:
     def test_format_response_with_recommendations(self) -> None:
         """Test formatting a response with recommendations."""
         result = format_shepherd_response(
-            "Main answer here.",
-            recommendations=["Do this first", "Then try that"]
+            "Main answer here.", recommendations=["Do this first", "Then try that"]
         )
         assert isinstance(result, str)
         assert "Main answer here." in result
@@ -77,6 +76,7 @@ class TestRegionDetection:
     def test_get_region_context_invalid(self) -> None:
         """Test getting context for invalid region raises error."""
         from nsip_mcp.knowledge_base.loader import KnowledgeBaseError
+
         with pytest.raises(KnowledgeBaseError):
             get_region_context("invalid_region")
 
@@ -110,34 +110,22 @@ class TestShepherdAgent:
 
     def test_consult_breeding_question(self, agent: ShepherdAgent) -> None:
         """Test consulting with a breeding question."""
-        result = agent.consult(
-            "How do I select for weaning weight?",
-            domain=Domain.BREEDING
-        )
+        result = agent.consult("How do I select for weaning weight?", domain=Domain.BREEDING)
         assert isinstance(result, dict)
 
     def test_consult_health_question(self, agent: ShepherdAgent) -> None:
         """Test consulting with a health question."""
-        result = agent.consult(
-            "What vaccines do my sheep need?",
-            domain=Domain.HEALTH
-        )
+        result = agent.consult("What vaccines do my sheep need?", domain=Domain.HEALTH)
         assert isinstance(result, dict)
 
     def test_consult_calendar_question(self, agent: ShepherdAgent) -> None:
         """Test consulting with a calendar question."""
-        result = agent.consult(
-            "When should I start breeding season?",
-            domain=Domain.CALENDAR
-        )
+        result = agent.consult("When should I start breeding season?", domain=Domain.CALENDAR)
         assert isinstance(result, dict)
 
     def test_consult_economics_question(self, agent: ShepherdAgent) -> None:
         """Test consulting with an economics question."""
-        result = agent.consult(
-            "What is my cost per ewe?",
-            domain=Domain.ECONOMICS
-        )
+        result = agent.consult("What is my cost per ewe?", domain=Domain.ECONOMICS)
         assert isinstance(result, dict)
 
     def test_consult_auto_classify(self, agent: ShepherdAgent) -> None:
@@ -148,8 +136,7 @@ class TestShepherdAgent:
     def test_consult_with_context(self, agent: ShepherdAgent) -> None:
         """Test consulting with additional context."""
         result = agent.consult(
-            "How should I feed my ewes?",
-            context={"region": "midwest", "flock_size": 100}
+            "How should I feed my ewes?", context={"region": "midwest", "flock_size": 100}
         )
         assert isinstance(result, dict)
 
@@ -181,9 +168,7 @@ class TestBreedingDomain:
     def test_recommend_selection_strategy(self, domain: BreedingDomain) -> None:
         """Test getting selection strategy recommendations."""
         result = domain.recommend_selection_strategy(
-            goal="terminal",
-            current_strengths=["WWT"],
-            current_weaknesses=["BWT"]
+            goal="terminal", current_strengths=["WWT"], current_weaknesses=["BWT"]
         )
         assert isinstance(result, dict)
         assert "recommendations" in result or "strategy" in result
@@ -191,10 +176,7 @@ class TestBreedingDomain:
     def test_estimate_genetic_progress(self, domain: BreedingDomain) -> None:
         """Test estimating genetic progress."""
         result = domain.estimate_genetic_progress(
-            trait="WWT",
-            current_mean=2.5,
-            selection_differential=1.0,
-            generations=3
+            trait="WWT", current_mean=2.5, selection_differential=1.0, generations=3
         )
         assert isinstance(result, dict)
 
@@ -220,18 +202,12 @@ class TestHealthDomain:
 
     def test_get_nutrition_recommendations(self, domain: HealthDomain) -> None:
         """Test getting nutrition recommendations."""
-        result = domain.get_nutrition_recommendations(
-            life_stage="gestation",
-            region="midwest"
-        )
+        result = domain.get_nutrition_recommendations(life_stage="gestation", region="midwest")
         assert isinstance(result, dict)
 
     def test_assess_parasite_risk(self, domain: HealthDomain) -> None:
         """Test assessing parasite risk."""
-        result = domain.assess_parasite_risk(
-            region="southeast",
-            season="summer"
-        )
+        result = domain.assess_parasite_risk(region="southeast", season="summer")
         assert isinstance(result, dict)
 
     def test_get_vaccination_schedule(self, domain: HealthDomain) -> None:
@@ -250,18 +226,12 @@ class TestCalendarDomain:
 
     def test_get_seasonal_tasks(self, domain: CalendarDomain) -> None:
         """Test getting seasonal tasks."""
-        result = domain.get_seasonal_tasks(
-            task_type="breeding",
-            region="midwest",
-            month=3
-        )
+        result = domain.get_seasonal_tasks(task_type="breeding", region="midwest", month=3)
         assert isinstance(result, dict)
 
     def test_calculate_breeding_dates(self, domain: CalendarDomain) -> None:
         """Test calculating breeding dates."""
-        result = domain.calculate_breeding_dates(
-            target_lambing="March"
-        )
+        result = domain.calculate_breeding_dates(target_lambing="March")
         assert isinstance(result, dict)
 
     def test_get_marketing_windows(self, domain: CalendarDomain) -> None:
@@ -271,10 +241,7 @@ class TestCalendarDomain:
 
     def test_create_annual_calendar(self, domain: CalendarDomain) -> None:
         """Test creating annual calendar."""
-        result = domain.create_annual_calendar(
-            lambing_month=3,
-            region="midwest"
-        )
+        result = domain.create_annual_calendar(lambing_month=3, region="midwest")
         assert isinstance(result, dict)
 
 
@@ -294,19 +261,14 @@ class TestEconomicsDomain:
     def test_calculate_breakeven(self, domain: EconomicsDomain) -> None:
         """Test calculating breakeven."""
         result = domain.calculate_breakeven(
-            annual_costs_per_ewe=150,
-            lambs_per_ewe=1.5,
-            lamb_weight=100
+            annual_costs_per_ewe=150, lambs_per_ewe=1.5, lamb_weight=100
         )
         assert isinstance(result, dict)
 
     def test_calculate_ram_roi(self, domain: EconomicsDomain) -> None:
         """Test calculating ram ROI."""
         result = domain.calculate_ram_roi(
-            ram_cost=2000,
-            years_used=4,
-            ewes_per_year=30,
-            lamb_value_increase=20
+            ram_cost=2000, years_used=4, ewes_per_year=30, lamb_value_increase=20
         )
         assert isinstance(result, dict)
 
@@ -318,7 +280,7 @@ class TestEconomicsDomain:
             avg_lamb_price=200,
             wool_revenue=500,
             cull_revenue=1000,
-            total_costs=15000
+            total_costs=15000,
         )
         assert isinstance(result, dict)
 
@@ -326,10 +288,7 @@ class TestEconomicsDomain:
         """Test comparing marketing options."""
         result = domain.compare_marketing_options(
             weight=80,
-            options=[
-                {"name": "direct", "price": 2.50},
-                {"name": "auction", "price": 2.00}
-            ]
+            options=[{"name": "direct", "price": 2.50}, {"name": "auction", "price": 2.00}],
         )
         assert isinstance(result, dict)
 

@@ -33,8 +33,7 @@ def _record_prompt_execution(prompt_name: str, success: bool) -> None:
 
 
 @mcp.prompt(
-    name="ebv_analyzer",
-    description="Compare and analyze EBV traits across a group of animals"
+    name="ebv_analyzer", description="Compare and analyze EBV traits across a group of animals"
 )
 async def ebv_analyzer_prompt(
     lpn_ids: str,
@@ -67,10 +66,7 @@ async def ebv_analyzer_prompt(
         if not animals_data:
             _record_prompt_execution("ebv_analyzer", False)
             msg = f"No animals found for LPN IDs: {lpn_ids}. Please verify the IDs."
-            return [{"role": "user", "content": {
-                "type": "text",
-                "text": msg
-            }}]
+            return [{"role": "user", "content": {"type": "text", "text": msg}}]
 
         # Build comparison table
         table_rows = []
@@ -118,15 +114,13 @@ Use this data to identify the best candidates for your breeding goals.
 
     except Exception as e:
         _record_prompt_execution("ebv_analyzer", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error analyzing EBVs: {str(e)}"
-        }}]
+        return [
+            {"role": "user", "content": {"type": "text", "text": f"Error analyzing EBVs: {str(e)}"}}
+        ]
 
 
 @mcp.prompt(
-    name="selection_index",
-    description="Calculate and rank animals by selection index scores"
+    name="selection_index", description="Calculate and rank animals by selection index scores"
 )
 async def selection_index_prompt(
     lpn_ids: str,
@@ -150,10 +144,7 @@ async def selection_index_prompt(
         if not index_def:
             _record_prompt_execution("selection_index", False)
             msg = f"Unknown index: {index_name}. Available: terminal, maternal, hair, balanced"
-            return [{"role": "user", "content": {
-                "type": "text",
-                "text": msg
-            }}]
+            return [{"role": "user", "content": {"type": "text", "text": msg}}]
 
         weights = index_def.get("weights", {})
 
@@ -178,29 +169,33 @@ async def selection_index_prompt(
                         score += contribution
                         contributions[trait] = contribution
 
-                scored_animals.append({
-                    "lpn_id": data.get("lpn_id"),
-                    "name": data.get("name", "Unknown"),
-                    "score": round(score, 2),
-                    "contributions": contributions,
-                })
+                scored_animals.append(
+                    {
+                        "lpn_id": data.get("lpn_id"),
+                        "name": data.get("name", "Unknown"),
+                        "score": round(score, 2),
+                        "contributions": contributions,
+                    }
+                )
 
             except Exception:
                 continue
 
         if not scored_animals:
             _record_prompt_execution("selection_index", False)
-            return [{"role": "user", "content": {
-                "type": "text",
-                "text": "No animals found for scoring."
-            }}]
+            return [
+                {
+                    "role": "user",
+                    "content": {"type": "text", "text": "No animals found for scoring."},
+                }
+            ]
 
         # Sort by score
         scored_animals.sort(key=lambda x: x["score"], reverse=True)
 
         # Build output
-        idx_name = index_def.get('name', index_name)
-        idx_desc = index_def.get('description', 'N/A')
+        idx_name = index_def.get("name", index_name)
+        idx_desc = index_def.get("description", "N/A")
         result = f"""## Selection Index Rankings: {idx_name}
 
 **Index Description**: {idx_desc}
@@ -211,9 +206,9 @@ async def selection_index_prompt(
 | --- | --- | --- |
 """
         for i, animal in enumerate(scored_animals, 1):
-            name = animal['name']
-            lpn = animal['lpn_id']
-            score = animal['score']
+            name = animal["name"]
+            lpn = animal["lpn_id"]
+            score = animal["score"]
             result += f"| {i} | {name} ({lpn}) | {score:.2f} |\n"
 
         result += """
@@ -235,16 +230,15 @@ async def selection_index_prompt(
 
     except Exception as e:
         _record_prompt_execution("selection_index", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error calculating index: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error calculating index: {str(e)}"},
+            }
+        ]
 
 
-@mcp.prompt(
-    name="ancestry",
-    description="Generate comprehensive ancestry/pedigree reports"
-)
+@mcp.prompt(name="ancestry", description="Generate comprehensive ancestry/pedigree reports")
 async def ancestry_prompt(lpn_id: str) -> list[dict[str, Any]]:
     """Generate a pedigree report for an animal.
 
@@ -261,10 +255,9 @@ async def ancestry_prompt(lpn_id: str) -> list[dict[str, Any]]:
         animal = client.get_animal_details(search_string=lpn_id)
         if not animal:
             _record_prompt_execution("ancestry", False)
-            return [{"role": "user", "content": {
-                "type": "text",
-                "text": f"Animal not found: {lpn_id}"
-            }}]
+            return [
+                {"role": "user", "content": {"type": "text", "text": f"Animal not found: {lpn_id}"}}
+            ]
 
         # Get lineage
         lineage = client.get_lineage(lpn_id=lpn_id)
@@ -344,16 +337,15 @@ async def ancestry_prompt(lpn_id: str) -> list[dict[str, Any]]:
 
     except Exception as e:
         _record_prompt_execution("ancestry", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error generating pedigree: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error generating pedigree: {str(e)}"},
+            }
+        ]
 
 
-@mcp.prompt(
-    name="inbreeding",
-    description="Calculate inbreeding coefficients using pedigree data"
-)
+@mcp.prompt(name="inbreeding", description="Calculate inbreeding coefficients using pedigree data")
 async def inbreeding_prompt(
     ram_lpn: str,
     ewe_lpn: str,
@@ -377,10 +369,15 @@ async def inbreeding_prompt(
         if not ram_lineage or not ewe_lineage:
             _record_prompt_execution("inbreeding", False)
             missing = "ram" if not ram_lineage else "ewe"
-            return [{"role": "user", "content": {
-                "type": "text",
-                "text": f"Could not find lineage for {missing}. Verify the LPN ID."
-            }}]
+            return [
+                {
+                    "role": "user",
+                    "content": {
+                        "type": "text",
+                        "text": f"Could not find lineage for {missing}. Verify the LPN ID.",
+                    },
+                }
+            ]
 
         # Find common ancestors
         def extract_ancestors(lineage: dict, depth: int = 4) -> set[str]:
@@ -460,15 +457,16 @@ async def inbreeding_prompt(
 
     except Exception as e:
         _record_prompt_execution("inbreeding", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error calculating inbreeding: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error calculating inbreeding: {str(e)}"},
+            }
+        ]
 
 
 @mcp.prompt(
-    name="progeny_report",
-    description="Evaluate sires by analyzing their offspring performance"
+    name="progeny_report", description="Evaluate sires by analyzing their offspring performance"
 )
 async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
     """Generate a progeny performance report for a sire.
@@ -486,10 +484,9 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
         sire = client.get_animal_details(search_string=sire_lpn)
         if not sire:
             _record_prompt_execution("progeny_report", False)
-            return [{"role": "user", "content": {
-                "type": "text",
-                "text": f"Sire not found: {sire_lpn}"
-            }}]
+            return [
+                {"role": "user", "content": {"type": "text", "text": f"Sire not found: {sire_lpn}"}}
+            ]
 
         # Get progeny - paginate to collect all offspring (API max 100 per page)
         all_progeny_animals = []
@@ -498,9 +495,7 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
         total_count = 0
 
         while True:
-            progeny_page = client.get_progeny(
-                lpn_id=sire_lpn, page=page, page_size=page_size
-            )
+            progeny_page = client.get_progeny(lpn_id=sire_lpn, page=page, page_size=page_size)
             if not progeny_page:
                 break
 
@@ -517,10 +512,12 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
 
         if not all_progeny_animals:
             _record_prompt_execution("progeny_report", False)
-            return [{"role": "user", "content": {
-                "type": "text",
-                "text": f"No progeny found for sire: {sire_lpn}"
-            }}]
+            return [
+                {
+                    "role": "user",
+                    "content": {"type": "text", "text": f"No progeny found for sire: {sire_lpn}"},
+                }
+            ]
 
         sire_data = sire.to_dict()
 
@@ -543,9 +540,7 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
             # Fetch detailed EBVs for up to max_fetch animals
             if fetched_count < max_fetch:
                 try:
-                    details = client.get_animal_details(
-                        search_string=prog_animal.lpn_id
-                    )
+                    details = client.get_animal_details(search_string=prog_animal.lpn_id)
                     if details and details.traits:
                         for trait_name, trait_obj in details.traits.items():
                             if trait_obj and trait_obj.value is not None:
@@ -620,15 +615,17 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
 
     except Exception as e:
         _record_prompt_execution("progeny_report", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error generating progeny report: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error generating progeny report: {str(e)}"},
+            }
+        ]
 
 
 @mcp.prompt(
     name="flock_dashboard",
-    description="Generate comprehensive flock performance statistics and insights"
+    description="Generate comprehensive flock performance statistics and insights",
 )
 async def flock_dashboard_prompt(flock_prefix: str) -> list[dict[str, Any]]:
     """Generate a flock performance dashboard.
@@ -644,18 +641,22 @@ async def flock_dashboard_prompt(flock_prefix: str) -> list[dict[str, Any]]:
 
         # Search for flock animals using SearchCriteria with flock_id filter
         from nsip_client.models import SearchCriteria
+
         search_criteria = SearchCriteria(flock_id=flock_prefix)
         search_result = client.search_animals(
-            page=0,
-            page_size=100,  # Max allowed by API
-            search_criteria=search_criteria
+            page=0, page_size=100, search_criteria=search_criteria  # Max allowed by API
         )
         if not search_result or not search_result.animals:
             _record_prompt_execution("flock_dashboard", False)
-            return [{"role": "user", "content": {
-                "type": "text",
-                "text": f"No animals found for flock: {flock_prefix}"
-            }}]
+            return [
+                {
+                    "role": "user",
+                    "content": {
+                        "type": "text",
+                        "text": f"No animals found for flock: {flock_prefix}",
+                    },
+                }
+            ]
 
         animals = [a.to_dict() for a in search_result.animals]
 
@@ -704,8 +705,11 @@ async def flock_dashboard_prompt(flock_prefix: str) -> list[dict[str, Any]]:
 
 """
         # Find animals with PWWT data
-        with_pwwt = [(a, a.get("ebvs", {}).get("PWWT"))
-                     for a in animals if a.get("ebvs", {}).get("PWWT") is not None]
+        with_pwwt = [
+            (a, a.get("ebvs", {}).get("PWWT"))
+            for a in animals
+            if a.get("ebvs", {}).get("PWWT") is not None
+        ]
         with_pwwt.sort(key=lambda x: x[1], reverse=True)
 
         for animal, pwwt in with_pwwt[:5]:
@@ -726,7 +730,9 @@ Based on the flock averages, consider:
 
     except Exception as e:
         _record_prompt_execution("flock_dashboard", False)
-        return [{"role": "user", "content": {
-            "type": "text",
-            "text": f"Error generating dashboard: {str(e)}"
-        }}]
+        return [
+            {
+                "role": "user",
+                "content": {"type": "text", "text": f"Error generating dashboard: {str(e)}"},
+            }
+        ]

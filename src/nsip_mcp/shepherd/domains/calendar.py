@@ -77,9 +77,19 @@ class CalendarDomain:
                 if month:
                     timing = task.get("timing", "").lower()
                     month_names = [
-                        "", "january", "february", "march", "april",
-                        "may", "june", "july", "august", "september",
-                        "october", "november", "december"
+                        "",
+                        "january",
+                        "february",
+                        "march",
+                        "april",
+                        "may",
+                        "june",
+                        "july",
+                        "august",
+                        "september",
+                        "october",
+                        "november",
+                        "december",
                     ]
                     if month <= 12 and month_names[month] not in timing:
                         # Check if it's a seasonal match
@@ -100,14 +110,12 @@ class CalendarDomain:
                     "5 months earlier"
                 )
             elif task_type == "lambing":
-                result["regional_adjustments"].append(
-                    f"Typical lambing season: {typical_lambing}"
-                )
+                result["regional_adjustments"].append(f"Typical lambing season: {typical_lambing}")
 
             if "challenges" in region_info:
-                result["regional_adjustments"].extend([
-                    f"Consider: {c}" for c in region_info["challenges"][:2]
-                ])
+                result["regional_adjustments"].extend(
+                    [f"Consider: {c}" for c in region_info["challenges"][:2]]
+                )
 
         return result
 
@@ -136,25 +144,25 @@ class CalendarDomain:
                         "name": "Ram preparation",
                         "timing": "4-6 weeks before breeding",
                         "priority": "high",
-                        "details": "Evaluate body condition, fertility testing, hoof trimming"
+                        "details": "Evaluate body condition, fertility testing, hoof trimming",
                     },
                     {
                         "name": "Ewe flushing",
                         "timing": "2-3 weeks before ram introduction",
                         "priority": "high",
-                        "details": "Increase energy to improve ovulation rates"
+                        "details": "Increase energy to improve ovulation rates",
                     },
                     {
                         "name": "Ram introduction",
                         "timing": "Based on desired lambing date",
                         "priority": "high",
-                        "details": "1 ram per 25-35 ewes for natural breeding"
+                        "details": "1 ram per 25-35 ewes for natural breeding",
                     },
                     {
                         "name": "Breeding records",
                         "timing": "Throughout breeding",
                         "priority": "moderate",
-                        "details": "Mark rams with crayon/paint, record mating dates"
+                        "details": "Mark rams with crayon/paint, record mating dates",
                     },
                 ],
             },
@@ -164,31 +172,31 @@ class CalendarDomain:
                         "name": "Pre-lambing vaccination",
                         "timing": "4 weeks before lambing",
                         "priority": "high",
-                        "details": "CDT booster for passive immunity transfer"
+                        "details": "CDT booster for passive immunity transfer",
                     },
                     {
                         "name": "Shearing/crutching",
                         "timing": "4-6 weeks before lambing",
                         "priority": "moderate",
-                        "details": "Clean udder/dock area, easier lamb access"
+                        "details": "Clean udder/dock area, easier lamb access",
                     },
                     {
                         "name": "Lambing supplies",
                         "timing": "2 weeks before",
                         "priority": "high",
-                        "details": "Iodine, OB sleeves, colostrum, heat lamps, jugs"
+                        "details": "Iodine, OB sleeves, colostrum, heat lamps, jugs",
                     },
                     {
                         "name": "Lambing area setup",
                         "timing": "1 week before",
                         "priority": "high",
-                        "details": "Clean, dry, draft-free jugs prepared"
+                        "details": "Clean, dry, draft-free jugs prepared",
                     },
                     {
                         "name": "Newborn processing",
                         "timing": "Within 24 hours of birth",
                         "priority": "high",
-                        "details": "Naval dip, colostrum, tag, weigh"
+                        "details": "Naval dip, colostrum, tag, weigh",
                     },
                 ],
             },
@@ -198,25 +206,25 @@ class CalendarDomain:
                         "name": "Schedule shearer",
                         "timing": "2-3 months ahead",
                         "priority": "high",
-                        "details": "Good shearers book up early"
+                        "details": "Good shearers book up early",
                     },
                     {
                         "name": "Prepare shearing area",
                         "timing": "1 week before",
                         "priority": "moderate",
-                        "details": "Clean, dry floor, good lighting"
+                        "details": "Clean, dry floor, good lighting",
                     },
                     {
                         "name": "Withhold feed",
                         "timing": "12-24 hours before shearing",
                         "priority": "moderate",
-                        "details": "Reduces stress and prolapse risk"
+                        "details": "Reduces stress and prolapse risk",
                     },
                     {
                         "name": "Post-shearing housing",
                         "timing": "Immediately after shearing",
                         "priority": "high",
-                        "details": "Shelter for 2-3 weeks if cold weather"
+                        "details": "Shelter for 2-3 weeks if cold weather",
                     },
                 ],
             },
@@ -226,25 +234,25 @@ class CalendarDomain:
                         "name": "Parasite monitoring",
                         "timing": "Spring through fall",
                         "priority": "high",
-                        "details": "FAMACHA every 2-3 weeks, FECs monthly"
+                        "details": "FAMACHA every 2-3 weeks, FECs monthly",
                     },
                     {
                         "name": "Hoof trimming",
                         "timing": "Quarterly or as needed",
                         "priority": "moderate",
-                        "details": "More frequent in wet conditions"
+                        "details": "More frequent in wet conditions",
                     },
                     {
                         "name": "CDT vaccination",
                         "timing": "Annual booster",
                         "priority": "high",
-                        "details": "Pre-lambing for ewes, 6-8 weeks for lambs"
+                        "details": "Pre-lambing for ewes, 6-8 weeks for lambs",
                     },
                     {
                         "name": "Body condition scoring",
                         "timing": "Monthly",
                         "priority": "moderate",
-                        "details": "Target BCS 2.5-3.5 depending on stage"
+                        "details": "Target BCS 2.5-3.5 depending on stage",
                     },
                 ],
             },
@@ -254,19 +262,19 @@ class CalendarDomain:
                         "name": "Pasture rotation",
                         "timing": "Ongoing",
                         "priority": "moderate",
-                        "details": "Rest pastures 60+ days for parasite control"
+                        "details": "Rest pastures 60+ days for parasite control",
                     },
                     {
                         "name": "Facility maintenance",
                         "timing": "Pre-season",
                         "priority": "moderate",
-                        "details": "Check fencing, waterers, feeders"
+                        "details": "Check fencing, waterers, feeders",
                     },
                     {
                         "name": "Record keeping",
                         "timing": "Ongoing",
                         "priority": "moderate",
-                        "details": "Update breeding, health, and performance records"
+                        "details": "Update breeding, health, and performance records",
                     },
                 ],
             },
@@ -294,9 +302,18 @@ class CalendarDomain:
             else:
                 # Assume month name for current/next year
                 month_map = {
-                    "january": 1, "february": 2, "march": 3, "april": 4,
-                    "may": 5, "june": 6, "july": 7, "august": 8,
-                    "september": 9, "october": 10, "november": 11, "december": 12
+                    "january": 1,
+                    "february": 2,
+                    "march": 3,
+                    "april": 4,
+                    "may": 5,
+                    "june": 6,
+                    "july": 7,
+                    "august": 8,
+                    "september": 9,
+                    "october": 10,
+                    "november": 11,
+                    "december": 12,
                 }
                 month = month_map.get(target_lambing.lower(), 3)
                 year = datetime.now().year
@@ -398,24 +415,21 @@ class CalendarDomain:
                     {
                         "period": "Easter (spring)",
                         "target_weight": "40-65 lbs",
-                        "notes": "Highest prices for light lambs, ethnic markets"
+                        "notes": "Highest prices for light lambs, ethnic markets",
                     },
                     {
                         "period": "Eid al-Adha (varies)",
                         "target_weight": "60-90 lbs",
-                        "notes": "Major demand, date varies by lunar calendar"
+                        "notes": "Major demand, date varies by lunar calendar",
                     },
                     {
                         "period": "Late fall (pre-Thanksgiving)",
                         "target_weight": "110-130 lbs",
-                        "notes": "Good conventional market weights"
+                        "notes": "Good conventional market weights",
                     },
                 ],
                 "avoid": [
-                    {
-                        "period": "Late summer",
-                        "reason": "Market flooded, prices typically lowest"
-                    }
+                    {"period": "Late summer", "reason": "Market flooded, prices typically lowest"}
                 ],
                 "strategies": [
                     "Sync lambing to hit holiday markets",
@@ -425,13 +439,10 @@ class CalendarDomain:
             },
             "breeding_stock": {
                 "peak_demand": [
-                    {
-                        "period": "Late summer/early fall",
-                        "notes": "Before breeding season"
-                    },
+                    {"period": "Late summer/early fall", "notes": "Before breeding season"},
                     {
                         "period": "Post-lambing (spring)",
-                        "notes": "Buyers evaluating sire offspring"
+                        "notes": "Buyers evaluating sire offspring",
                     },
                 ],
                 "strategies": [
@@ -442,10 +453,7 @@ class CalendarDomain:
             },
             "wool": {
                 "peak_demand": [
-                    {
-                        "period": "Spring shearing",
-                        "notes": "Before lambing, longest staple"
-                    }
+                    {"period": "Spring shearing", "notes": "Before lambing, longest staple"}
                 ],
                 "strategies": [
                     "Quality skirting increases value",
@@ -485,8 +493,18 @@ class CalendarDomain:
             Dict with month-by-month task calendar
         """
         months = [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
         ]
 
         # Calculate key months relative to lambing
@@ -501,43 +519,55 @@ class CalendarDomain:
             tasks = []
 
             if month_num == breeding_month:
-                tasks.extend([
-                    "Ram introduction",
-                    "Breeding record keeping",
-                    "Monitor for returns to heat",
-                ])
+                tasks.extend(
+                    [
+                        "Ram introduction",
+                        "Breeding record keeping",
+                        "Monitor for returns to heat",
+                    ]
+                )
             elif month_num == (breeding_month - 1 - 1) % 12 + 1:
-                tasks.extend([
-                    "Ram preparation and fertility check",
-                    "Begin flushing ewes",
-                ])
+                tasks.extend(
+                    [
+                        "Ram preparation and fertility check",
+                        "Begin flushing ewes",
+                    ]
+                )
 
             if month_num == lambing_month:
-                tasks.extend([
-                    "LAMBING SEASON",
-                    "Daily monitoring",
-                    "Newborn processing",
-                    "Colostrum management",
-                ])
+                tasks.extend(
+                    [
+                        "LAMBING SEASON",
+                        "Daily monitoring",
+                        "Newborn processing",
+                        "Colostrum management",
+                    ]
+                )
             elif month_num == late_gestation:
-                tasks.extend([
-                    "Increase ewe nutrition",
-                    "Pre-lambing CDT vaccine",
-                    "Shearing/crutching",
-                ])
+                tasks.extend(
+                    [
+                        "Increase ewe nutrition",
+                        "Pre-lambing CDT vaccine",
+                        "Shearing/crutching",
+                    ]
+                )
             elif month_num == (lambing_month - 1 - 1) % 12 + 1:
-                tasks.extend([
-                    "Prepare lambing area",
-                    "Stock supplies",
-                    "Late gestation nutrition",
-                ])
+                tasks.extend(
+                    [
+                        "Prepare lambing area",
+                        "Stock supplies",
+                        "Late gestation nutrition",
+                    ]
+                )
 
             if month_num == weaning_month:
-                tasks.extend([
-                    "Weaning",
-                    "Lamb vaccinations (CDT booster)",
-                    "Sort and manage lamb groups",
-                ])
+                tasks.extend(
+                    [
+                        "Weaning",
+                        "Lamb vaccinations (CDT booster)",
+                        "Sort and manage lamb groups",
+                    ]
+                )
 
             # Seasonal tasks
             if month_num in [3, 4, 5]:  # Spring
@@ -581,9 +611,7 @@ class CalendarDomain:
             if "timeline" in data:
                 for event in data["timeline"][:3]:
                     if isinstance(event, dict):
-                        next_steps.append(
-                            f"{event.get('event', '')}: {event.get('date', '')}"
-                        )
+                        next_steps.append(f"{event.get('event', '')}: {event.get('date', '')}")
 
         return format_shepherd_response(
             answer=answer,
