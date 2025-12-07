@@ -32,6 +32,98 @@ def _record_prompt_execution(prompt_name: str, success: bool) -> None:
     server_metrics.record_prompt_execution(prompt_name, success)
 
 
+def _fetch_all_progeny(client: Any, sire_lpn: str, max_pages: int = 10) -> tuple[list, int]:
+    """Fetch all progeny for a sire with pagination.
+
+    Returns:
+        Tuple of (list of progeny animals, total count)
+    """
+    all_animals = []
+    page = 0
+    page_size = 100
+    total_count = 0
+
+    while page < max_pages:
+        progeny_page = client.get_progeny(lpn_id=sire_lpn, page=page, page_size=page_size)
+        if not progeny_page:
+            break
+        total_count = progeny_page.total_count
+        all_animals.extend(progeny_page.animals)
+        if len(all_animals) >= total_count:
+            break
+        page += 1
+
+    return all_animals, total_count
+
+
+def _count_progeny_by_sex(progeny_animals: list) -> tuple[int, int]:
+    """Count male and female offspring."""
+    males = sum(1 for p in progeny_animals if p.sex in ("M", "1"))
+    females = sum(1 for p in progeny_animals if p.sex in ("F", "2"))
+    return males, females
+
+
+def _collect_progeny_trait_stats(
+    client: Any, progeny_animals: list, max_fetch: int = 50
+) -> dict[str, list]:
+    """Fetch detailed EBVs for progeny and collect trait statistics."""
+    trait_stats: dict[str, list] = {}
+    fetched = 0
+
+    for prog in progeny_animals:
+        if fetched >= max_fetch:
+            break
+        try:
+            details = client.get_animal_details(search_string=prog.lpn_id)
+            if details and details.traits:
+                for name, trait_obj in details.traits.items():
+                    if trait_obj and trait_obj.value is not None:
+                        trait_stats.setdefault(name, []).append(trait_obj.value)
+                fetched += 1
+        except Exception:
+            pass  # Skip animals that fail to fetch
+
+    return trait_stats
+
+
+def _format_sire_ebvs(sire_traits: dict, trait_names: list[str]) -> str:
+    """Format sire's own EBVs for display."""
+    lines = []
+    for name in trait_names:
+        trait_data = sire_traits.get(name)
+        if trait_data:
+            val = trait_data.get("value") if isinstance(trait_data, dict) else None
+            if val is not None:
+                lines.append(f"- **{name}**: {val:.2f}")
+    return "\n".join(lines) + "\n" if lines else ""
+
+
+def _format_progeny_stats_table(trait_stats: dict, key_traits: list[str]) -> str:
+    """Format progeny EBV statistics as a markdown table."""
+    rows = []
+    for trait in key_traits:
+        values = trait_stats.get(trait, [])
+        if values:
+            avg = sum(values) / len(values)
+            min_v, max_v = min(values), max(values)
+            rows.append(f"| {trait} | {avg:.2f} | {min_v:.2f} | {max_v:.2f} | {len(values)} |")
+    return "\n".join(rows) + "\n" if rows else ""
+
+
+def _format_evaluation(sire_traits: dict, trait_stats: dict, traits: list[str]) -> str:
+    """Format sire vs progeny comparison."""
+    lines = []
+    for name in traits:
+        sire_trait = sire_traits.get(name)
+        sire_val = sire_trait.get("value") if isinstance(sire_trait, dict) else None
+        prog_vals = trait_stats.get(name, [])
+        if sire_val is not None and prog_vals:
+            prog_avg = sum(prog_vals) / len(prog_vals)
+            if prog_avg > 0:
+                lines.append(f"- {name}: Progeny averaging {prog_avg:.2f} (sire: {sire_val:.2f})")
+    return "\n".join(lines) + "\n" if lines else ""
+
+
 @mcp.prompt(
     name="ebv_analyzer", description="Compare and analyze EBV traits across a group of animals"
 )
@@ -488,27 +580,8 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
                 {"role": "user", "content": {"type": "text", "text": f"Sire not found: {sire_lpn}"}}
             ]
 
-        # Get progeny - paginate to collect all offspring (API max 100 per page)
-        all_progeny_animals = []
-        page = 0
-        page_size = 100  # Max allowed by API
-        total_count = 0
-
-        while True:
-            progeny_page = client.get_progeny(lpn_id=sire_lpn, page=page, page_size=page_size)
-            if not progeny_page:
-                break
-
-            total_count = progeny_page.total_count
-            all_progeny_animals.extend(progeny_page.animals)
-
-            # Check if we've retrieved all progeny
-            if len(all_progeny_animals) >= total_count:
-                break
-            # Safety limit to prevent infinite loops
-            if page >= 10:
-                break
-            page += 1
+        # Get all progeny with pagination
+        all_progeny_animals, total_count = _fetch_all_progeny(client, sire_lpn)
 
         if not all_progeny_animals:
             _record_prompt_execution("progeny_report", False)
@@ -520,36 +593,19 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
             ]
 
         sire_data = sire.to_dict()
+        sire_traits = sire_data.get("traits", {})
 
-        # Calculate statistics - need to fetch details for each offspring
-        # because progeny endpoint doesn't include EBV data
-        trait_stats: dict[str, list] = {}
-        males = 0
-        females = 0
-        fetched_count = 0
-        max_fetch = min(len(all_progeny_animals), 50)  # Limit API calls
+        # Count by sex and collect trait statistics
+        males, females = _count_progeny_by_sex(all_progeny_animals)
+        max_fetch = min(len(all_progeny_animals), 50)
+        trait_stats = _collect_progeny_trait_stats(client, all_progeny_animals, max_fetch)
 
-        for prog_animal in all_progeny_animals:
-            # Count sex from progeny list (always available)
-            sex = prog_animal.sex
-            if sex in ("M", "1"):
-                males += 1
-            elif sex in ("F", "2"):
-                females += 1
-
-            # Fetch detailed EBVs for up to max_fetch animals
-            if fetched_count < max_fetch:
-                try:
-                    details = client.get_animal_details(search_string=prog_animal.lpn_id)
-                    if details and details.traits:
-                        for trait_name, trait_obj in details.traits.items():
-                            if trait_obj and trait_obj.value is not None:
-                                if trait_name not in trait_stats:
-                                    trait_stats[trait_name] = []
-                                trait_stats[trait_name].append(trait_obj.value)
-                        fetched_count += 1
-                except Exception:
-                    pass  # Skip animals that fail to fetch
+        # Build the report
+        sire_ebvs = _format_sire_ebvs(sire_traits, ["BWT", "WWT", "PWWT", "NLW"])
+        sample_note = f" (based on {max_fetch} sampled)" if max_fetch < total_count else ""
+        key_traits = ["BWT", "WWT", "PWWT", "YWT", "NLW", "MWWT"]
+        stats_table = _format_progeny_stats_table(trait_stats, key_traits)
+        evaluation = _format_evaluation(sire_traits, trait_stats, ["PWWT", "NLW"])
 
         result = f"""## Progeny Report: {sire_lpn}
 
@@ -560,55 +616,15 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
 
 ### Sire's Own EBVs
 
-"""
-        # AnimalDetails uses 'traits' dict of Trait objects, not 'ebvs'
-        sire_traits = sire_data.get("traits", {})
-        for trait_name in ["BWT", "WWT", "PWWT", "NLW"]:
-            trait_data = sire_traits.get(trait_name)
-            if trait_data:
-                val = trait_data.get("value") if isinstance(trait_data, dict) else None
-                if val is not None:
-                    result += f"- **{trait_name}**: {val:.2f}\n"
-
-        sample_note = ""
-        if fetched_count < total_count:
-            sample_note = f" (based on {fetched_count} sampled)"
-
-        result += f"""
+{sire_ebvs}
 ### Progeny EBV Averages{sample_note}
 
 | Trait | Average | Min | Max | Count |
 | --- | --- | --- | --- | --- |
-"""
-        key_traits = ["BWT", "WWT", "PWWT", "YWT", "NLW", "MWWT"]
-        for trait in key_traits:
-            values = trait_stats.get(trait, [])
-            if values:
-                avg = sum(values) / len(values)
-                min_v = min(values)
-                max_v = max(values)
-                cnt = len(values)
-                result += f"| {trait} | {avg:.2f} | {min_v:.2f} | {max_v:.2f} | {cnt} |\n"
-
-        result += """
+{stats_table}
 ### Evaluation
 
-"""
-        # Compare sire EBVs to progeny averages
-        for trait_name in ["PWWT", "NLW"]:
-            # Get sire's trait value from Trait object
-            sire_trait = sire_traits.get(trait_name)
-            sire_val = None
-            if sire_trait:
-                sire_val = sire_trait.get("value") if isinstance(sire_trait, dict) else None
-            prog_vals = trait_stats.get(trait_name, [])
-            if sire_val is not None and prog_vals:
-                prog_avg = sum(prog_vals) / len(prog_vals)
-                if prog_avg > 0:
-                    result += (
-                        f"- {trait_name}: Progeny averaging {prog_avg:.2f} "
-                        f"(sire: {sire_val:.2f})\n"
-                    )
+{evaluation}"""
 
         _record_prompt_execution("progeny_report", True)
         return [{"role": "user", "content": {"type": "text", "text": result}}]

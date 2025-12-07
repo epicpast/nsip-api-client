@@ -60,6 +60,43 @@ def _project_offspring_ebv(sire_ebv: float | None, dam_ebv: float | None) -> flo
     return (sire_ebv + dam_ebv) / 2
 
 
+def _analyze_trait_strengths(projected_ebvs: dict) -> list[str]:
+    """Analyze projected EBVs for breeding strengths."""
+    strengths = []
+    if projected_ebvs.get("PWWT", 0) > 5:
+        strengths.append("Strong post-weaning growth potential")
+    if projected_ebvs.get("WWT", 0) > 3:
+        strengths.append("Good weaning weight genetics")
+    if projected_ebvs.get("NLW", 0) > 0.1:
+        strengths.append("Above-average lamb survival genetics")
+    bwt = projected_ebvs.get("BWT", 0)
+    if bwt < -0.5:
+        strengths.append("Lower birth weight reduces lambing difficulty")
+    return strengths
+
+
+def _analyze_trait_concerns(projected_ebvs: dict, f_coefficient: float) -> list[str]:
+    """Analyze projected EBVs and inbreeding for concerns."""
+    concerns = []
+    bwt = projected_ebvs.get("BWT", 0)
+    if bwt > 1.5:
+        concerns.append("Higher birth weight may increase dystocia risk")
+    if f_coefficient > 0.0625:
+        concerns.append(f"High inbreeding ({f_coefficient*100:.1f}%) - consider alternatives")
+    elif f_coefficient > 0.03:
+        concerns.append(f"Moderate inbreeding ({f_coefficient*100:.1f}%) - monitor carefully")
+    return concerns
+
+
+def _determine_recommendation(f_coefficient: float, strengths: list, concerns: list) -> tuple:
+    """Determine overall breeding recommendation and summary."""
+    if f_coefficient > 0.0625:
+        return "avoid", "High inbreeding risk outweighs genetic benefits. Choose a different ram."
+    if len(concerns) > len(strengths):
+        return "caution", "Some concerns exist. Weigh benefits against risks for your goals."
+    return "proceed", "Good genetic match. Mating should produce quality offspring."
+
+
 def _find_common_ancestors(lineage1: dict, lineage2: dict, depth: int = 4) -> list[str]:
     """Find common ancestors in two lineage trees.
 
@@ -306,43 +343,12 @@ async def get_breeding_recommendation(ram_lpn: str, ewe_lpn: str) -> dict[str, A
             if projected is not None:
                 projected_ebvs[trait] = round(projected, 2)
 
-        # Analyze strengths and concerns
-        strengths = []
-        concerns = []
-
-        # Check growth traits
-        if projected_ebvs.get("PWWT", 0) > 5:
-            strengths.append("Strong post-weaning growth potential")
-        if projected_ebvs.get("WWT", 0) > 3:
-            strengths.append("Good weaning weight genetics")
-
-        # Check maternal traits
-        if projected_ebvs.get("NLW", 0) > 0.1:
-            strengths.append("Above-average lamb survival genetics")
-
-        # Check birth weight (too high can be a concern)
-        bwt = projected_ebvs.get("BWT", 0)
-        if bwt > 1.5:
-            concerns.append("Higher birth weight may increase dystocia risk")
-        elif bwt < -0.5:
-            strengths.append("Lower birth weight reduces lambing difficulty")
-
-        # Check inbreeding
-        if f_coefficient > 0.0625:
-            concerns.append(f"High inbreeding ({f_coefficient*100:.1f}%) - consider alternatives")
-        elif f_coefficient > 0.03:
-            concerns.append(f"Moderate inbreeding ({f_coefficient*100:.1f}%) - monitor carefully")
+        # Analyze strengths and concerns using helper functions
+        strengths = _analyze_trait_strengths(projected_ebvs)
+        concerns = _analyze_trait_concerns(projected_ebvs, f_coefficient)
 
         # Determine overall recommendation
-        if f_coefficient > 0.0625:
-            recommendation = "avoid"
-            summary = "High inbreeding risk outweighs genetic benefits. Choose a different ram."
-        elif len(concerns) > len(strengths):
-            recommendation = "caution"
-            summary = "Some concerns exist. Weigh benefits against risks for your goals."
-        else:
-            recommendation = "proceed"
-            summary = "Good genetic match. Mating should produce quality offspring."
+        recommendation, summary = _determine_recommendation(f_coefficient, strengths, concerns)
 
         _record_resource_access("nsip://breeding/{ram}/{ewe}/recommendation", start)
 

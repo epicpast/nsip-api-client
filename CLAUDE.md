@@ -246,6 +246,54 @@ Detailed documentation: `docs/nsip-skills.md`
 3. **Cache key order** - Parameters must be JSON-serializable; sorted automatically
 4. **Summarization** - Never automatic; explicitly pass `summarize=True` when needed
 5. **Coverage threshold** - CI requires 95%, not 80%
+6. **FastMCP decorated functions** - Use `.fn` to call underlying function (e.g., `get_animal_details_resource.fn(lpn_id="...")`)
+
+## Testing Patterns
+
+### Testing MCP Resources (async functions)
+
+MCP resource functions are async and wrapped by FastMCP decorators. Test pattern:
+
+```python
+import asyncio
+from unittest.mock import MagicMock, patch
+
+def test_get_animal_details_api_error(self) -> None:
+    with patch("nsip_mcp.resources.animal_resources.get_nsip_client") as mock_get:
+        with patch("nsip_mcp.resources.animal_resources.response_cache") as mock_cache:
+            mock_cache.get.return_value = None  # Cache miss
+            mock_client = MagicMock()
+            mock_client.get_animal_details.side_effect = NSIPAPIError("API error")
+            mock_get.return_value = mock_client
+
+            from nsip_mcp.resources.animal_resources import get_animal_details_resource
+            # Use .fn to call the underlying function, not the FunctionTool wrapper
+            result = asyncio.run(get_animal_details_resource.fn(lpn_id="6332-12345"))
+            assert "error" in result
+```
+
+### Key Testing Fixtures (conftest.py)
+
+- `sample_lpn_id` → `"6####92020###249"`
+- `sample_breed_id` → `486` (South African Meat Merino)
+
+## Error Codes Reference
+
+JSON-RPC 2.0 error codes used in `errors.py`:
+
+| Code | Constant | Usage |
+|------|----------|-------|
+| -32602 | `INVALID_PARAMS` | Bad input parameters |
+| -32000 | `NSIP_API_ERROR` | Upstream API failure |
+| -32001 | `CACHE_ERROR` | Cache operation failed |
+| -32002 | `SUMMARIZATION_ERROR` | Token reduction failed |
+| -32003 | `VALIDATION_ERROR` | Field validation failed |
+| -32004 | `TIMEOUT_ERROR` | Request timeout |
+| -32005 | `RESOURCE_NOT_FOUND` | MCP resource not found |
+| -32006 | `PROMPT_EXECUTION_ERROR` | Prompt failed |
+| -32007 | `SAMPLING_ERROR` | Rate limit / sampling issue |
+| -32008 | `REGION_UNKNOWN` | Invalid NSIP region |
+| -32009 | `KNOWLEDGE_BASE_ERROR` | KB file not found |
 
 ## NSIP API Quirks
 

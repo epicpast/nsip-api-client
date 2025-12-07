@@ -33,6 +33,40 @@ recommendations, cite data sources, acknowledge uncertainty when information is 
 and give actionable next steps. You respect regional differences in sheep production."""
 
 
+def _format_cost_component(component: str, values: dict) -> str:
+    """Format a single cost component for display."""
+    if not isinstance(values, dict) or "average" not in values:
+        return ""
+    avg = values.get("average", 0)
+    low = values.get("low", 0)
+    high = values.get("high", 0)
+    desc = values.get("description", "")
+    result = f"- **{component.title()}**: ${avg} (range: ${low}-${high})"
+    if desc:
+        result += f" - {desc}"
+    return result + "\n"
+
+
+def _format_revenue_item(market_type: str, data: dict) -> str:
+    """Format a single revenue item for display."""
+    if not isinstance(data, dict):
+        return ""
+    result = ""
+    if "typical_range" in data:
+        ranges = data.get("typical_range", {})
+        result = f"- **{market_type.replace('_', ' ').title()}**: "
+        result += f"${ranges.get('average', 0)} average "
+        result += f"(range: ${ranges.get('low', 0)}-${ranges.get('high', 0)})\n"
+    elif "market_types" in data:
+        result = f"**{market_type.replace('_', ' ').title()}**:\n"
+        for mtype, mdata in data.get("market_types", {}).items():
+            if isinstance(mdata, dict) and "typical_range" in mdata:
+                tr = mdata.get("typical_range", {})
+                result += f"  - {mtype.title()}: ${tr.get('average', 0)} "
+                result += f"({mdata.get('unit', '')})\n"
+    return result
+
+
 @mcp.prompt(
     name="shepherd_breeding",
     description="Get expert advice on breeding decisions and genetic improvement",
@@ -317,6 +351,31 @@ async def shepherd_economics_prompt(
         scale_data = get_economics_template("scale_considerations")
         scale_info = scale_data.get("scale_considerations", {}).get("flock_size_economics", {})
 
+        # Build cost section
+        components = ewe_costs.get("components", {}) if ewe_costs else {}
+        cost_lines = "".join(
+            _format_cost_component(comp, vals) for comp, vals in components.items()
+        )
+
+        # Add total if available
+        total = ewe_costs.get("total", {}) if ewe_costs else {}
+        total_line = ""
+        if total:
+            total_line = f"\n**Total Annual Cost**: ${total.get('average', 0)} "
+            total_line += f"(range: ${total.get('low', 0)}-${total.get('high', 0)})\n"
+
+        # Build revenue section
+        revenue_lines = "".join(
+            _format_revenue_item(mt, data) for mt, data in (revenue or {}).items()
+        )
+
+        # Build scale section
+        scale_lines = ""
+        if scale_info and flock_size in scale_info:
+            info = scale_info.get(flock_size, {})
+            scale_lines = f"- Size: {info.get('size', 'varies')}\n"
+            scale_lines += "".join(f"- {char}\n" for char in info.get("characteristics", []))
+
         context = f"""
 {SHEPHERD_PERSONA}
 
@@ -327,59 +386,13 @@ async def shepherd_economics_prompt(
 
 ## Cost Templates (Annual per Ewe)
 
-"""
-        # ewe_costs has 'components' dict with cost categories
-        components = ewe_costs.get("components", {}) if ewe_costs else {}
-        for component, values in components.items():
-            if isinstance(values, dict) and "average" in values:
-                avg = values.get("average", 0)
-                low = values.get("low", 0)
-                high = values.get("high", 0)
-                desc = values.get("description", "")
-                context += f"- **{component.title()}**: ${avg} (range: ${low}-${high})"
-                if desc:
-                    context += f" - {desc}"
-                context += "\n"
-
-        # Add total if available
-        total = ewe_costs.get("total", {}) if ewe_costs else {}
-        if total:
-            context += f"\n**Total Annual Cost**: ${total.get('average', 0)} "
-            context += f"(range: ${total.get('low', 0)}-${total.get('high', 0)})\n"
-
-        context += """
+{cost_lines}{total_line}
 ## Revenue Potential
 
-"""
-        # revenue has market types like lamb_sales, wool_income, breeding_stock
-        if revenue:
-            for market_type, data in revenue.items():
-                if isinstance(data, dict):
-                    if "typical_range" in data:
-                        ranges = data.get("typical_range", {})
-                        context += f"- **{market_type.replace('_', ' ').title()}**: "
-                        context += f"${ranges.get('average', 0)} average "
-                        context += f"(range: ${ranges.get('low', 0)}-${ranges.get('high', 0)})\n"
-                    elif "market_types" in data:
-                        # lamb_sales has nested market_types
-                        context += f"**{market_type.replace('_', ' ').title()}**:\n"
-                        for mtype, mdata in data.get("market_types", {}).items():
-                            if isinstance(mdata, dict) and "typical_range" in mdata:
-                                tr = mdata.get("typical_range", {})
-                                context += f"  - {mtype.title()}: ${tr.get('average', 0)} "
-                                context += f"({mdata.get('unit', '')})\n"
-
-        context += f"""
+{revenue_lines}
 ## Scale Considerations: {flock_size.title()} Flock
 
-"""
-        if scale_info and flock_size in scale_info:
-            info = scale_info.get(flock_size, {})
-            context += f"- Size: {info.get('size', 'varies')}\n"
-            for char in info.get("characteristics", []):
-                context += f"- {char}\n"
-
-        context += f"""
+{scale_lines}
 ## User Question
 
 {question}
