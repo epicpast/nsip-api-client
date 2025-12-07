@@ -5,6 +5,8 @@ A Python client for the NSIP (National Sheep Improvement Program) Search API, re
 ---
 
 > **🐑 New to NSIP Tools?** Check out the **[Getting Started Guide](docs/getting-started-guide.md)** for step-by-step instructions on using these tools with Claude Desktop or other AI assistants. No programming experience required!
+>
+> **📚 Example Prompts**: Browse the **[Examples Library](docs/examples/)** for copy-paste prompts covering tools, workflows, resources, and skills.
 
 ---
 
