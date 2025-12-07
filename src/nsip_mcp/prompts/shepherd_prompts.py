@@ -159,7 +159,9 @@ async def shepherd_health_prompt(
                     prevention_list = disease_info.get('prevention', [])
                     # prevention may be a list or string
                     if isinstance(prevention_list, list):
-                        prevention = prevention_list[0] if prevention_list else 'Consult veterinarian'
+                        prevention = (
+                            prevention_list[0] if prevention_list else 'Consult vet'
+                        )
                     else:
                         prevention = str(prevention_list)
                     context += f"- **{disease_name.replace('_', ' ').title()}**: {prevention}\n"
