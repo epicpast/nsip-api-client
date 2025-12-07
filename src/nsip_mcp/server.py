@@ -4,6 +4,7 @@ This module sets up the FastMCP server instance and configures transport mechani
 for MCP protocol communication.
 """
 
+import sys
 import time
 
 from fastmcp import FastMCP
@@ -63,20 +64,21 @@ def start_server():
     startup_duration = time.time() - _startup_start
     server_metrics.set_startup_time(startup_duration)
 
-    # Log startup information
-    print(f"Starting NSIP MCP Server with {transport_config.transport_type.value} transport")
-    print(f"Startup time: {startup_duration:.3f}s (target: <3s)")
+    # Log startup information to stderr (stdout reserved for JSON-RPC in stdio mode)
+    log = sys.stderr.write
+    log(f"Starting NSIP MCP Server with {transport_config.transport_type.value} transport\n")
+    log(f"Startup time: {startup_duration:.3f}s (target: <3s)\n")
 
     # Start server with configured transport
     # FastMCP 2.12.4+ provides native Streamable HTTP support
     if transport_config.transport_type == TransportType.STDIO:
-        # stdio uses default stdin/stdout
-        print("Listening on stdin/stdout")
-        mcp.run()
+        # stdio uses default stdin/stdout - no banner to stdout (would corrupt JSON-RPC)
+        log("Listening on stdin/stdout\n")
+        mcp.run(show_banner=False)
     elif transport_config.transport_type == TransportType.STREAMABLE_HTTP:
         # Streamable HTTP (MCP spec 2025-03-26)
-        print(
-            f"Listening on {transport_config.host}:{transport_config.port}{transport_config.path}"
+        log(
+            f"Listening on {transport_config.host}:{transport_config.port}{transport_config.path}\n"
         )
         mcp.run(
             transport="streamable-http",
@@ -86,7 +88,7 @@ def start_server():
         )
     elif transport_config.transport_type == TransportType.WEBSOCKET:
         # WebSocket transport
-        print(f"Listening on ws://{transport_config.host}:{transport_config.port}/ws")
+        log(f"Listening on ws://{transport_config.host}:{transport_config.port}/ws\n")
         # FastMCP types don't include websocket transport but it works at runtime
         mcp.run(
             transport="websocket",  # type: ignore[arg-type]
