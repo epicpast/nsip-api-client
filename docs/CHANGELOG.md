@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2025-12-07
+
+### Added
+- **5 Shepherd MCP Tools**: Exposed the AI Shepherd advisor as MCP tools
+  - `shepherd_consult` - General sheep husbandry advice
+  - `shepherd_breeding` - EBV interpretation, mating advice, genetics
+  - `shepherd_health` - Disease prevention, nutrition, parasites
+  - `shepherd_calendar` - Seasonal planning, breeding schedules
+  - `shepherd_economics` - Cost analysis, ROI, market timing
+
+- **Enhanced `nsip_list_breeds`**: Now returns individual breeds within each breed group
+  - Response includes `breeds` array per group with breed id and name
+  - Example: `{"id": 64, "name": "Hair", "breeds": [{"id": 640, "name": "Katahdin"}, ...]}`
+
+### Changed
+- MCP tool count increased from 10 to 15 (10 NSIP API + 5 Shepherd tools)
+- Transport documentation updated to prefer `streamable-http` over legacy `http-sse`
+
+### Documentation
+- Added `docs/getting-started-guide.md` - Non-technical user guide for farmers/breeders
+- Added `docs/mcp-configurations.md` - Comprehensive MCP config examples (uvx, Docker, transports)
+- Updated `llms.txt` with complete MCP tools, resources, prompts, and Shepherd agent reference
+- Updated CLAUDE.md, README.md, and mcp-server.md with correct tool counts
+- Fixed Python version requirements in CONTRIBUTING.md (3.10+) and RELEASE.md (3.10-3.13)
+
 ## [nsip-skills 1.3.0] - 2025-12-06
 
 ### Added

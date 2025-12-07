@@ -6,7 +6,7 @@ This document describes how to create a new release of the NSIP API Client.
 
 Releases are automated via GitHub Actions. When you push a version tag, the workflow will:
 
-1. ✅ Run all tests on Python 3.8, 3.9, 3.10, 3.11, 3.12
+1. ✅ Run all tests on Python 3.10, 3.11, 3.12, 3.13
 2. ✅ Run quality checks (black, isort, flake8, mypy)
 3. 📦 Build distribution packages (wheel and source)
 4. ✅ Validate package with twine

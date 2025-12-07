@@ -5,8 +5,8 @@ Thank you for your interest in contributing to the NSIP API Client!
 ## Development Setup
 
 ### Prerequisites
-- Python 3.8 or higher
-- pip and virtualenv
+- Python 3.10 or higher
+- pip and virtualenv (or uv)
 
 ### Getting Started
 
@@ -34,7 +34,7 @@ pip install -e ".[dev]"
 pytest
 
 # Run with coverage
-pytest --cov=nsip_client --cov-report=html
+pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=html
 
 # Run specific test file
 pytest tests/test_client.py

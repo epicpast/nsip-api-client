@@ -207,12 +207,14 @@ tests/
 
 Markers: `@pytest.mark.integration`, `@pytest.mark.slow`
 
-## MCP Tools Reference
+## MCP Tools Reference (15 Tools)
+
+### NSIP API Tools (10)
 
 | Tool | Description | Caching | Summarization |
 |------|-------------|---------|---------------|
 | `nsip_get_last_update` | Database timestamp | ✓ | N/A |
-| `nsip_list_breeds` | Breed groups (61=Range, 62=Maternal Wool, 64=Hair, 69=Terminal) | ✓ | N/A |
+| `nsip_list_breeds` | Breed groups with individual breeds | ✓ | N/A |
 | `nsip_get_statuses` | Animal statuses | ✓ | N/A |
 | `nsip_get_trait_ranges` | Min/max trait values by breed | ✓ | N/A |
 | `nsip_search_animals` | Paginated animal search | ✓ | Optional |
@@ -221,6 +223,16 @@ Markers: `@pytest.mark.integration`, `@pytest.mark.slow`
 | `nsip_get_progeny` | Offspring list | ✓ | Optional |
 | `nsip_search_by_lpn` | Complete profile (details+lineage+progeny) | ✓ | Optional |
 | `get_server_health` | Metrics dashboard | No | N/A |
+
+### Shepherd Consultation Tools (5)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `shepherd_consult` | General sheep husbandry advice | `question`, `region` |
+| `shepherd_breeding` | EBV interpretation, mating advice, genetics | `question`, `region`, `production_goal` |
+| `shepherd_health` | Disease prevention, nutrition, parasites | `question`, `region`, `life_stage` |
+| `shepherd_calendar` | Seasonal planning, breeding schedules | `question`, `region`, `task_type` |
+| `shepherd_economics` | Cost analysis, ROI, market timing | `question`, `flock_size`, `market_focus` |
 
 ## NSIP Skills Reference (Claude Code Slash Commands)
 
