@@ -1,9 +1,11 @@
 name: Docker Build
 
+# This workflow handles PR validation and branch builds only.
+# Versioned Docker images (v1.3.4, latest) are built by release.yml
+
 on:
   push:
-    branches: [ main, develop ]
-    tags: [ 'v*' ]
+    branches: [ develop ]
   pull_request:
     branches: [ main, develop ]
 
