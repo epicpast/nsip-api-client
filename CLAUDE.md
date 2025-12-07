@@ -390,13 +390,13 @@ Detailed documentation: `docs/shepherd-agent.md`
 
 ```bash
 # Pull pre-built image from GitHub Container Registry
-docker pull ghcr.io/epicpast/nsip-mcp-server:latest
+docker pull ghcr.io/epicpast/nsip-api-client:latest
 
 # Run with stdio transport (for Claude Desktop)
-docker run -i ghcr.io/epicpast/nsip-mcp-server:latest
+docker run -i ghcr.io/epicpast/nsip-api-client:latest
 
 # Run with HTTP transport
-docker run -p 8000:8000 -e MCP_TRANSPORT=streamable-http ghcr.io/epicpast/nsip-mcp-server:latest
+docker run -p 8000:8000 -e MCP_TRANSPORT=streamable-http ghcr.io/epicpast/nsip-api-client:latest
 ```
 
 See `docker/` directory for Dockerfile and configuration.

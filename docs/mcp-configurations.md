@@ -151,10 +151,10 @@ For isolated, reproducible deployments using pre-built images from GitHub Contai
 
 ```bash
 # Pull latest release
-docker pull ghcr.io/epicpast/nsip-mcp-server:latest
+docker pull ghcr.io/epicpast/nsip-api-client:latest
 
 # Or pull a specific version
-docker pull ghcr.io/epicpast/nsip-mcp-server:1.3.4
+docker pull ghcr.io/epicpast/nsip-api-client:1.3.4
 ```
 
 **Step 2: Configure Claude Desktop**
@@ -168,7 +168,7 @@ docker pull ghcr.io/epicpast/nsip-mcp-server:1.3.4
         "run",
         "-i",
         "--rm",
-        "ghcr.io/epicpast/nsip-mcp-server:latest"
+        "ghcr.io/epicpast/nsip-api-client:latest"
       ]
     }
   }
@@ -186,7 +186,7 @@ docker pull ghcr.io/epicpast/nsip-mcp-server:1.3.4
         "run",
         "-i",
         "--rm",
-        "ghcr.io/epicpast/nsip-mcp-server:1.3.4"
+        "ghcr.io/epicpast/nsip-api-client:1.3.4"
       ]
     }
   }
@@ -326,20 +326,20 @@ Pre-built Docker images are available from GitHub Container Registry. No build r
 
 ```bash
 # Pull the latest release
-docker pull ghcr.io/epicpast/nsip-mcp-server:latest
+docker pull ghcr.io/epicpast/nsip-api-client:latest
 
 # Or pull a specific version
-docker pull ghcr.io/epicpast/nsip-mcp-server:1.3.4
+docker pull ghcr.io/epicpast/nsip-api-client:1.3.4
 
 # Run stdio mode (for Claude Desktop)
-docker run -i --rm ghcr.io/epicpast/nsip-mcp-server:latest
+docker run -i --rm ghcr.io/epicpast/nsip-api-client:latest
 
 # Run HTTP mode
 docker run -d -p 8000:8000 \
   -e MCP_TRANSPORT=streamable-http \
   -e MCP_PORT=8000 \
   --name nsip-http \
-  ghcr.io/epicpast/nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-api-client:latest
 ```
 
 ### docker-compose.yml
@@ -352,7 +352,7 @@ version: '3.8'
 services:
   # stdio mode (for MCP clients like Claude Desktop)
   nsip-mcp-stdio:
-    image: ghcr.io/epicpast/nsip-mcp-server:1.3.4
+    image: ghcr.io/epicpast/nsip-api-client:1.3.4
     container_name: nsip-mcp-stdio
     environment:
       MCP_TRANSPORT: stdio
@@ -365,7 +365,7 @@ services:
 
   # Streamable HTTP mode (for web applications)
   nsip-mcp-http:
-    image: ghcr.io/epicpast/nsip-mcp-server:1.3.4
+    image: ghcr.io/epicpast/nsip-api-client:1.3.4
     container_name: nsip-mcp-http
     environment:
       MCP_TRANSPORT: streamable-http
@@ -388,7 +388,7 @@ services:
 
   # WebSocket mode (for real-time applications)
   nsip-mcp-websocket:
-    image: ghcr.io/epicpast/nsip-mcp-server:1.3.4
+    image: ghcr.io/epicpast/nsip-api-client:1.3.4
     container_name: nsip-mcp-websocket
     environment:
       MCP_TRANSPORT: websocket
@@ -403,7 +403,7 @@ services:
 
   # Production mode with persistent cache
   nsip-mcp-production:
-    image: ghcr.io/epicpast/nsip-mcp-server:1.3.4
+    image: ghcr.io/epicpast/nsip-api-client:1.3.4
     container_name: nsip-mcp-production
     environment:
       MCP_TRANSPORT: streamable-http
@@ -443,24 +443,24 @@ volumes:
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/epicpast/nsip-mcp-server:latest
+docker pull ghcr.io/epicpast/nsip-api-client:latest
 
 # Run stdio mode (for Claude Desktop)
-docker run -i --rm ghcr.io/epicpast/nsip-mcp-server:latest
+docker run -i --rm ghcr.io/epicpast/nsip-api-client:latest
 
 # Run Streamable HTTP mode
 docker run -d -p 8000:8000 \
   -e MCP_TRANSPORT=streamable-http \
   -e MCP_PORT=8000 \
   --name nsip-http \
-  ghcr.io/epicpast/nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-api-client:latest
 
 # Run WebSocket mode
 docker run -d -p 9000:9000 \
   -e MCP_TRANSPORT=websocket \
   -e MCP_PORT=9000 \
   --name nsip-ws \
-  ghcr.io/epicpast/nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-api-client:latest
 
 # Run with persistent cache
 docker run -d -p 8000:8000 \
@@ -468,7 +468,7 @@ docker run -d -p 8000:8000 \
   -e MCP_PORT=8000 \
   -v nsip-cache:/app/.cache/tiktoken \
   --name nsip-http \
-  ghcr.io/epicpast/nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-api-client:latest
 
 # Docker Compose commands
 docker-compose up                           # Start default (HTTP) service
@@ -489,7 +489,7 @@ docker-compose down -v                      # Stop and remove volumes
         "run",
         "-i",
         "--rm",
-        "ghcr.io/epicpast/nsip-mcp-server:latest"
+        "ghcr.io/epicpast/nsip-api-client:latest"
       ]
     }
   }
@@ -1011,7 +1011,7 @@ nsip-mcp-server
 **Use with Docker:**
 
 ```bash
-docker run --env-file .env -p 8000:8000 ghcr.io/epicpast/nsip-mcp-server:latest
+docker run --env-file .env -p 8000:8000 ghcr.io/epicpast/nsip-api-client:latest
 ```
 
 **Use with Docker Compose:**
@@ -1019,7 +1019,7 @@ docker run --env-file .env -p 8000:8000 ghcr.io/epicpast/nsip-mcp-server:latest
 ```yaml
 services:
   nsip-mcp:
-    image: ghcr.io/epicpast/nsip-mcp-server:latest
+    image: ghcr.io/epicpast/nsip-api-client:latest
     env_file:
       - .env
     ports:
@@ -1120,13 +1120,13 @@ MCP_PORT=70000 # Bad (out of range)
 
 ```bash
 # For stdio mode, always use -i
-docker run -i --rm ghcr.io/epicpast/nsip-mcp-server:latest
+docker run -i --rm ghcr.io/epicpast/nsip-api-client:latest
 
 # For HTTP/WebSocket, ensure port mapping
 docker run -d -p 8000:8000 \
   -e MCP_TRANSPORT=streamable-http \
   -e MCP_PORT=8000 \
-  ghcr.io/epicpast/nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-api-client:latest
 ```
 
 #### Issue: "Address already in use"
@@ -1182,10 +1182,10 @@ echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-1
 docker images | grep nsip
 
 # Test stdio mode
-echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | docker run -i --rm ghcr.io/epicpast/nsip-mcp-server:latest
+echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | docker run -i --rm ghcr.io/epicpast/nsip-api-client:latest
 
 # Test HTTP mode
-docker run -d -p 8000:8000 -e MCP_TRANSPORT=streamable-http -e MCP_PORT=8000 --name nsip-test ghcr.io/epicpast/nsip-mcp-server:latest
+docker run -d -p 8000:8000 -e MCP_TRANSPORT=streamable-http -e MCP_PORT=8000 --name nsip-test ghcr.io/epicpast/nsip-api-client:latest
 curl http://localhost:8000/health
 docker rm -f nsip-test
 ```

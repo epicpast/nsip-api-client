@@ -243,7 +243,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/epicpast/nsip-mcp-server
+        images: ghcr.io/${{ github.repository }}
         tags: |
           type=raw,value=latest
           type=raw,value=${{ needs.bump-and-tag.outputs.server_version }}
@@ -264,5 +264,5 @@ jobs:
       env:
         SERVER_VERSION: ${{ needs.bump-and-tag.outputs.server_version }}
       run: |
-        docker pull "ghcr.io/epicpast/nsip-mcp-server:$SERVER_VERSION"
-        docker run --rm "ghcr.io/epicpast/nsip-mcp-server:$SERVER_VERSION" python -c "import nsip_client; import nsip_mcp; print('Imports OK')"
+        docker pull "ghcr.io/${{ github.repository }}:$SERVER_VERSION"
+        docker run --rm "ghcr.io/${{ github.repository }}:$SERVER_VERSION" python -c "import nsip_client; import nsip_mcp; print('Imports OK')"
