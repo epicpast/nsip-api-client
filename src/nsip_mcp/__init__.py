@@ -12,6 +12,7 @@ Key Features:
 - Shepherd AI advisor with 4 domains (breeding, health, calendar, economics)
 - Automatic response summarization for large payloads (>2000 tokens)
 - In-memory caching with 1-hour TTL
+- Multi-platform Docker support (amd64, arm64)
 - Multiple transport support (stdio, streamable-http, WebSocket)
 - Context-aware token management using tiktoken (cl100k_base)
 
