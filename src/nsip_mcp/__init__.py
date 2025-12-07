@@ -22,7 +22,7 @@ Usage:
 For detailed usage, see quickstart.md in the specs/001-create-an-mcp/ directory.
 """
 
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 __author__ = "Allen R"
 __all__ = [
     "__version__",
