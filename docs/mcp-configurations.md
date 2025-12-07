@@ -22,7 +22,7 @@ Complete configuration reference for deploying the NSIP MCP Server across differ
 |-------------------|----------|---------------|
 | uvx | Quick setup, no installation | uv installed |
 | pip install | Permanent installation | Python 3.10+ |
-| Docker | Isolated environments | Docker 20.10+ |
+| Docker (ghcr.io) | Isolated environments, no build | Docker 20.10+ |
 | From source | Development | Git, Python 3.10+ |
 
 | Transport | Port Required | Use Case |
@@ -145,14 +145,16 @@ python -c "import shutil; print(shutil.which('nsip-mcp-server'))"
 
 ### Option 3: Using Docker
 
-For isolated, reproducible deployments.
+For isolated, reproducible deployments using pre-built images from GitHub Container Registry.
 
-**Step 1: Build the Docker image**
+**Step 1: Pull the image from GitHub Container Registry**
 
 ```bash
-git clone https://github.com/epicpast/nsip-api-client.git
-cd nsip-api-client
-docker build -t nsip-mcp-server:latest .
+# Pull latest release
+docker pull ghcr.io/epicpast/nsip-mcp-server:latest
+
+# Or pull a specific version
+docker pull ghcr.io/epicpast/nsip-mcp-server:1.3.4
 ```
 
 **Step 2: Configure Claude Desktop**
@@ -166,14 +168,14 @@ docker build -t nsip-mcp-server:latest .
         "run",
         "-i",
         "--rm",
-        "nsip-mcp-server:latest"
+        "ghcr.io/epicpast/nsip-mcp-server:latest"
       ]
     }
   }
 }
 ```
 
-**With version tag:**
+**With specific version (recommended for production):**
 
 ```json
 {
@@ -184,7 +186,7 @@ docker build -t nsip-mcp-server:latest .
         "run",
         "-i",
         "--rm",
-        "nsip-mcp-server:1.3.4"
+        "ghcr.io/epicpast/nsip-mcp-server:1.3.4"
       ]
     }
   }
@@ -192,6 +194,11 @@ docker build -t nsip-mcp-server:latest .
 ```
 
 **Note:** The `-i` flag is required for stdio transport to work with Docker.
+
+**Available image tags:**
+- `latest` - Most recent stable release
+- `1.3.4`, `1.3.3`, etc. - Specific version releases
+- `main` - Latest from main branch (development)
 
 ---
 
@@ -313,72 +320,31 @@ uvx --reinstall nsip-mcp-server
 
 ## Docker Configurations
 
-### Dockerfile
+Pre-built Docker images are available from GitHub Container Registry. No build required!
 
-The project includes a production-ready Dockerfile. If building from source:
+### Quick Start with Pre-built Images
 
-```dockerfile
-# NSIP MCP Server Dockerfile
-# Multi-stage build for optimized image size and security
+```bash
+# Pull the latest release
+docker pull ghcr.io/epicpast/nsip-mcp-server:latest
 
-# Stage 1: Builder
-FROM python:3.11-slim AS builder
+# Or pull a specific version
+docker pull ghcr.io/epicpast/nsip-mcp-server:1.3.4
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ && rm -rf /var/lib/apt/lists/*
+# Run stdio mode (for Claude Desktop)
+docker run -i --rm ghcr.io/epicpast/nsip-mcp-server:latest
 
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel build hatchling
-
-WORKDIR /build
-COPY src/ ./src/
-COPY packaging/ ./packaging/
-COPY README.md LICENSE ./
-
-# Build and install packages
-WORKDIR /build/packaging/nsip-client
-RUN ln -sf ../../src/nsip_client src/nsip_client && python -m build --wheel
-RUN pip install --no-cache-dir dist/*.whl
-
-WORKDIR /build/packaging/nsip-mcp-server
-RUN ln -sf ../../src/nsip_mcp src/nsip_mcp && python -m build --wheel
-RUN pip install --no-cache-dir dist/*.whl
-
-# Stage 2: Runtime
-FROM python:3.11-slim
-
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    MCP_TRANSPORT=stdio \
-    TIKTOKEN_CACHE_DIR=/app/.cache/tiktoken \
-    LOG_LEVEL=INFO
-
-RUN groupadd -r nsip --gid=1000 && \
-    useradd -r -g nsip --uid=1000 --home-dir=/app --shell=/bin/bash nsip
-
-WORKDIR /app
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-RUN mkdir -p /app/.cache/tiktoken && chown -R nsip:nsip /app
-USER nsip
-
-EXPOSE 8000 9000
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD if [ "$MCP_TRANSPORT" = "streamable-http" ] || [ "$MCP_TRANSPORT" = "websocket" ]; then \
-            python -c "import urllib.request; urllib.request.urlopen('http://localhost:${MCP_PORT:-8000}/health').read()"; \
-        else exit 0; fi
-
-ENTRYPOINT ["nsip-mcp-server"]
-CMD []
+# Run HTTP mode
+docker run -d -p 8000:8000 \
+  -e MCP_TRANSPORT=streamable-http \
+  -e MCP_PORT=8000 \
+  --name nsip-http \
+  ghcr.io/epicpast/nsip-mcp-server:latest
 ```
 
 ### docker-compose.yml
 
-Complete docker-compose configuration with multiple profiles:
+Complete docker-compose configuration using pre-built images:
 
 ```yaml
 version: '3.8'
@@ -386,10 +352,7 @@ version: '3.8'
 services:
   # stdio mode (for MCP clients like Claude Desktop)
   nsip-mcp-stdio:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: nsip-mcp-server:1.3.4
+    image: ghcr.io/epicpast/nsip-mcp-server:1.3.4
     container_name: nsip-mcp-stdio
     environment:
       MCP_TRANSPORT: stdio
@@ -402,10 +365,7 @@ services:
 
   # Streamable HTTP mode (for web applications)
   nsip-mcp-http:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: nsip-mcp-server:1.3.4
+    image: ghcr.io/epicpast/nsip-mcp-server:1.3.4
     container_name: nsip-mcp-http
     environment:
       MCP_TRANSPORT: streamable-http
@@ -428,10 +388,7 @@ services:
 
   # WebSocket mode (for real-time applications)
   nsip-mcp-websocket:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: nsip-mcp-server:1.3.4
+    image: ghcr.io/epicpast/nsip-mcp-server:1.3.4
     container_name: nsip-mcp-websocket
     environment:
       MCP_TRANSPORT: websocket
@@ -446,10 +403,7 @@ services:
 
   # Production mode with persistent cache
   nsip-mcp-production:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: nsip-mcp-server:1.3.4
+    image: ghcr.io/epicpast/nsip-mcp-server:1.3.4
     container_name: nsip-mcp-production
     environment:
       MCP_TRANSPORT: streamable-http
@@ -488,25 +442,25 @@ volumes:
 ### Docker Commands Reference
 
 ```bash
-# Build the image
-docker build -t nsip-mcp-server:latest .
+# Pull the latest image
+docker pull ghcr.io/epicpast/nsip-mcp-server:latest
 
 # Run stdio mode (for Claude Desktop)
-docker run -i --rm nsip-mcp-server:latest
+docker run -i --rm ghcr.io/epicpast/nsip-mcp-server:latest
 
 # Run Streamable HTTP mode
 docker run -d -p 8000:8000 \
   -e MCP_TRANSPORT=streamable-http \
   -e MCP_PORT=8000 \
   --name nsip-http \
-  nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-mcp-server:latest
 
 # Run WebSocket mode
 docker run -d -p 9000:9000 \
   -e MCP_TRANSPORT=websocket \
   -e MCP_PORT=9000 \
   --name nsip-ws \
-  nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-mcp-server:latest
 
 # Run with persistent cache
 docker run -d -p 8000:8000 \
@@ -514,7 +468,7 @@ docker run -d -p 8000:8000 \
   -e MCP_PORT=8000 \
   -v nsip-cache:/app/.cache/tiktoken \
   --name nsip-http \
-  nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-mcp-server:latest
 
 # Docker Compose commands
 docker-compose up                           # Start default (HTTP) service
@@ -535,12 +489,24 @@ docker-compose down -v                      # Stop and remove volumes
         "run",
         "-i",
         "--rm",
-        "nsip-mcp-server:latest"
+        "ghcr.io/epicpast/nsip-mcp-server:latest"
       ]
     }
   }
 }
 ```
+
+### Building from Source (Optional)
+
+If you need to build a custom image (for development or modifications):
+
+```bash
+git clone https://github.com/epicpast/nsip-api-client.git
+cd nsip-api-client
+docker build -t nsip-mcp-server:custom .
+```
+
+See the [Dockerfile](../Dockerfile) in the repository for the full build configuration.
 
 ---
 
@@ -1045,7 +1011,7 @@ nsip-mcp-server
 **Use with Docker:**
 
 ```bash
-docker run --env-file .env -p 8000:8000 nsip-mcp-server:latest
+docker run --env-file .env -p 8000:8000 ghcr.io/epicpast/nsip-mcp-server:latest
 ```
 
 **Use with Docker Compose:**
@@ -1053,7 +1019,7 @@ docker run --env-file .env -p 8000:8000 nsip-mcp-server:latest
 ```yaml
 services:
   nsip-mcp:
-    image: nsip-mcp-server:latest
+    image: ghcr.io/epicpast/nsip-mcp-server:latest
     env_file:
       - .env
     ports:
@@ -1154,13 +1120,13 @@ MCP_PORT=70000 # Bad (out of range)
 
 ```bash
 # For stdio mode, always use -i
-docker run -i --rm nsip-mcp-server:latest
+docker run -i --rm ghcr.io/epicpast/nsip-mcp-server:latest
 
 # For HTTP/WebSocket, ensure port mapping
 docker run -d -p 8000:8000 \
   -e MCP_TRANSPORT=streamable-http \
   -e MCP_PORT=8000 \
-  nsip-mcp-server:latest
+  ghcr.io/epicpast/nsip-mcp-server:latest
 ```
 
 #### Issue: "Address already in use"
@@ -1216,10 +1182,10 @@ echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-1
 docker images | grep nsip
 
 # Test stdio mode
-echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | docker run -i --rm nsip-mcp-server:latest
+echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | docker run -i --rm ghcr.io/epicpast/nsip-mcp-server:latest
 
 # Test HTTP mode
-docker run -d -p 8000:8000 -e MCP_TRANSPORT=streamable-http -e MCP_PORT=8000 --name nsip-test nsip-mcp-server:latest
+docker run -d -p 8000:8000 -e MCP_TRANSPORT=streamable-http -e MCP_PORT=8000 --name nsip-test ghcr.io/epicpast/nsip-mcp-server:latest
 curl http://localhost:8000/health
 docker rm -f nsip-test
 ```
