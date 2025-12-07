@@ -188,11 +188,19 @@ uv run python -m nsip_skills.flock_stats my_flock.csv --name "My Flock"
 
 ## Release Process
 
-1. Update `version` in `pyproject.toml`
-2. Update `docs/CHANGELOG.md` (NOT root level)
-3. Run `./run_tests_and_coverage.sh`
-4. Commit, tag (`git tag -a vX.Y.Z`), push with tags
-5. Create GitHub release referencing `docs/CHANGELOG.md`
+```bash
+# Version bump (automated)
+python scripts/bump_version.py --package client --bump patch   # Patch: 1.3.4 → 1.3.5
+python scripts/bump_version.py --package server --bump patch   # Patch server only
+python scripts/bump_version.py --package skills --bump patch   # Patch skills only
+python scripts/bump_version.py --package all --bump minor      # Minor: 1.3.x → 1.4.0 (aligns all)
+```
+
+**Manual steps after version bump:**
+1. Update `docs/CHANGELOG.md` (NOT root level)
+2. Run `./run_tests_and_coverage.sh`
+3. Commit, tag (`git tag -a vX.Y.Z`), push with tags
+4. Create GitHub release referencing `docs/CHANGELOG.md`
 
 ## Test Structure
 
@@ -366,3 +374,29 @@ The Shepherd is an AI-powered breeding advisor with four domains:
 **Persona**: Neutral expert (veterinarian-like), evidence-based, acknowledges uncertainty
 
 Detailed documentation: `docs/shepherd-agent.md`
+
+## Additional Documentation
+
+| Document | Purpose |
+|----------|---------|
+| `llms.txt` | LLM-optimized reference documentation (full API, data models, examples) |
+| `docs/nsip-skills.md` | Detailed NSIP Skills guide |
+| `docs/mcp-resources.md` | MCP Resources specification |
+| `docs/mcp-prompts.md` | MCP Prompts specification |
+| `docs/shepherd-agent.md` | Shepherd AI agent guide |
+| `docs/CHANGELOG.md` | Version history |
+
+## Docker Deployment
+
+```bash
+# Pull pre-built image from GitHub Container Registry
+docker pull ghcr.io/epicpast/nsip-mcp-server:latest
+
+# Run with stdio transport (for Claude Desktop)
+docker run -i ghcr.io/epicpast/nsip-mcp-server:latest
+
+# Run with HTTP transport
+docker run -p 8000:8000 -e MCP_TRANSPORT=streamable-http ghcr.io/epicpast/nsip-mcp-server:latest
+```
+
+See `docker/` directory for Dockerfile and configuration.
