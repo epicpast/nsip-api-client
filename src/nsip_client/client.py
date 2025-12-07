@@ -124,20 +124,23 @@ class NSIPClient:
 
     def get_available_breed_groups(self) -> list[BreedGroup]:
         """
-        Get list of available breed groups
+        Get list of available breed groups with their breeds
 
         Returns:
-            List of BreedGroup objects with their IDs and names
+            List of BreedGroup objects with their IDs, names, and breeds
 
         Example:
             >>> client = NSIPClient()
             >>> groups = client.get_available_breed_groups()
             >>> for group in groups:
             ...     print(f"{group.id}: {group.name}")
+            ...     for breed in group.breeds:
+            ...         print(f"  - {breed['id']}: {breed['name']}")
             61: Range
-            62: Maternal Wool
+              - 486: South African Meat Merino
+              - 610: Targhee
             64: Hair
-            69: Terminal
+              - 640: Katahdin
         """
         data = self._make_request("GET", "search/getAvailableBreedGroups")
 
@@ -148,14 +151,25 @@ class NSIPClient:
             # Fallback for old format (direct list)
             breed_list = data
 
-        # Support multiple field name formats
-        return [
-            BreedGroup(
-                id=int(g.get("breedGroupId") or g.get("Id") or g.get("id") or 0),
-                name=str(g.get("breedGroupName") or g.get("Name") or g.get("name") or ""),
-            )
-            for g in breed_list
-        ]
+        # Support multiple field name formats and extract breeds
+        result = []
+        for g in breed_list:
+            group_id = int(g.get("breedGroupId") or g.get("Id") or g.get("id") or 0)
+            group_name = str(g.get("breedGroupName") or g.get("Name") or g.get("name") or "")
+
+            # Extract breeds within the group
+            raw_breeds = g.get("breeds", [])
+            breeds = [
+                {
+                    "id": int(b.get("breedId") or b.get("id") or 0),
+                    "name": str(b.get("breedName") or b.get("name") or ""),
+                }
+                for b in raw_breeds
+            ]
+
+            result.append(BreedGroup(id=group_id, name=group_name, breeds=breeds))
+
+        return result
 
     def get_statuses_by_breed_group(self) -> list[str]:
         """

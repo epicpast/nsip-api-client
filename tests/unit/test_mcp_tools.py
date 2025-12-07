@@ -118,25 +118,32 @@ class TestNsipListBreeds:
 
     @patch("nsip_mcp.tools.NSIPClient")
     def test_returns_breed_list(self, mock_client_class):
-        """Verify tool returns array of breeds with id and name."""
+        """Verify tool returns array of breed groups with their breeds."""
         mock_client = MagicMock()
 
-        # Create mock breed objects with id and name attributes
+        # Create mock breed group objects with id, name, and breeds attributes
         mock_breed_1 = MagicMock()
         mock_breed_1.id = 61
         mock_breed_1.name = "Range"
+        mock_breed_1.breeds = [
+            {"id": 486, "name": "South African Meat Merino"},
+            {"id": 610, "name": "Targhee"},
+        ]
 
         mock_breed_2 = MagicMock()
         mock_breed_2.id = 62
         mock_breed_2.name = "Maternal Wool"
+        mock_breed_2.breeds = []
 
         mock_breed_3 = MagicMock()
         mock_breed_3.id = 64
         mock_breed_3.name = "Hair"
+        mock_breed_3.breeds = [{"id": 640, "name": "Katahdin"}]
 
         mock_breed_4 = MagicMock()
         mock_breed_4.id = 69
         mock_breed_4.name = "Terminal"
+        mock_breed_4.breeds = []
 
         mock_client.get_available_breed_groups.return_value = [
             mock_breed_1,
@@ -151,10 +158,17 @@ class TestNsipListBreeds:
         assert result["success"] is True
         assert "data" in result
         expected_data = [
-            {"id": 61, "name": "Range"},
-            {"id": 62, "name": "Maternal Wool"},
-            {"id": 64, "name": "Hair"},
-            {"id": 69, "name": "Terminal"},
+            {
+                "id": 61,
+                "name": "Range",
+                "breeds": [
+                    {"id": 486, "name": "South African Meat Merino"},
+                    {"id": 610, "name": "Targhee"},
+                ],
+            },
+            {"id": 62, "name": "Maternal Wool", "breeds": []},
+            {"id": 64, "name": "Hair", "breeds": [{"id": 640, "name": "Katahdin"}]},
+            {"id": 69, "name": "Terminal", "breeds": []},
         ]
         assert result["data"] == expected_data
         mock_client.get_available_breed_groups.assert_called_once()
@@ -167,6 +181,7 @@ class TestNsipListBreeds:
         mock_breed = MagicMock()
         mock_breed.id = 61
         mock_breed.name = "Range"
+        mock_breed.breeds = [{"id": 486, "name": "Targhee"}]
 
         mock_client.get_available_breed_groups.return_value = [mock_breed]
         mock_client_class.return_value = mock_client
@@ -1016,6 +1031,7 @@ class TestCacheBehavior:
         mock_breed = MagicMock()
         mock_breed.id = 61
         mock_breed.name = "Range"
+        mock_breed.breeds = []
         mock_client.get_available_breed_groups.return_value = [mock_breed]
 
         mock_client.get_statuses_by_breed_group.return_value = ["CURRENT"]

@@ -52,12 +52,23 @@ class TestNSIPClient:
 
     @pytest.fixture
     def mock_breed_groups(self):
-        """Mock breed groups response"""
+        """Mock breed groups response with breeds"""
         return [
-            {"Id": 61, "Name": "Range"},
-            {"Id": 62, "Name": "Maternal Wool"},
-            {"Id": 64, "Name": "Hair"},
-            {"Id": 69, "Name": "Terminal"},
+            {
+                "breedGroupId": 61,
+                "breedGroupName": "Range",
+                "breeds": [
+                    {"breedId": 486, "breedName": "South African Meat Merino"},
+                    {"breedId": 610, "breedName": "Targhee"},
+                ],
+            },
+            {"breedGroupId": 62, "breedGroupName": "Maternal Wool", "breeds": []},
+            {
+                "breedGroupId": 64,
+                "breedGroupName": "Hair",
+                "breeds": [{"breedId": 640, "breedName": "Katahdin"}],
+            },
+            {"breedGroupId": 69, "breedGroupName": "Terminal", "breeds": []},
         ]
 
     @pytest.fixture
@@ -119,7 +130,7 @@ class TestNSIPClient:
             assert result["date"] == "09/23/2025"
 
     def test_get_available_breed_groups(self, client, mock_breed_groups):
-        """Test getting breed groups"""
+        """Test getting breed groups with breeds"""
         with requests_mock.Mocker() as m:
             m.get(
                 "http://nsipsearch.nsip.org/api/search/getAvailableBreedGroups",
@@ -129,6 +140,16 @@ class TestNSIPClient:
             assert len(groups) == 4
             assert groups[0].id == 61
             assert groups[0].name == "Range"
+            # Check breeds are extracted
+            assert len(groups[0].breeds) == 2
+            assert groups[0].breeds[0]["id"] == 486
+            assert groups[0].breeds[0]["name"] == "South African Meat Merino"
+            # Hair group has Katahdin
+            assert groups[2].id == 64
+            assert groups[2].name == "Hair"
+            assert len(groups[2].breeds) == 1
+            assert groups[2].breeds[0]["id"] == 640
+            assert groups[2].breeds[0]["name"] == "Katahdin"
 
     def test_get_available_breed_groups_camelcase(self, client):
         """Test getting breed groups with camelCase field names"""

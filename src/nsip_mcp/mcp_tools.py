@@ -264,22 +264,32 @@ def nsip_list_breeds() -> dict[str, Any]:
     """Get list of available breed groups in the NSIP database.
 
     Returns:
-        Dict containing list of breed groups with their IDs and names
+        Dict containing list of breed groups with their IDs and names,
+        plus the individual breeds within each group.
 
     Example:
         {
             'success': True,
             'data': [
-                {'id': 61, 'name': 'Range'},
-                {'id': 62, 'name': 'Maternal Wool'},
-                {'id': 64, 'name': 'Hair'},
-                {'id': 69, 'name': 'Terminal'}
+                {'id': 61, 'name': 'Range', 'breeds': [
+                    {'id': 486, 'name': 'South African Meat Merino'},
+                    {'id': 610, 'name': 'Targhee'}
+                ]},
+                {'id': 62, 'name': 'Maternal Wool', 'breeds': [...]},
+                {'id': 64, 'name': 'Hair', 'breeds': [
+                    {'id': 640, 'name': 'Katahdin'},
+                    {'id': 641, 'name': 'St. Croix'}
+                ]},
+                {'id': 69, 'name': 'Terminal', 'breeds': [...]}
             ]
         }
     """
     client = get_nsip_client()
     breed_groups = client.get_available_breed_groups()
-    return {"success": True, "data": [{"id": bg.id, "name": bg.name} for bg in breed_groups]}
+    return {
+        "success": True,
+        "data": [{"id": bg.id, "name": bg.name, "breeds": bg.breeds} for bg in breed_groups],
+    }
 
 
 @mcp.tool()
