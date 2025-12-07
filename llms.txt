@@ -1,0 +1,1226 @@
+# NSIP API Client - LLM Reference Documentation
+
+> Python packages for accessing the National Sheep Improvement Program (NSIP) API
+> and building breeding decision support tools.
+
+## Quick Reference
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| nsip-client | 1.3.2 | Pure Python API client |
+| nsip-mcp-server | 1.3.2 | MCP server for LLM integration |
+| nsip-skills | 1.3.3 | Breeding decision support tools |
+
+**Repository**: https://github.com/epicpast/nsip-api-client
+**API Base URL**: http://nsipsearch.nsip.org/api
+**Authentication**: None required (public API)
+
+---
+
+## Table of Contents
+
+1. [Installation](#installation)
+2. [Quick Start](#quick-start)
+3. [Package: nsip-client](#package-nsip-client)
+4. [Package: nsip-mcp-server](#package-nsip-mcp-server)
+5. [Package: nsip-skills](#package-nsip-skills)
+6. [Data Models](#data-models)
+7. [Error Handling](#error-handling)
+8. [Common Patterns](#common-patterns)
+9. [Trait Reference](#trait-reference)
+
+---
+
+## Installation
+
+```bash
+# Core API client only
+pip install nsip-client
+
+# MCP server for LLM integration
+pip install nsip-mcp-server
+
+# Breeding decision support tools
+pip install nsip-skills
+
+# With Google Sheets support
+pip install nsip-skills[gsheets]
+```
+
+### Requirements
+
+- Python 3.10+
+- Dependencies are auto-installed:
+  - nsip-client: requests, python-dateutil
+  - nsip-mcp-server: nsip-client, fastmcp, tiktoken
+  - nsip-skills: nsip-client, pandas, openpyxl, numpy
+
+---
+
+## Quick Start
+
+### Basic API Usage
+
+```python
+from nsip_client import NSIPClient
+
+client = NSIPClient()
+
+# Get breed groups
+groups = client.get_available_breed_groups()
+# Returns: [BreedGroup(id=61, name='Range'), BreedGroup(id=64, name='Hair'), ...]
+
+# Get animal details by LPN ID
+animal = client.get_animal_details("6####92020###249")
+print(f"{animal.breed} - {animal.gender}")
+# Output: Katahdin - Female
+
+# Get traits
+for trait_name, trait in animal.traits.items():
+    print(f"{trait_name}: {trait.value} (accuracy: {trait.accuracy}%)")
+```
+
+### Using the Cached Client (nsip-skills)
+
+```python
+from nsip_skills import CachedNSIPClient
+
+client = CachedNSIPClient()  # Caches to ~/.cache/nsip/
+
+# First call fetches from API, subsequent calls use cache
+animal = client.get_animal_details("6####92020###249")
+animal = client.get_animal_details("6####92020###249")  # Uses cache
+
+# Batch operations
+results = client.batch_get_animals(
+    lpn_ids=["LPN1", "LPN2", "LPN3"],
+    include_lineage=True,
+    include_progeny=True,
+    on_error="skip"  # or "raise"
+)
+```
+
+### MCP Server Usage
+
+```bash
+# Start MCP server (stdio, for Claude Desktop)
+nsip-mcp-server
+
+# HTTP mode for web apps
+MCP_TRANSPORT=streamable-http MCP_PORT=8000 nsip-mcp-server
+
+# WebSocket mode
+MCP_TRANSPORT=websocket MCP_PORT=9000 nsip-mcp-server
+```
+
+---
+
+## Package: nsip-client
+
+Pure Python client for the NSIP Search API.
+
+### NSIPClient Class
+
+```python
+class NSIPClient:
+    BASE_URL = "http://nsipsearch.nsip.org/api"
+
+    def __init__(self, timeout: int = 30, base_url: str = None):
+        """
+        Args:
+            timeout: Request timeout in seconds (default: 30)
+            base_url: Override the base URL (useful for testing)
+        """
+```
+
+### Methods
+
+#### get_date_last_updated()
+
+```python
+def get_date_last_updated() -> dict[str, Any]
+```
+
+Returns the last database update date.
+
+**Returns**: `{'date': '09/23/2025'}`
+
+---
+
+#### get_available_breed_groups()
+
+```python
+def get_available_breed_groups() -> list[BreedGroup]
+```
+
+Returns all breed groups with their IDs.
+
+**Returns**:
+```python
+[
+    BreedGroup(id=61, name='Range'),
+    BreedGroup(id=62, name='Maternal Wool'),
+    BreedGroup(id=64, name='Hair'),
+    BreedGroup(id=69, name='Terminal')
+]
+```
+
+---
+
+#### get_statuses_by_breed_group()
+
+```python
+def get_statuses_by_breed_group() -> list[str]
+```
+
+Returns available animal statuses.
+
+**Returns**: `['CURRENT', 'SOLD', 'DEAD', 'COMMERCIAL', 'CULL', 'EXPORTED', ...]`
+
+---
+
+#### get_trait_ranges_by_breed(breed_id)
+
+```python
+def get_trait_ranges_by_breed(breed_id: int) -> dict[str, Any]
+```
+
+Returns min/max trait values for a breed.
+
+**Args**:
+- `breed_id`: Breed ID (use get_available_breed_groups to find IDs)
+
+**Returns**:
+```python
+{
+    'BWT': {'min': -0.713, 'max': 0.0},
+    'WWT': {'min': -1.234, 'max': 2.456},
+    ...
+}
+```
+
+**Raises**: `NSIPValidationError` if breed_id is invalid
+
+---
+
+#### search_animals(...)
+
+```python
+def search_animals(
+    page: int = 0,
+    page_size: int = 15,
+    breed_id: int | None = None,
+    sorted_trait: str | None = None,
+    reverse: bool | None = None,
+    search_criteria: SearchCriteria | dict[str, Any] | None = None,
+) -> SearchResults
+```
+
+Search for animals with filtering and pagination.
+
+**Args**:
+- `page`: Page number (0-indexed)
+- `page_size`: Results per page (1-100)
+- `breed_id`: Filter by breed
+- `sorted_trait`: Sort by trait (e.g., "BWT", "WWT")
+- `reverse`: Sort in descending order
+- `search_criteria`: Advanced filtering
+
+**Returns**: `SearchResults` with `total_count`, `results`, `page`, `page_size`
+
+**Example**:
+```python
+from nsip_client import SearchCriteria
+
+criteria = SearchCriteria(
+    breed_group_id=64,
+    gender="Male",
+    status="CURRENT",
+    born_after="2020-01-01"
+)
+results = client.search_animals(search_criteria=criteria, page_size=50)
+print(f"Found {results.total_count} animals")
+```
+
+---
+
+#### get_animal_details(search_string)
+
+```python
+def get_animal_details(search_string: str) -> AnimalDetails
+```
+
+Get complete information about a specific animal.
+
+**Args**:
+- `search_string`: LPN ID or registration number
+
+**Returns**: `AnimalDetails` object
+
+**Raises**: `NSIPNotFoundError` if animal not found
+
+**Example**:
+```python
+animal = client.get_animal_details("6####92020###249")
+print(f"Breed: {animal.breed}")
+print(f"DOB: {animal.date_of_birth}")
+print(f"BWT: {animal.traits['BWT'].value}")
+```
+
+---
+
+#### get_lineage(lpn_id)
+
+```python
+def get_lineage(lpn_id: str) -> Lineage
+```
+
+Get pedigree/ancestry information.
+
+**Args**:
+- `lpn_id`: LPN ID of the animal
+
+**Returns**: `Lineage` with `subject`, `sire`, `dam`, and `generations`
+
+---
+
+#### get_progeny(lpn_id, page, page_size)
+
+```python
+def get_progeny(lpn_id: str, page: int = 0, page_size: int = 10) -> Progeny
+```
+
+Get offspring list for an animal.
+
+**Args**:
+- `lpn_id`: LPN ID of the parent
+- `page`: Page number (0-indexed)
+- `page_size`: Results per page
+
+**Returns**: `Progeny` with `total_count` and `animals` list
+
+---
+
+#### search_by_lpn(lpn_id)
+
+```python
+def search_by_lpn(lpn_id: str) -> dict[str, Any]
+```
+
+Convenience method: get details + lineage + progeny in one call.
+
+**Returns**:
+```python
+{
+    'details': AnimalDetails,
+    'lineage': Lineage,
+    'progeny': Progeny
+}
+```
+
+---
+
+## Package: nsip-mcp-server
+
+MCP (Model Context Protocol) server for LLM integration.
+
+### MCP Tools
+
+All tools support optional `summarize=True` to reduce token usage.
+By default, full data is preserved (`summarize=False`).
+
+#### nsip_get_last_update()
+
+Get the NSIP database last update date.
+
+**Returns**: `{'date': '09/23/2025'}`
+
+---
+
+#### nsip_list_breeds()
+
+Get available breed groups.
+
+**Returns**:
+```python
+{
+    'success': True,
+    'data': [
+        {'id': 61, 'name': 'Range'},
+        {'id': 62, 'name': 'Maternal Wool'},
+        {'id': 64, 'name': 'Hair'},
+        {'id': 69, 'name': 'Terminal'}
+    ]
+}
+```
+
+---
+
+#### nsip_get_statuses()
+
+Get available animal statuses.
+
+**Returns**:
+```python
+{
+    'success': True,
+    'data': ['CURRENT', 'SOLD', 'DEAD', 'COMMERCIAL', 'CULL', 'EXPORTED']
+}
+```
+
+---
+
+#### nsip_get_trait_ranges(breed_id)
+
+Get min/max trait values for a breed.
+
+**Args**:
+- `breed_id` (int): Breed ID
+
+---
+
+#### nsip_search_animals(...)
+
+Search animals with filtering.
+
+**Args**:
+- `page` (int): Page number, default 0
+- `page_size` (int): Results per page, default 15 (max 100)
+- `breed_id` (int, optional): Filter by breed
+- `sorted_trait` (str, optional): Sort by trait
+- `reverse` (bool, optional): Reverse sort order
+- `search_criteria` (dict, optional): Advanced filters
+- `summarize` (bool): Summarize response, default False
+
+---
+
+#### nsip_get_animal(search_string, summarize=False)
+
+Get animal details.
+
+**Args**:
+- `search_string` (str): LPN ID or registration number
+- `summarize` (bool): Summarize response, default False
+
+---
+
+#### nsip_get_lineage(lpn_id, summarize=False)
+
+Get pedigree information.
+
+**Args**:
+- `lpn_id` (str): LPN ID
+- `summarize` (bool): Summarize response, default False
+
+---
+
+#### nsip_get_progeny(lpn_id, page=0, page_size=10, summarize=False)
+
+Get offspring list.
+
+**Args**:
+- `lpn_id` (str): LPN ID of parent
+- `page` (int): Page number
+- `page_size` (int): Results per page
+- `summarize` (bool): Summarize response, default False
+
+---
+
+#### nsip_search_by_lpn(lpn_id, summarize=False)
+
+Get complete profile (details + lineage + progeny).
+
+**Args**:
+- `lpn_id` (str): LPN ID
+- `summarize` (bool): Summarize response, default False
+
+---
+
+### Caching
+
+The MCP server uses in-memory caching:
+- TTL: 1 hour (3600 seconds)
+- Max entries: 1000
+- Eviction: FIFO (First In, First Out)
+- Cache key format: `method_name:sorted_json_params`
+
+---
+
+### Configuration
+
+Environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MCP_TRANSPORT` | `stdio` | Transport mode: `stdio`, `streamable-http`, `websocket` |
+| `MCP_PORT` | `8000` | Port for HTTP/WebSocket modes |
+
+---
+
+## Package: nsip-skills
+
+Breeding decision support tools with 10 modules and CLI commands.
+
+### CachedNSIPClient
+
+Enhanced client with two-level caching (memory + file).
+
+```python
+from nsip_skills import CachedNSIPClient
+
+client = CachedNSIPClient(
+    cache_dir="~/.cache/nsip",  # Default location
+    ttl=3600,                   # 1 hour TTL
+    timeout=30                  # API timeout
+)
+
+# Same API as NSIPClient, plus:
+animal = client.get_animal_details("LPN123", force_refresh=True)  # Bypass cache
+
+# Batch operations
+results = client.batch_get_animals(
+    lpn_ids=["LPN1", "LPN2"],
+    include_lineage=True,
+    include_progeny=True,
+    on_error="skip"  # or "raise"
+)
+
+# Get all progeny (auto-paginate)
+all_progeny = client.get_all_progeny("LPN123")
+
+# Clear cache
+cleared = client.clear_cache()
+```
+
+---
+
+### Skill Modules and CLI Commands
+
+#### 1. Flock Import (nsip-flock-import)
+
+Import and enrich flock data from spreadsheets.
+
+```bash
+nsip-flock-import input.xlsx --output enriched.xlsx
+nsip-flock-import input.xlsx --lpn-column "LPN ID" --output enriched.xlsx
+```
+
+```python
+from nsip_skills.flock_import import import_flock, enrich_flock_data
+
+# Import from spreadsheet
+records = import_flock("flock.xlsx", lpn_column="LPN")
+
+# Enrich with NSIP data
+enriched = enrich_flock_data(records, client)
+```
+
+---
+
+#### 2. EBV Analysis (nsip-ebv-analysis)
+
+Compare and rank animals by EBV traits.
+
+```bash
+nsip-ebv-analysis LPN1 LPN2 LPN3 --traits BWT WWT PWWT
+nsip-ebv-analysis --file lpn_list.txt --output analysis.xlsx
+```
+
+```python
+from nsip_skills.ebv_analysis import analyze_ebvs, compare_animals, rank_by_trait
+
+# Analyze traits
+analysis = analyze_ebvs(lpn_ids, client)
+
+# Compare animals
+comparison = compare_animals(lpn_ids, traits=["BWT", "WWT"], client=client)
+
+# Rank by trait
+ranked = rank_by_trait(lpn_ids, "WWT", client=client)
+```
+
+---
+
+#### 3. Inbreeding Calculator (nsip-inbreeding)
+
+Calculate inbreeding coefficients using Wright's path method.
+
+```bash
+nsip-inbreeding LPN123 --generations 4
+nsip-inbreeding --sire SIRE_LPN --dam DAM_LPN --projected
+```
+
+```python
+from nsip_skills.inbreeding import (
+    calculate_inbreeding,
+    calculate_projected_inbreeding,
+    build_pedigree_for_inbreeding
+)
+
+# Calculate COI for existing animal
+result = calculate_inbreeding("LPN123", client, generations=4)
+print(f"COI: {result.percentage:.2f}%")
+print(f"Risk: {result.risk_level.value}")
+
+# Project COI for potential mating
+projected = calculate_projected_inbreeding("SIRE_LPN", "DAM_LPN", client)
+```
+
+**Risk Levels**:
+- LOW: < 6.25%
+- MODERATE: 6.25% - 12.5%
+- HIGH: > 12.5%
+
+---
+
+#### 4. Mating Optimizer (nsip-mating-optimizer)
+
+Generate optimal ram-ewe mating recommendations.
+
+```bash
+nsip-mating-optimizer --rams rams.txt --ewes ewes.txt --output matings.xlsx
+nsip-mating-optimizer --rams rams.txt --ewes ewes.txt --max-inbreeding 6.25
+```
+
+```python
+from nsip_skills.mating_optimizer import (
+    optimize_matings,
+    generate_mating_recommendations,
+    score_mating_pair
+)
+
+# Generate recommendations
+matings = optimize_matings(
+    ram_lpns=["RAM1", "RAM2"],
+    ewe_lpns=["EWE1", "EWE2", "EWE3"],
+    client=client,
+    max_inbreeding=0.0625,  # 6.25%
+    trait_weights={"WWT": 1.5, "BWT": -0.5}
+)
+
+for pair in matings:
+    print(f"{pair.ram_lpn} x {pair.ewe_lpn}: score={pair.composite_score:.2f}")
+```
+
+---
+
+#### 5. Progeny Analysis (nsip-progeny-analysis)
+
+Evaluate sires by analyzing offspring performance.
+
+```bash
+nsip-progeny-analysis SIRE_LPN --output progeny_report.xlsx
+nsip-progeny-analysis SIRE_LPN --traits BWT WWT NLB
+```
+
+```python
+from nsip_skills.progeny_analysis import (
+    analyze_progeny,
+    calculate_progeny_stats,
+    compare_sires
+)
+
+# Analyze sire's progeny
+stats = analyze_progeny("SIRE_LPN", client)
+print(f"Total progeny: {stats.total_progeny}")
+print(f"Mean WWT: {stats.trait_means.get('WWT', 'N/A')}")
+
+# Compare multiple sires
+comparison = compare_sires(["SIRE1", "SIRE2"], client)
+```
+
+---
+
+#### 6. Trait Planner (nsip-trait-planner)
+
+Design multi-generation improvement strategies.
+
+```bash
+nsip-trait-planner --flock flock.xlsx --goals "WWT:+10%" "BWT:-5%"
+nsip-trait-planner --flock flock.xlsx --generations 3 --output plan.xlsx
+```
+
+```python
+from nsip_skills.trait_planner import (
+    create_improvement_plan,
+    estimate_genetic_progress,
+    identify_trait_gaps
+)
+
+# Create improvement plan
+plan = create_improvement_plan(
+    flock_data=flock,
+    goals={"WWT": 1.5, "BWT": -0.3},
+    generations=3,
+    client=client
+)
+```
+
+---
+
+#### 7. Ancestry Builder (nsip-ancestry)
+
+Generate comprehensive pedigree reports.
+
+```bash
+nsip-ancestry LPN123 --generations 4
+nsip-ancestry LPN123 --output pedigree.json --format json
+```
+
+```python
+from nsip_skills.ancestry_builder import (
+    build_pedigree_tree,
+    find_common_ancestors,
+    generate_pedigree_report
+)
+
+# Build pedigree tree
+tree = build_pedigree_tree("LPN123", client, max_generations=4)
+print(f"Sire: {tree.sire.lpn_id if tree.sire else 'Unknown'}")
+print(f"Dam: {tree.dam.lpn_id if tree.dam else 'Unknown'}")
+
+# Find common ancestors
+common = find_common_ancestors(tree)
+```
+
+---
+
+#### 8. Flock Statistics (nsip-flock-stats)
+
+Calculate aggregate flock statistics.
+
+```bash
+nsip-flock-stats flock.xlsx --output stats.xlsx
+nsip-flock-stats flock.xlsx --by-status --by-breed
+```
+
+```python
+from nsip_skills.flock_stats import (
+    calculate_flock_stats,
+    generate_flock_summary,
+    identify_top_performers
+)
+
+# Calculate statistics
+summary = calculate_flock_stats(flock_data, client)
+print(f"Total animals: {summary.total_animals}")
+print(f"Breeds: {summary.breed_breakdown}")
+
+# Identify top performers
+top = identify_top_performers(flock_data, trait="WWT", top_n=10)
+```
+
+---
+
+#### 9. Selection Index (nsip-selection-index)
+
+Build and apply custom breeding indexes.
+
+```bash
+nsip-selection-index flock.xlsx --index terminal --output ranked.xlsx
+nsip-selection-index flock.xlsx --weights "WWT:1.5,BWT:-0.5,NLB:2.0"
+```
+
+```python
+from nsip_skills.selection_index import (
+    calculate_selection_index,
+    rank_by_index,
+    PRESET_INDEXES
+)
+from nsip_skills.common.data_models import SelectionIndex
+
+# Use preset index
+scores = calculate_selection_index(
+    flock_data,
+    index=PRESET_INDEXES["terminal"],
+    client=client
+)
+
+# Custom index
+custom = SelectionIndex(
+    name="My Index",
+    trait_weights={"WWT": 1.5, "BWT": -0.5, "NLB": 2.0}
+)
+ranked = rank_by_index(flock_data, custom, client)
+```
+
+**Preset Indexes**:
+- `terminal`: Meat production (growth, carcass)
+- `maternal`: Reproduction (lambing, milk)
+- `range`: Balanced for pastoral operations
+- `hair`: Hair sheep breeds (no wool traits)
+
+---
+
+#### 10. Recommendation Engine
+
+AI-powered breeding recommendations (used internally by other modules).
+
+```python
+from nsip_skills.recommendation_engine import (
+    generate_recommendations,
+    analyze_breeding_opportunities
+)
+
+# Generate AI recommendations
+recs = generate_recommendations(flock_summary, goals={"WWT": "increase"})
+```
+
+---
+
+## Data Models
+
+### nsip_client Models
+
+```python
+@dataclass
+class SearchCriteria:
+    breed_group_id: int | None = None
+    breed_id: int | None = None
+    born_after: str | None = None      # "YYYY-MM-DD"
+    born_before: str | None = None     # "YYYY-MM-DD"
+    gender: str | None = None          # "Male", "Female", "Both"
+    proven_only: bool | None = None
+    status: str | None = None          # "CURRENT", "SOLD", "DEAD", etc.
+    flock_id: str | None = None
+    trait_ranges: dict[str, dict[str, float]] | None = None
+
+@dataclass
+class Trait:
+    name: str
+    value: float
+    accuracy: int | None = None        # 0-100 percentage
+    units: str | None = None
+
+@dataclass
+class ContactInfo:
+    farm_name: str | None = None
+    contact_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    zip_code: str | None = None
+
+@dataclass
+class AnimalDetails:
+    lpn_id: str
+    breed: str | None = None
+    breed_group: str | None = None
+    date_of_birth: str | None = None
+    gender: str | None = None
+    status: str | None = None
+    sire: str | None = None
+    dam: str | None = None
+    registration_number: str | None = None
+    total_progeny: int | None = None
+    flock_count: int | None = None
+    genotyped: str | None = None
+    traits: dict[str, Trait]
+    contact_info: ContactInfo | None = None
+
+@dataclass
+class Lineage:
+    subject: LineageAnimal | None = None
+    sire: LineageAnimal | None = None
+    dam: LineageAnimal | None = None
+    generations: list[list[LineageAnimal]]
+
+@dataclass
+class LineageAnimal:
+    lpn_id: str
+    farm_name: str | None = None
+    us_index: float | None = None
+    src_index: float | None = None
+    date_of_birth: str | None = None
+    sex: str | None = None
+    status: str | None = None
+
+@dataclass
+class Progeny:
+    total_count: int
+    animals: list[ProgenyAnimal]
+    page: int = 0
+    page_size: int = 10
+
+@dataclass
+class ProgenyAnimal:
+    lpn_id: str
+    sex: str | None = None
+    date_of_birth: str | None = None
+    traits: dict[str, float]
+
+@dataclass
+class SearchResults:
+    total_count: int
+    results: list[dict[str, Any]]
+    page: int = 0
+    page_size: int = 15
+
+@dataclass
+class BreedGroup:
+    id: int
+    name: str
+    breeds: list[dict[str, Any]]
+```
+
+### nsip_skills Models
+
+```python
+class RiskLevel(Enum):
+    LOW = "low"           # < 6.25%
+    MODERATE = "moderate" # 6.25% - 12.5%
+    HIGH = "high"         # > 12.5%
+
+class BreedingGoal(Enum):
+    TERMINAL = "terminal"
+    MATERNAL = "maternal"
+    BALANCED = "balanced"
+    CUSTOM = "custom"
+
+@dataclass
+class TraitValue:
+    name: str
+    value: float
+    accuracy: float | None = None      # 0-100 percentage
+    percentile: float | None = None    # 0-100 percentile
+    breed_min: float | None = None
+    breed_max: float | None = None
+    breed_mean: float | None = None
+
+@dataclass
+class TraitProfile:
+    lpn_id: str
+    breed: str | None = None
+    breed_id: int | None = None
+    traits: dict[str, TraitValue]
+    strengths: list[str]               # Top 25% traits
+    weaknesses: list[str]              # Bottom 25% traits
+
+@dataclass
+class AnimalAnalysis:
+    lpn_id: str
+    name: str | None = None
+    breed: str | None = None
+    breed_id: int | None = None
+    gender: str | None = None
+    date_of_birth: str | None = None
+    status: str | None = None
+    sire_lpn: str | None = None
+    dam_lpn: str | None = None
+    trait_profile: TraitProfile | None = None
+    inbreeding_coefficient: float | None = None
+    inbreeding_risk: RiskLevel | None = None
+    progeny_count: int | None = None
+    index_scores: dict[str, float]
+
+@dataclass
+class PedigreeTree:
+    subject: PedigreeNode
+    sire: PedigreeNode | None = None
+    dam: PedigreeNode | None = None
+    sire_sire: PedigreeNode | None = None
+    sire_dam: PedigreeNode | None = None
+    dam_sire: PedigreeNode | None = None
+    dam_dam: PedigreeNode | None = None
+    extended: dict[str, PedigreeNode]  # Path keys: "sss", "ssd", etc.
+    common_ancestors: list[str]
+    max_generations: int = 4
+
+@dataclass
+class PedigreeNode:
+    lpn_id: str
+    name: str | None = None
+    breed: str | None = None
+    gender: str | None = None
+    date_of_birth: str | None = None
+    status: str | None = None
+    farm_name: str | None = None
+    us_index: float | None = None
+    generation: int = 0
+
+@dataclass
+class InbreedingResult:
+    lpn_id: str
+    coefficient: float                 # 0-1 scale
+    risk_level: RiskLevel
+    common_ancestors: list[str]
+    paths: list[dict[str, Any]]
+    generations_analyzed: int = 4
+
+    @property
+    def percentage(self) -> float:     # 0-100 scale
+        return self.coefficient * 100
+
+@dataclass
+class MatingPair:
+    ram_lpn: str
+    ewe_lpn: str
+    projected_offspring_ebvs: dict[str, float]
+    projected_inbreeding: float = 0.0
+    inbreeding_risk: RiskLevel = RiskLevel.LOW
+    composite_score: float = 0.0
+    rank: int = 0
+    notes: list[str]
+
+@dataclass
+class ProgenyStats:
+    parent_lpn: str
+    parent_gender: str
+    total_progeny: int = 0
+    male_count: int = 0
+    female_count: int = 0
+    trait_means: dict[str, float]
+    trait_std_devs: dict[str, float]
+    top_performers: list[str]          # Top 10% by index
+    bottom_performers: list[str]       # Bottom 10% by index
+
+@dataclass
+class FlockSummary:
+    flock_id: str | None = None
+    flock_name: str | None = None
+    total_animals: int = 0
+    male_count: int = 0
+    female_count: int = 0
+    status_breakdown: dict[str, int]
+    breed_breakdown: dict[str, int]
+    age_distribution: dict[str, int]   # Year -> count
+    trait_summary: dict[str, dict[str, float]]  # Trait -> stats
+    top_performers: list[AnimalAnalysis]
+    needs_improvement: list[str]       # Trait names
+    recommendations: list[str]
+
+@dataclass
+class SelectionIndex:
+    name: str
+    description: str | None = None
+    trait_weights: dict[str, float]
+    is_preset: bool = False
+
+    def calculate_score(self, ebvs: dict[str, float]) -> float:
+        """Calculate weighted index score from EBVs."""
+
+@dataclass
+class FlockRecord:
+    lpn_id: str
+    local_id: str | None = None        # User's tag/name
+    notes: str | None = None
+    group: str | None = None
+    row_number: int | None = None
+
+@dataclass
+class EnrichedFlockRecord:
+    local: FlockRecord
+    nsip_details: AnimalAnalysis | None = None
+    fetch_error: str | None = None
+```
+
+---
+
+## Error Handling
+
+### Exception Hierarchy
+
+```python
+class NSIPError(Exception):
+    """Base exception for all NSIP client errors"""
+
+class NSIPAPIError(NSIPError):
+    """API returned an error response"""
+    status_code: int
+    response: dict
+
+class NSIPNotFoundError(NSIPAPIError):
+    """Animal or resource not found (404)"""
+    search_string: str
+
+class NSIPConnectionError(NSIPError):
+    """Connection to API failed"""
+
+class NSIPTimeoutError(NSIPError):
+    """Request timed out"""
+
+class NSIPValidationError(NSIPError):
+    """Invalid request parameters"""
+```
+
+### Handling Errors
+
+```python
+from nsip_client import NSIPClient
+from nsip_client.exceptions import (
+    NSIPNotFoundError,
+    NSIPTimeoutError,
+    NSIPValidationError
+)
+
+client = NSIPClient(timeout=30)
+
+try:
+    animal = client.get_animal_details("INVALID_LPN")
+except NSIPNotFoundError as e:
+    print(f"Animal not found: {e.search_string}")
+except NSIPTimeoutError:
+    print("Request timed out")
+except NSIPValidationError as e:
+    print(f"Invalid parameter: {e}")
+```
+
+### MCP Error Responses
+
+MCP tools return structured error responses:
+
+```python
+{
+    "error": True,
+    "code": -32602,  # JSON-RPC invalid params
+    "message": "Animal not found",
+    "details": {
+        "parameter": "search_string",
+        "value": "INVALID",
+        "suggestion": "Provide a valid LPN ID (e.g., '6####92020###249')"
+    }
+}
+```
+
+---
+
+## Common Patterns
+
+### Context Manager Usage
+
+```python
+from nsip_client import NSIPClient
+
+# Automatically closes session on exit
+with NSIPClient() as client:
+    animal = client.get_animal_details("LPN123")
+```
+
+### Batch Operations with Error Handling
+
+```python
+from nsip_skills import CachedNSIPClient
+
+client = CachedNSIPClient()
+
+# Skip errors, continue processing
+results = client.batch_get_animals(
+    lpn_ids=lpn_ids,
+    include_lineage=True,
+    on_error="skip"
+)
+
+for lpn_id, data in results.items():
+    if "error" in data:
+        print(f"Failed: {lpn_id} - {data['error']}")
+    else:
+        print(f"Success: {lpn_id} - {data['details'].breed}")
+```
+
+### Pagination
+
+```python
+# Manual pagination
+all_results = []
+page = 0
+while True:
+    results = client.search_animals(page=page, page_size=100)
+    all_results.extend(results.results)
+    if len(results.results) < 100 or len(all_results) >= results.total_count:
+        break
+    page += 1
+
+# Or use CachedNSIPClient helper
+all_progeny = client.get_all_progeny("LPN123")  # Auto-paginates
+```
+
+### Custom Selection Index
+
+```python
+from nsip_skills.common.data_models import SelectionIndex
+
+# Define custom index
+my_index = SelectionIndex(
+    name="My Terminal Index",
+    description="Focus on growth with low birth weight",
+    trait_weights={
+        "BWT": -1.0,   # Negative = lower is better
+        "WWT": 1.5,
+        "PWWT": 2.0,
+        "YWT": 1.0,
+        "YEMD": 0.8,
+        "YFAT": -0.3,
+    }
+)
+
+# Calculate score for an animal
+ebvs = {"BWT": 0.2, "WWT": 3.5, "PWWT": 5.0, "YWT": 8.0}
+score = my_index.calculate_score(ebvs)
+```
+
+---
+
+## Trait Reference
+
+### Common Trait Codes
+
+| Code | Name | Description | Units |
+|------|------|-------------|-------|
+| BWT | Birth Weight | Weight at birth | lbs |
+| WWT | Weaning Weight | Weight at weaning | lbs |
+| PWWT | Post-Weaning Weight | Weight after weaning | lbs |
+| YWT | Yearling Weight | Weight at 1 year | lbs |
+| MWWT | Maternal Weaning Weight | Dam's milk contribution | lbs |
+| NLB | Number Lambs Born | Litter size at birth | count |
+| NLW | Number Lambs Weaned | Litter size at weaning | count |
+| FAT | Fat Depth | Subcutaneous fat | mm |
+| EMD/YEMD | Eye Muscle Depth | Loin eye area | mm |
+| DAG | Dag Score | Fecal soiling resistance | score |
+| WGR | Worm Growth Rate | Parasite resistance | score |
+| WEC | Worm Egg Count | Parasite load | count |
+| FEC | Fecal Egg Count | Parasite eggs | count |
+
+### Breed Groups
+
+| ID | Name | Description |
+|----|------|-------------|
+| 61 | Range | Dual-purpose breeds for range conditions |
+| 62 | Maternal Wool | Wool breeds with maternal emphasis |
+| 64 | Hair | Hair sheep breeds (no wool) |
+| 69 | Terminal | Meat-focused breeds |
+
+---
+
+## API Quirks
+
+The upstream NSIP API has some inconsistencies to be aware of:
+
+1. **Response Formats**: Some endpoints return `{"success": true, "data": [...]}`, others return lists directly.
+
+2. **Field Names**: Same fields may appear as `breedGroupId`, `Id`, or `id`. Models handle these variations.
+
+3. **Content-Type Required**: `search_animals` requires `Content-Type: application/json` even with empty body.
+
+4. **Accuracy Formats**: API returns 0-100 percentages; some internal functions convert to 0-1 decimals.
+
+5. **Lineage HTML**: The lineage endpoint returns data embedded in HTML divs that must be parsed.
+
+---
+
+## Version History
+
+- **1.3.3** (nsip-skills): Added comprehensive CLI commands, selection index presets
+- **1.3.2** (nsip-client, nsip-mcp-server): Improved lineage parsing, cache versioning
+- **1.3.0**: Initial public release with all three packages
+
+---
+
+## License
+
+MIT License - See repository for details.
+
+## Author
+
+Robert Allen (bob@epicpastures.com)
