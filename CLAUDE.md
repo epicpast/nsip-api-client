@@ -27,7 +27,40 @@ src/
 │   ├── transport.py      # stdio/streamable-http/websocket transport config
 │   ├── metrics.py        # Server health metrics (SC-001 through SC-007)
 │   ├── errors.py         # JSON-RPC 2.0 error codes and LLM-friendly messages
-│   └── cli.py            # nsip-mcp-server CLI entrypoint
+│   ├── cli.py            # nsip-mcp-server CLI entrypoint
+│   │
+│   ├── resources/        # MCP Resources (nsip:// URI scheme)
+│   │   ├── static_resources.py   # Heritabilities, indexes, traits, regions
+│   │   ├── animal_resources.py   # nsip://animals/{lpn_id}/*
+│   │   ├── breeding_resources.py # nsip://breeding/{ram}/{ewe}/*
+│   │   └── flock_resources.py    # nsip://flock/{flock_id}/*
+│   │
+│   ├── prompts/          # MCP Prompts (skill workflows, interviews)
+│   │   ├── skill_prompts.py      # 10 skill prompts from slash commands
+│   │   ├── shepherd_prompts.py   # Shepherd consultation prompts
+│   │   └── interview_prompts.py  # Guided multi-turn interviews
+│   │
+│   ├── shepherd/         # AI Breeding Advisor (4 domains)
+│   │   ├── agent.py              # Main orchestration, question classification
+│   │   ├── persona.py            # Neutral expert voice, uncertainty handling
+│   │   ├── regions.py            # NSIP region detection (6 regions)
+│   │   └── domains/              # Domain handlers
+│   │       ├── breeding.py       # EBV interpretation, mating advice
+│   │       ├── health.py         # Disease, nutrition, parasites
+│   │       ├── calendar.py       # Seasonal planning, schedules
+│   │       └── economics.py      # Costs, ROI, market timing
+│   │
+│   └── knowledge_base/   # Static knowledge (YAML files)
+│       ├── loader.py             # YAML loader with LRU caching
+│       └── data/                 # Knowledge files
+│           ├── heritabilities.yaml
+│           ├── diseases.yaml
+│           ├── nutrition.yaml
+│           ├── selection_indexes.yaml
+│           ├── trait_glossary.yaml
+│           ├── regions.yaml
+│           ├── calendar_templates.yaml
+│           └── economics.yaml
 │
 └── nsip_skills/          # Breeding decision support tools (depends on nsip_client)
     ├── common/           # Shared utilities (data_models, formatters, nsip_wrapper)
@@ -224,3 +257,52 @@ The upstream NSIP API has inconsistent response formats. Key quirks to handle:
 4. **Trait accuracy formats** - API returns 0-100 percentages; summarization converts to 0-1 decimals
 
 When adding API handling, check `models.py` for `from_api_response()` patterns that handle these variations.
+
+## MCP Resources Reference
+
+Resources provide URI-based access to static and dynamic data via the `nsip://` scheme.
+
+| URI Pattern | Description |
+|-------------|-------------|
+| `nsip://static/heritabilities/{breed}` | Trait heritabilities by breed |
+| `nsip://static/indexes/{index_name}` | Selection index definitions |
+| `nsip://static/traits/{trait_code}` | Trait glossary and interpretation |
+| `nsip://static/regions/{region}` | Regional context (climate, breeds, challenges) |
+| `nsip://static/diseases/{region}` | Disease prevention guides |
+| `nsip://static/nutrition/{region}/{season}` | Nutrition guidelines |
+| `nsip://animals/{lpn_id}/details` | Full animal details |
+| `nsip://animals/{lpn_id}/lineage` | Pedigree tree |
+| `nsip://breeding/{ram}/{ewe}/projection` | Offspring EBV projection |
+
+Detailed documentation: `docs/mcp-resources.md`
+
+## MCP Prompts Reference
+
+Prompts provide structured workflows for breeding analysis.
+
+| Prompt | Type | Description |
+|--------|------|-------------|
+| `ebv_analyzer` | Single-shot | Compare EBVs across animals |
+| `mating_plan` | Guided interview | Optimize ram-ewe pairings |
+| `trait_improvement` | Guided interview | Multi-generation selection planning |
+| `shepherd_consult` | Single-shot | General breeding advice |
+| `breeding_recommendations` | Guided interview | AI-powered recommendations |
+
+Detailed documentation: `docs/mcp-prompts.md`
+
+## Shepherd Agent Reference
+
+The Shepherd is an AI-powered breeding advisor with four domains:
+
+| Domain | Capabilities |
+|--------|--------------|
+| **Breeding** | EBV interpretation, mating advice, inbreeding management |
+| **Health** | Disease prevention, parasites, nutrition, vaccination |
+| **Calendar** | Breeding dates, seasonal planning, task schedules |
+| **Economics** | Cost analysis, breakeven, RAM ROI, marketing |
+
+**Regions**: northeast, southeast, midwest, southwest, mountain, pacific
+
+**Persona**: Neutral expert (veterinarian-like), evidence-based, acknowledges uncertainty
+
+Detailed documentation: `docs/shepherd-agent.md`

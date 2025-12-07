@@ -590,3 +590,219 @@ def nsip_search_by_lpn(lpn_id: str, summarize: bool = False) -> dict[str, Any]:
     except Exception as e:
         # NSIP API error - convert to structured error (T039)
         return handle_nsip_api_error(e, f"searching complete profile for '{lpn_id}'")
+
+
+# =============================================================================
+# Shepherd Consultation Tools
+# =============================================================================
+# These tools expose the Shepherd agent's expert guidance as MCP tools,
+# providing evidence-based advice on breeding, health, calendar, and economics.
+
+
+@mcp.tool(
+    name="shepherd_consult",
+    description=(
+        "Get expert sheep husbandry advice from the NSIP Shepherd. "
+        "Use for general questions about breeding, health, management, or economics. "
+        "The Shepherd provides evidence-based recommendations with a neutral, "
+        "professional tone similar to a veterinarian."
+    ),
+)
+async def shepherd_consult_tool(
+    question: str,
+    region: str = "",
+) -> dict[str, Any]:
+    """Get general Shepherd consultation for any sheep husbandry question.
+
+    Args:
+        question: Your sheep husbandry question (breeding, health, calendar, economics)
+        region: Optional NSIP region for context (northeast, southeast, midwest,
+                southwest, mountain, pacific). Auto-detected if not provided.
+
+    Returns:
+        Expert guidance with evidence-based recommendations
+    """
+    from nsip_mcp.prompts.shepherd_prompts import shepherd_consult_prompt
+
+    try:
+        # Access .fn to get the underlying async function from the FunctionPrompt
+        messages = await shepherd_consult_prompt.fn(question=question, region=region)
+        # Extract the text content from the prompt messages
+        if messages and len(messages) > 0:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    content = msg.get("content", {})
+                    if isinstance(content, dict):
+                        return {"guidance": content.get("text", "")}
+                    return {"guidance": str(content)}
+        return {"error": "No guidance generated"}
+    except Exception as e:
+        return {"error": f"Shepherd consultation failed: {str(e)}"}
+
+
+@mcp.tool(
+    name="shepherd_breeding",
+    description=(
+        "Get expert breeding advice from the NSIP Shepherd. "
+        "Covers genetic selection, EBV interpretation, mating plans, "
+        "inbreeding management, and trait improvement strategies."
+    ),
+)
+async def shepherd_breeding_tool(
+    question: str,
+    region: str = "midwest",
+    production_goal: str = "balanced",
+) -> dict[str, Any]:
+    """Get Shepherd advice on breeding decisions.
+
+    Args:
+        question: Your breeding question or scenario
+        region: NSIP region (northeast, southeast, midwest, southwest, mountain, pacific)
+        production_goal: Production focus (terminal, maternal, hair, balanced)
+
+    Returns:
+        Expert breeding guidance with genetic principles and recommendations
+    """
+    from nsip_mcp.prompts.shepherd_prompts import shepherd_breeding_prompt
+
+    try:
+        # Access .fn to get the underlying async function from the FunctionPrompt
+        messages = await shepherd_breeding_prompt.fn(
+            question=question, region=region, production_goal=production_goal
+        )
+        if messages and len(messages) > 0:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    content = msg.get("content", {})
+                    if isinstance(content, dict):
+                        return {"guidance": content.get("text", "")}
+                    return {"guidance": str(content)}
+        return {"error": "No guidance generated"}
+    except Exception as e:
+        return {"error": f"Shepherd breeding advice failed: {str(e)}"}
+
+
+@mcp.tool(
+    name="shepherd_health",
+    description=(
+        "Get expert health and nutrition advice from the NSIP Shepherd. "
+        "Covers disease prevention, parasite management, vaccination schedules, "
+        "feeding programs, and mineral supplementation."
+    ),
+)
+async def shepherd_health_tool(
+    question: str,
+    region: str = "midwest",
+    life_stage: str = "maintenance",
+) -> dict[str, Any]:
+    """Get Shepherd advice on health and nutrition.
+
+    Args:
+        question: Your health or nutrition question
+        region: NSIP region for disease risk context
+        life_stage: Life stage (maintenance, flushing, gestation, lactation)
+
+    Returns:
+        Expert health guidance with prevention and treatment approaches
+    """
+    from nsip_mcp.prompts.shepherd_prompts import shepherd_health_prompt
+
+    try:
+        # Access .fn to get the underlying async function from the FunctionPrompt
+        messages = await shepherd_health_prompt.fn(
+            question=question, region=region, life_stage=life_stage
+        )
+        if messages and len(messages) > 0:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    content = msg.get("content", {})
+                    if isinstance(content, dict):
+                        return {"guidance": content.get("text", "")}
+                    return {"guidance": str(content)}
+        return {"error": "No guidance generated"}
+    except Exception as e:
+        return {"error": f"Shepherd health advice failed: {str(e)}"}
+
+
+@mcp.tool(
+    name="shepherd_calendar",
+    description=(
+        "Get seasonal management advice from the NSIP Shepherd. "
+        "Covers breeding schedules, lambing preparation, shearing timing, "
+        "vaccination schedules, and seasonal task planning."
+    ),
+)
+async def shepherd_calendar_tool(
+    question: str,
+    region: str = "midwest",
+    task_type: str = "general",
+) -> dict[str, Any]:
+    """Get Shepherd advice on seasonal management.
+
+    Args:
+        question: Your calendar or planning question
+        region: NSIP region for timing context
+        task_type: Task category (breeding, lambing, shearing, health, general)
+
+    Returns:
+        Seasonal management guidance with timing and task priorities
+    """
+    from nsip_mcp.prompts.shepherd_prompts import shepherd_calendar_prompt
+
+    try:
+        # Access .fn to get the underlying async function from the FunctionPrompt
+        messages = await shepherd_calendar_prompt.fn(
+            question=question, region=region, task_type=task_type
+        )
+        if messages and len(messages) > 0:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    content = msg.get("content", {})
+                    if isinstance(content, dict):
+                        return {"guidance": content.get("text", "")}
+                    return {"guidance": str(content)}
+        return {"error": "No guidance generated"}
+    except Exception as e:
+        return {"error": f"Shepherd calendar advice failed: {str(e)}"}
+
+
+@mcp.tool(
+    name="shepherd_economics",
+    description=(
+        "Get economic analysis from the NSIP Shepherd. "
+        "Covers cost analysis, breakeven calculations, ROI on genetics, "
+        "marketing strategies, and profitability optimization."
+    ),
+)
+async def shepherd_economics_tool(
+    question: str,
+    flock_size: str = "medium",
+    market_focus: str = "balanced",
+) -> dict[str, Any]:
+    """Get Shepherd advice on economics and profitability.
+
+    Args:
+        question: Your economics or business question
+        flock_size: Flock size category (small: 25-75, medium: 100-300, large: 500+)
+        market_focus: Market focus (direct, auction, breeding_stock, balanced)
+
+    Returns:
+        Economic analysis with cost/revenue estimates and profitability strategies
+    """
+    from nsip_mcp.prompts.shepherd_prompts import shepherd_economics_prompt
+
+    try:
+        # Access .fn to get the underlying async function from the FunctionPrompt
+        messages = await shepherd_economics_prompt.fn(
+            question=question, flock_size=flock_size, market_focus=market_focus
+        )
+        if messages and len(messages) > 0:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    content = msg.get("content", {})
+                    if isinstance(content, dict):
+                        return {"guidance": content.get("text", "")}
+                    return {"guidance": str(content)}
+        return {"error": "No guidance generated"}
+    except Exception as e:
+        return {"error": f"Shepherd economics advice failed: {str(e)}"}

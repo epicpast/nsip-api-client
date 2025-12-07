@@ -1,0 +1,300 @@
+# Sheep Economics Templates and Calculations
+#
+# Guidance for economic analysis of sheep operations.
+# All values are templates - actual costs vary significantly by region,
+# scale, management system, and market conditions.
+
+feed_costs:
+  description: "Feed cost analysis templates"
+
+  hay:
+    unit: "$/ton"
+    typical_range:
+      low: 150
+      average: 250
+      high: 400
+    notes: >
+      Varies dramatically by region and year. Grass hay typically less
+      than alfalfa. Quality affects actual feeding value.
+    consumption:
+      maintenance_ewe: "4-5 lbs/day"
+      late_gestation: "6-7 lbs/day"
+      lactating: "7-9 lbs/day"
+
+  grain:
+    unit: "$/bushel or $/ton"
+    corn:
+      typical_range:
+        low: 4.00
+        average: 6.00
+        high: 9.00
+      notes: "Per bushel. Local elevator price. Bulk discounts available."
+    soybean_meal:
+      typical_range:
+        low: 350
+        average: 450
+        high: 600
+      notes: "Per ton. Main protein supplement."
+
+  mineral:
+    unit: "$/bag (50 lb)"
+    typical_range:
+      low: 25
+      average: 40
+      high: 60
+    consumption: "0.25-0.5 oz/head/day"
+    notes: "Use sheep-specific mineral. Never cattle minerals (copper toxicity)."
+
+  pasture:
+    rental_rates:
+      unit: "$/AUM (Animal Unit Month)"
+      typical_range:
+        low: 15
+        average: 30
+        high: 50
+    carrying_capacity:
+      description: "Sheep per acre varies widely"
+      intensive_managed: "5-10 ewes/acre"
+      extensive: "1-3 ewes/acre"
+      range: "5-50 acres/ewe"
+
+cost_templates:
+  ewe_annual_costs:
+    description: "Typical annual costs per breeding ewe"
+    components:
+      feed:
+        description: "Hay, grain, mineral for ewe year-round"
+        low: 75
+        average: 125
+        high: 200
+
+      healthcare:
+        description: "Vaccines, dewormers, vet visits"
+        low: 10
+        average: 20
+        high: 40
+
+      shearing:
+        description: "Cost per head for custom shearing"
+        low: 5
+        average: 8
+        high: 12
+
+      breeding:
+        description: "Ram cost prorated (ram/35 ewes, 4 year use)"
+        low: 10
+        average: 25
+        high: 50
+
+      facilities:
+        description: "Prorated fencing, handling, buildings"
+        low: 15
+        average: 30
+        high: 50
+
+      labor:
+        description: "If valued/hired"
+        note: "Often excluded in owner-operator analysis"
+        low: 0
+        average: 30
+        high: 75
+
+      marketing:
+        description: "Trucking, auction fees if applicable"
+        low: 5
+        average: 15
+        high: 30
+
+    total:
+      low: 120
+      average: 253
+      high: 457
+
+  lamb_costs:
+    description: "Variable costs per lamb to market"
+    components:
+      creep_feed:
+        low: 0
+        average: 15
+        high: 30
+
+      finishing_feed:
+        low: 20
+        average: 40
+        high: 70
+
+      healthcare:
+        low: 5
+        average: 10
+        high: 20
+
+      marketing:
+        low: 5
+        average: 15
+        high: 30
+
+revenue_templates:
+  lamb_sales:
+    description: "Revenue from lamb sales"
+    market_types:
+      auction:
+        unit: "$/lb live weight"
+        typical_range:
+          low: 1.50
+          average: 2.25
+          high: 3.50
+        notes: "Prices highly seasonal. Spring typically highest."
+
+      direct:
+        unit: "$/lb hanging weight"
+        typical_range:
+          low: 5.00
+          average: 7.00
+          high: 10.00
+        notes: "Hanging weight ~50% of live weight"
+
+      ethnic_markets:
+        unit: "$/head (variable by size)"
+        typical_range:
+          low: 150
+          average: 250
+          high: 400
+        notes: "Holiday markets can command premiums"
+
+  wool_income:
+    unit: "$/lb clean basis"
+    typical_range:
+      low: 0.50
+      average: 1.50
+      high: 4.00
+    average_fleece: "6-10 lbs per ewe"
+    notes: >
+      Highly variable by quality. Fine wool (Merino) commands premium.
+      Many commercial flocks find wool barely covers shearing cost.
+
+  breeding_stock:
+    description: "Registered stock sales"
+    rams:
+      typical_range:
+        low: 300
+        average: 800
+        high: 2500
+      notes: "Performance tested rams command premium"
+    ewes:
+      typical_range:
+        low: 250
+        average: 400
+        high: 1000
+    ewe_lambs:
+      typical_range:
+        low: 200
+        average: 350
+        high: 700
+
+profitability_analysis:
+  breakeven_formula:
+    description: "Calculate breakeven lamb price"
+    formula: "(Total Annual Costs) / (Lambs Marketed per Ewe)"
+    example:
+      annual_costs: 250
+      lambing_rate: 1.5
+      lamb_death_loss: "10%"
+      lambs_marketed: 1.35
+      breakeven: 185  # $250 / 1.35 = $185 per lamb
+
+  return_on_investment:
+    description: "Simple ROI calculation"
+    formula: "(Net Income / Total Investment) × 100"
+    investment_components:
+      - "Land (owned or opportunity cost)"
+      - "Breeding stock"
+      - "Facilities and equipment"
+      - "Operating capital"
+
+  key_performance_indicators:
+    lambing_rate:
+      description: "Lambs born per ewe exposed"
+      targets:
+        minimum: 1.3
+        good: 1.5
+        excellent: 1.8
+        prolific: 2.0
+
+    lamb_survival:
+      description: "Lambs weaned / lambs born"
+      targets:
+        minimum: 0.85
+        good: 0.90
+        excellent: 0.95
+
+    lambs_marketed:
+      description: "Lambs sold per ewe in flock"
+      targets:
+        minimum: 1.2
+        good: 1.4
+        excellent: 1.7
+
+    pounds_weaned:
+      description: "Total pounds weaned per ewe"
+      targets:
+        minimum: 60
+        good: 80
+        excellent: 100
+
+genetic_investment_roi:
+  ram_purchase_analysis:
+    description: "Evaluating return on superior genetics"
+    factors:
+      - "EBV advantage over average"
+      - "Number of offspring"
+      - "Heritability of traits"
+      - "Economic value per unit improvement"
+
+    example:
+      scenario: "Ram with +10 lb PWWT EBV vs average"
+      ewes_bred: 35
+      lamb_crop: 50  # 1.4 lambing rate
+      genetic_advantage: 5  # Half goes to offspring (lbs)
+      lamb_price: 2.25  # $/lb
+      extra_revenue_per_year: 562  # 50 × 5 × 2.25
+      ram_cost_premium: 800
+      payback_years: 1.4
+      notes: >
+        Simplified example. Actual advantage depends on accuracy of
+        EBV, management, and market conditions.
+
+scale_considerations:
+  flock_size_economics:
+    small:
+      size: "25-75 ewes"
+      characteristics:
+        - "Part-time management"
+        - "Higher per-head costs"
+        - "Direct marketing viable"
+        - "Flexible management"
+
+    medium:
+      size: "100-300 ewes"
+      characteristics:
+        - "Full-time enterprise viable"
+        - "Equipment investment justified"
+        - "May employ part-time help"
+        - "Mix of direct and wholesale markets"
+
+    large:
+      size: "500+ ewes"
+      characteristics:
+        - "Economies of scale"
+        - "Full-time employees"
+        - "Wholesale/commodity markets"
+        - "Equipment investment essential"
+
+notes:
+  general: >
+    All figures are templates for educational purposes. Actual costs
+    and revenues vary significantly by region, year, management skill,
+    and market access. Conduct enterprise budgets with local data.
+
+  data_sources: >
+    Consult university extension enterprise budgets for your region.
+    Many state sheep associations publish annual cost studies.

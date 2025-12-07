@@ -26,6 +26,9 @@ skills = [
     "gspread>=5.10.0",
     "numpy>=1.24.0",
 ]
+mcp = [
+    "pyyaml>=6.0.0",
+]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
@@ -45,6 +48,7 @@ dev = [
     "python-dateutil>=2.8.2",
     "fastmcp>=2.0",
     "tiktoken>=0.8.0",
+    "pyyaml>=6.0.0",
     # Skills dependencies for local development
     "pandas>=2.0.0",
     "openpyxl>=3.1.0",
@@ -163,4 +167,5 @@ dev = [
     "python-dateutil>=2.8.2",
     "fastmcp>=2.0",
     "tiktoken>=0.8.0",
+    "pyyaml>=6.0.0",
 ]

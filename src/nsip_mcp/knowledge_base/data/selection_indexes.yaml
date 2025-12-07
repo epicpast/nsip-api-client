@@ -1,0 +1,206 @@
+# Selection Index Definitions for Sheep Breeding
+#
+# Selection indexes combine multiple EBV traits into a single value for
+# ranking animals. Weights reflect the relative economic or breeding
+# importance of each trait for a specific production goal.
+#
+# Positive weights favor higher EBVs; negative weights favor lower EBVs.
+# Traits not listed have zero weight in the index.
+
+indexes:
+  terminal:
+    name: "Terminal Sire Index"
+    description: >
+      Maximizes growth and carcass traits for market lamb production.
+      Optimizes rams used on commercial ewes where all offspring go to market.
+    weights:
+      BWT: -0.5    # Reduce dystocia risk (lower better)
+      WWT: 1.0     # Weaning growth
+      PWWT: 1.5    # Post-weaning growth (primary emphasis)
+      YWT: 1.0     # Yearling growth
+      YEMD: 0.8    # Loin eye muscle depth
+      YFAT: -0.3   # Reduce excess fat (lower better)
+    use_case: >
+      Use for terminal sire breeds (Suffolk, Hampshire, Texel) or any rams
+      being used in a terminal cross where replacement ewes come from
+      elsewhere. Emphasizes rapid growth and lean carcass.
+    breed_focus:
+      - suffolk
+      - hampshire
+      - texel
+      - charollais
+
+  maternal:
+    name: "Maternal Index"
+    description: >
+      Emphasizes reproduction and mothering ability for ewe flock
+      replacement and maternal lines. Balances prolificacy with lamb survival.
+    weights:
+      NLB: 2.0     # Lambs born (litter size)
+      NLW: 2.5     # Lambs weaned (survival + mothering) - highest priority
+      MWWT: 1.5    # Maternal weaning weight (milk + mothering)
+      BWT: -1.0    # Reduce birth weight for easier lambing
+      WWT: 0.5     # Some growth still valued
+    use_case: >
+      Use for maternal breeds (Polypay, Finnsheep, Dorset) and replacement
+      ewe selection in any flock. Emphasizes reproductive efficiency over
+      individual lamb performance.
+    breed_focus:
+      - polypay
+      - finnsheep
+      - dorset
+      - romney
+
+  range:
+    name: "Range/Extensive Index"
+    description: >
+      Balanced index for range flocks emphasizing maternal traits with
+      moderate growth. Suited to extensive systems with minimal intervention.
+    weights:
+      BWT: -0.5    # Minimize dystocia for unassisted lambing
+      WWT: 1.0     # Weaning weight
+      PWWT: 1.0    # Post-weaning weight
+      NLW: 1.5     # Lamb survival critical on range
+      MWWT: 1.0    # Maternal ability for survival
+    use_case: >
+      Use for range operations (Rambouillet, Targhee, Columbia) where
+      ewes lamb unassisted and must raise lambs in extensive conditions.
+      Balanced emphasis on growth and maternal ability.
+    breed_focus:
+      - rambouillet
+      - targhee
+      - columbia
+      - corriedale
+
+  hair:
+    name: "Hair Sheep Index"
+    description: >
+      Optimized for hair sheep breeds emphasizing maternal traits,
+      parasite resistance, and moderate growth. No wool traits included.
+    weights:
+      BWT: -0.5    # Reduce birth difficulty
+      WWT: 1.2     # Weaning weight
+      PWWT: 1.5    # Post-weaning growth
+      NLB: 1.5     # Prolificacy valued
+      NLW: 2.0     # Lamb survival critical
+      FEC: -1.0    # Parasite resistance (lower FEC better)
+      DAG: -0.5    # Reduce dags (lower better)
+    use_case: >
+      Use for hair sheep breeds (Katahdin, Dorper, St. Croix) that
+      emphasize low-input production. Parasite resistance especially
+      important in warm, humid regions.
+    breed_focus:
+      - katahdin
+      - dorper
+      - white_dorper
+      - st_croix
+      - barbados_blackbelly
+
+  balanced:
+    name: "Balanced Index"
+    description: >
+      All-purpose index combining growth, maternal, and carcass traits
+      for dual-purpose flocks that retain replacements and market lambs.
+    weights:
+      BWT: -0.3    # Moderate birth weight control
+      WWT: 1.0     # Weaning weight
+      PWWT: 1.0    # Post-weaning weight
+      NLB: 1.0     # Prolificacy
+      NLW: 1.0     # Lamb survival
+      MWWT: 0.5    # Maternal ability
+      YEMD: 0.3    # Some carcass emphasis
+      YFAT: -0.2   # Moderate fat reduction
+    use_case: >
+      General purpose index for flocks selling market lambs while also
+      retaining replacement ewes. Provides moderate selection pressure
+      across all important traits.
+    breed_focus:
+      - all
+
+  growth_only:
+    name: "Pure Growth Index"
+    description: >
+      Single-focus index maximizing weight gain without regard to
+      maternal traits. Use carefully - ignores other important traits.
+    weights:
+      WWT: 1.0
+      PWWT: 2.0
+      YWT: 1.5
+    use_case: >
+      Use for strict terminal sire selection where ONLY growth matters.
+      Not recommended for most situations - balanced indexes typically
+      perform better economically.
+    breed_focus:
+      - suffolk
+      - hampshire
+
+  parasite_resistance:
+    name: "Parasite Resistance Index"
+    description: >
+      Emphasizes traits related to internal parasite resistance.
+      Important for reducing deworming in regions with high parasite pressure.
+    weights:
+      FEC: -2.0    # Primary selection criterion (lower better)
+      DAG: -1.0    # Indicator of parasite burden/scouring
+      NLW: 0.5     # Maintain productivity
+      WWT: 0.3     # Minimal growth emphasis
+    use_case: >
+      Use in flocks with significant Haemonchus contortus problems,
+      especially in the Southeast. Combine with FAMACHA management.
+      May sacrifice some growth for long-term sustainability.
+    breed_focus:
+      - katahdin
+      - st_croix
+      - gulf_coast_native
+
+  wool_merit:
+    name: "Wool Merit Index"
+    description: >
+      Emphasizes fleece production and quality for dual-purpose wool flocks.
+    weights:
+      CFW: 2.0     # Clean fleece weight (primary)
+      FD: -1.5     # Finer diameter preferred (lower better)
+      SL: 0.5      # Staple length
+      GFW: 1.0     # Greasy fleece weight
+      WWT: 0.5     # Maintain growth
+    use_case: >
+      Use for wool breeds where fleece income is significant.
+      Balance with growth traits for overall profitability.
+    breed_focus:
+      - rambouillet
+      - merino
+      - targhee
+      - columbia
+
+selection_intensity_reference:
+  description: >
+    Selection intensity (i) relates to the proportion of animals retained.
+    Higher intensity means fewer animals retained and faster genetic progress,
+    but reduces selection options and may increase inbreeding.
+  values:
+    "50%": 0.80
+    "40%": 0.97
+    "30%": 1.16
+    "20%": 1.40
+    "10%": 1.76
+    "5%": 2.06
+    "1%": 2.67
+  notes: >
+    Typical commercial ram selection: top 5-10% (i = 1.76-2.06)
+    Ewe lamb retention: top 50-70% (i = 0.50-0.80)
+    Ram lamb retention for testing: top 20-30% (i = 1.16-1.40)
+
+custom_index_guidance:
+  description: >
+    Users can create custom indexes by specifying weights for any
+    combination of traits. Consider these principles:
+  principles:
+    - "Assign weights based on relative economic value of traits"
+    - "Negative weights for traits where lower is better (BWT, YFAT, FEC)"
+    - "Consider genetic correlations - some traits move together"
+    - "More traits = less progress per trait (dilution effect)"
+    - "Verify with economic analysis for your specific operation"
+  warnings:
+    - "Don't ignore birth weight when selecting for growth (dystocia risk)"
+    - "Maternal traits have low heritability - slow progress expected"
+    - "Very high selection intensity increases inbreeding"

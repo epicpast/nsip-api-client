@@ -40,6 +40,13 @@ class McpErrorCode(IntEnum):
     VALIDATION_ERROR = -32003
     TIMEOUT_ERROR = -32004
 
+    # Resource, Prompt, and Shepherd errors
+    RESOURCE_NOT_FOUND = -32005
+    PROMPT_EXECUTION_ERROR = -32006
+    SAMPLING_ERROR = -32007
+    REGION_UNKNOWN = -32008
+    KNOWLEDGE_BASE_ERROR = -32009
+
 
 @dataclass
 class McpErrorData:
@@ -230,3 +237,116 @@ class McpErrorResponse:
         """
         data = McpErrorData(parameter=field, suggestion=f"Check {field} format and try again")
         return cls(code=McpErrorCode.VALIDATION_ERROR, message=message, data=data)
+
+    @classmethod
+    def resource_not_found(cls, uri: str, suggestion: str | None = None) -> "McpErrorResponse":
+        """Create resource not found error (-32005).
+
+        Args:
+            uri: The resource URI that was not found
+            suggestion: Optional suggestion for finding the resource
+
+        Returns:
+            McpErrorResponse for resource not found errors
+        """
+        data = McpErrorData(
+            parameter="uri",
+            value=uri,
+            suggestion=suggestion or "Verify the resource URI and try again",
+        )
+        return cls(
+            code=McpErrorCode.RESOURCE_NOT_FOUND,
+            message=f"Resource not found: {uri}",
+            data=data,
+        )
+
+    @classmethod
+    def prompt_execution_error(
+        cls, prompt_name: str, message: str, suggestion: str | None = None
+    ) -> "McpErrorResponse":
+        """Create prompt execution error (-32006).
+
+        Args:
+            prompt_name: Name of the prompt that failed
+            message: Error message describing what went wrong
+            suggestion: Optional suggestion for resolving the error
+
+        Returns:
+            McpErrorResponse for prompt execution errors
+        """
+        data = McpErrorData(
+            parameter="prompt",
+            value=prompt_name,
+            suggestion=suggestion or "Check prompt parameters and try again",
+        )
+        return cls(
+            code=McpErrorCode.PROMPT_EXECUTION_ERROR,
+            message=f"Prompt execution failed: {message}",
+            data=data,
+        )
+
+    @classmethod
+    def sampling_error(cls, message: str, retry_after: int | None = None) -> "McpErrorResponse":
+        """Create sampling error (-32007).
+
+        Args:
+            message: Error message describing sampling failure
+            retry_after: Optional seconds to wait before retrying
+
+        Returns:
+            McpErrorResponse for sampling errors
+        """
+        data = McpErrorData(
+            suggestion="Sampling request failed. Simplify the query or try again later.",
+            retry_after=retry_after,
+        )
+        return cls(
+            code=McpErrorCode.SAMPLING_ERROR,
+            message=f"Sampling error: {message}",
+            data=data,
+        )
+
+    @classmethod
+    def region_unknown(cls, region: str) -> "McpErrorResponse":
+        """Create region unknown error (-32008).
+
+        Args:
+            region: The region identifier that was not recognized
+
+        Returns:
+            McpErrorResponse for unknown region errors
+        """
+        data = McpErrorData(
+            parameter="region",
+            value=region,
+            expected="Valid NSIP region: northeast, southeast, midwest, "
+            "southwest, mountain, pacific",
+            suggestion="Use a valid NSIP region or state abbreviation (e.g., 'TX', 'OH')",
+        )
+        return cls(
+            code=McpErrorCode.REGION_UNKNOWN,
+            message=f"Unknown region: {region}",
+            data=data,
+        )
+
+    @classmethod
+    def knowledge_base_error(cls, resource: str, message: str) -> "McpErrorResponse":
+        """Create knowledge base error (-32009).
+
+        Args:
+            resource: The KB resource that failed to load
+            message: Error message describing the failure
+
+        Returns:
+            McpErrorResponse for knowledge base errors
+        """
+        data = McpErrorData(
+            parameter="kb_resource",
+            value=resource,
+            suggestion="Knowledge base may be corrupted. Contact support if issue persists.",
+        )
+        return cls(
+            code=McpErrorCode.KNOWLEDGE_BASE_ERROR,
+            message=f"Knowledge base error: {message}",
+            data=data,
+        )

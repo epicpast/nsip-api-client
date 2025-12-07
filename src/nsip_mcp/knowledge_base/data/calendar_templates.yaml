@@ -1,0 +1,293 @@
+# Seasonal Calendar Templates for Sheep Management
+#
+# Monthly task checklists organized by management category.
+# These are templates - actual timing varies by region and flock goals.
+
+general:
+  breeding_season:
+    description: "Tasks around ram introduction and breeding"
+    tasks:
+      - name: "Ram fertility testing"
+        timing: "60 days before breeding"
+        priority: high
+        details: >
+          Breeding soundness exam including semen evaluation.
+          Test all rams - don't assume last year's performance.
+
+      - name: "Condition scoring - ewes"
+        timing: "60 days before breeding"
+        priority: high
+        details: >
+          Target BCS 3.0-3.5. Thin ewes need flushing; fat ewes
+          may have reduced conception.
+
+      - name: "Condition scoring - rams"
+        timing: "30 days before breeding"
+        priority: high
+        details: >
+          Target BCS 3.5-4.0. Rams lose 10-15% during breeding.
+
+      - name: "Flushing (if applicable)"
+        timing: "14-21 days before breeding"
+        priority: moderate
+        details: >
+          Increase energy intake 15-20% for thin ewes on rising plane.
+
+      - name: "Ram turnout"
+        timing: "Breeding start"
+        priority: high
+        details: >
+          Mark rams with raddle or harness. Change color every 17 days.
+          Ram to ewe ratio: 1:25-40 for mature rams, 1:15 for ram lambs.
+
+      - name: "Monitor breeding activity"
+        timing: "Throughout breeding"
+        priority: moderate
+        details: >
+          Check raddle marks daily. Unbred ewes at day 17+ may need attention.
+
+  pre_lambing:
+    description: "Preparation for lambing season"
+    tasks:
+      - name: "Booster vaccinations (CDT)"
+        timing: "4-6 weeks before lambing"
+        priority: high
+        details: >
+          Ewes need annual booster to provide colostral immunity to lambs.
+
+      - name: "Crutch/tag ewes"
+        timing: "2-4 weeks before lambing"
+        priority: moderate
+        details: >
+          Shear around udder and vulva for cleanliness at birth.
+
+      - name: "Prepare lambing supplies"
+        timing: "2-4 weeks before lambing"
+        priority: high
+        details: >
+          OB sleeves, lubricant, iodine, towels, stomach tube, colostrum,
+          lamb pullers, heat lamps, jugs/pens.
+
+      - name: "Ultrasound pregnancy check"
+        timing: "45-90 days post-breeding"
+        priority: moderate
+        details: >
+          Identify open ewes, singles, multiples. Group by litter size
+          for targeted nutrition.
+
+      - name: "Increase nutrition (late gestation)"
+        timing: "6 weeks before lambing"
+        priority: high
+        details: >
+          Increase energy 50-70%. Twins/triplets need more.
+          Watch for pregnancy toxemia.
+
+      - name: "Set up lambing jugs"
+        timing: "1 week before lambing"
+        priority: high
+        details: >
+          4x4 to 5x5 feet per ewe. Bedding, water, hay ready.
+
+  lambing:
+    description: "During active lambing period"
+    tasks:
+      - name: "Lamb check rounds"
+        timing: "Every 4-6 hours minimum"
+        priority: high
+        details: >
+          More frequent for first-time mothers. Night checks important
+          in cold weather.
+
+      - name: "Navel dipping"
+        timing: "Within 1 hour of birth"
+        priority: high
+        details: >
+          7% iodine solution. Repeat at 12 hours if wet/dirty conditions.
+
+      - name: "Colostrum management"
+        timing: "Within 2-4 hours of birth"
+        priority: critical
+        details: >
+          Ensure 10% of body weight colostrum in first 24 hours.
+          50% in first 6 hours critical.
+
+      - name: "Jug management"
+        timing: "24-72 hours post-lambing"
+        priority: high
+        details: >
+          Bonding time. Check udder function, lamb nursing, ewe mothering.
+
+      - name: "Lamb processing"
+        timing: "24-72 hours old"
+        priority: high
+        details: >
+          Ear tag, tail dock (if applicable), elastrator for males
+          (if applicable). Record birth data.
+
+  post_lambing:
+    description: "Lactation through weaning"
+    tasks:
+      - name: "Creep feed lambs (optional)"
+        timing: "2-3 weeks old"
+        priority: moderate
+        details: >
+          High-protein starter (18-20%). Access restricted to lambs only.
+
+      - name: "Lamb vaccinations"
+        timing: "6-8 weeks old"
+        priority: high
+        details: >
+          First CDT vaccine. Booster 2-4 weeks later.
+
+      - name: "FAMACHA scoring"
+        timing: "Every 2-3 weeks (season dependent)"
+        priority: high
+        details: >
+          Check eyelid color. Treat score 3+ animals. Record data for
+          selection decisions.
+
+      - name: "Weaning"
+        timing: "60-90 days (system dependent)"
+        priority: high
+        details: >
+          Abrupt separation. Move ewes to poor pasture to reduce milk.
+          Lamb stress management.
+
+      - name: "Post-weaning ewe care"
+        timing: "At weaning"
+        priority: moderate
+        details: >
+          Reduce nutrition, check udders for mastitis, condition score.
+
+  shearing:
+    description: "Wool harvest and preparation"
+    tasks:
+      - name: "Schedule shearer"
+        timing: "2-3 months ahead"
+        priority: high
+        details: >
+          Good shearers book early. Confirm date and requirements.
+
+      - name: "Clean pens/handling area"
+        timing: "Day before shearing"
+        priority: moderate
+        details: >
+          Remove bedding and debris. Dry, clean sheep preferred.
+
+      - name: "Shearing day"
+        timing: "Per schedule"
+        priority: high
+        details: >
+          Sort fleeces by quality. Keep dry storage. Second cuts reduce value.
+
+      - name: "Post-shearing care"
+        timing: "First 2 weeks after"
+        priority: high
+        details: >
+          Shelter from cold/wet for 10-14 days. Watch for cuts, monitor condition.
+
+  annual_health:
+    description: "Year-round health tasks"
+    tasks:
+      - name: "Hoof trimming"
+        timing: "2-4 times per year"
+        priority: moderate
+        details: >
+          Before breeding, before lambing, and as needed. More frequent
+          in wet conditions.
+
+      - name: "Annual vaccinations"
+        timing: "Pre-breeding or pre-lambing"
+        priority: high
+        details: >
+          CDT at minimum. Footvax, CL vaccine if applicable to flock.
+
+      - name: "Fecal egg counts"
+        timing: "Beginning and peak of parasite season"
+        priority: moderate
+        details: >
+          Establish baseline. Identify resistant/susceptible animals.
+
+      - name: "Culling decisions"
+        timing: "Post-weaning"
+        priority: moderate
+        details: >
+          Evaluate udder health, feet, reproductive failure, poor mothering,
+          parasite susceptibility.
+
+regional_adjustments:
+  southeast:
+    parasite_management:
+      - name: "Year-round FAMACHA"
+        timing: "Every 2-3 weeks"
+        priority: critical
+        details: "No dormant season for parasites"
+
+      - name: "Smart drenching"
+        timing: "Based on FAMACHA, not calendar"
+        priority: critical
+        details: "Avoid whole-flock treatments"
+
+    heat_management:
+      - name: "Provide shade"
+        timing: "April - October"
+        priority: high
+        details: "Natural or constructed shade essential"
+
+      - name: "Water access"
+        timing: "Year-round"
+        priority: critical
+        details: "Multiple water sources, shaded if possible"
+
+  mountain:
+    winter_preparation:
+      - name: "Hay inventory"
+        timing: "By October"
+        priority: high
+        details: "Plan for 5-6 months feeding"
+
+      - name: "Windbreaks/shelter"
+        timing: "Before first snow"
+        priority: high
+        details: "Natural terrain or built structures"
+
+    lambing_timing:
+      - name: "Spring lambing setup"
+        timing: "March"
+        priority: high
+        details: "Later lambing to match grass growth"
+
+  pacific:
+    selenium_program:
+      - name: "Selenium supplementation"
+        timing: "Year-round"
+        priority: critical
+        details: "Injectable BoSe or selenium-containing mineral"
+
+      - name: "Pre-lambing selenium boost"
+        timing: "4 weeks before lambing"
+        priority: high
+        details: "Ewes need adequate selenium for lamb health"
+
+marketing_calendar:
+  direct_sales:
+    - name: "Easter market"
+      timing: "2-4 weeks before Easter"
+      details: "30-50 lb lambs preferred"
+
+    - name: "Eid al-Adha"
+      timing: "Varies yearly - check Islamic calendar"
+      details: "Premium market. 60-80 lb lambs. Intact males preferred."
+
+    - name: "Christmas/holiday"
+      timing: "November - December"
+      details: "Heavier lambs for roasts"
+
+  auction/wholesale:
+    - name: "Spring lamb market"
+      timing: "April - June"
+      details: "Price typically highest early in season"
+
+    - name: "Fall lamb market"
+      timing: "September - November"
+      details: "Prices often lower due to supply"

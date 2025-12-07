@@ -1,0 +1,224 @@
+# Sheep Disease Prevention Guide by Region
+#
+# This knowledge base covers common sheep diseases and health challenges,
+# with regional risk assessments based on climate, parasite pressure,
+# and typical management systems.
+#
+# Risk levels: low, moderate, high, very_high, unknown
+
+common_diseases:
+  footrot:
+    description: >
+      Bacterial infection (Dichelobacter nodosus + Fusobacterium necrophorum)
+      causing lameness and hoof damage. Highly contagious in wet conditions.
+    prevention:
+      - Maintain dry conditions in high-traffic areas
+      - Regular hoof trimming and inspection
+      - Footbath with 10% zinc sulfate solution
+      - Quarantine new arrivals for 30 days
+      - Cull chronic carriers
+      - Select for foot health (genetic component)
+    treatment: >
+      Isolate affected animals immediately. Trim all necrotic tissue,
+      topical treatment with zinc sulfate or copper sulfate, systemic
+      antibiotics (LA-200) for severe cases. Dry environment critical.
+    regional_risk:
+      northeast: high
+      southeast: very_high
+      midwest: moderate
+      southwest: low
+      mountain: low
+      pacific: moderate
+
+  internal_parasites:
+    description: >
+      Haemonchus contortus (barber pole worm) is the primary threat,
+      along with Teladorsagia, Trichostrongylus species. Causes anemia,
+      bottle jaw, weight loss, death in severe cases.
+    prevention:
+      - FAMACHA scoring every 2-3 weeks during season
+      - Selective deworming (treat only animals that need it)
+      - Pasture rotation with 60+ day rest periods
+      - Multi-species grazing when possible
+      - Select for parasite resistance (FEC EBV)
+      - Avoid grazing wet, shaded areas
+      - Use refugia strategy to maintain susceptible worm population
+    treatment: >
+      Deworm based on FAMACHA score (3+) or fecal egg count. Rotate
+      drug classes to prevent resistance. Check efficacy with fecal
+      egg count reduction test. Supportive care for anemic animals.
+    regional_risk:
+      northeast: high
+      southeast: very_high
+      midwest: moderate
+      southwest: moderate
+      mountain: low
+      pacific: moderate
+
+  ovine_progressive_pneumonia:
+    description: >
+      OPP (Maedi-Visna) is a slow viral disease causing progressive lung
+      damage, mastitis, arthritis. No treatment or vaccine available.
+      Spread through respiratory secretions and infected colostrum/milk.
+    prevention:
+      - Test and cull positive animals
+      - Raise lambs on pasteurized colostrum
+      - Maintain closed flock when possible
+      - Test all new purchases before introduction
+      - Avoid nose-to-nose contact with unknown animals
+    treatment: >
+      No treatment available. Positive animals should be culled to
+      prevent spread. Some flocks manage by separating positive
+      animals and bottle-raising offspring.
+    regional_risk:
+      northeast: moderate
+      southeast: moderate
+      midwest: moderate
+      southwest: moderate
+      mountain: moderate
+      pacific: moderate
+
+  caseous_lymphadenitis:
+    description: >
+      CL (Cheesy Gland) is a chronic bacterial infection (Corynebacterium
+      pseudotuberculosis) causing abscesses in lymph nodes. Highly
+      contagious, difficult to eradicate once established.
+    prevention:
+      - Test and cull positive animals
+      - Isolate animals with external abscesses
+      - Disinfect shearing equipment between animals
+      - Avoid sharing equipment with other flocks
+      - Vaccinate in endemic flocks (Case-Bac or similar)
+      - Quarantine all new purchases
+    treatment: >
+      External abscesses can be lanced, drained, and flushed with
+      iodine - but this spreads bacteria. Best to isolate and
+      cull affected animals. Internal abscesses untreatable.
+    regional_risk:
+      northeast: moderate
+      southeast: high
+      midwest: moderate
+      southwest: high
+      mountain: moderate
+      pacific: high
+
+  enterotoxemia:
+    description: >
+      Overeating disease caused by Clostridium perfringens types C and D.
+      Affects rapidly growing lambs on high-concentrate diets.
+      Often fatal before treatment can begin.
+    prevention:
+      - Vaccinate ewes 4-6 weeks before lambing (CDT vaccine)
+      - Vaccinate lambs at 6-8 weeks, booster at 10-12 weeks
+      - Gradual diet changes when increasing grain
+      - Adequate fiber in diet (minimum 10% roughage)
+      - Consistent feeding schedule
+    treatment: >
+      Often too late by the time signs appear. Antitoxin if
+      available. Supportive care with oral electrolytes.
+      Prevention far more effective than treatment.
+    regional_risk:
+      northeast: moderate
+      southeast: moderate
+      midwest: high
+      southwest: moderate
+      mountain: moderate
+      pacific: moderate
+
+  scrapie:
+    description: >
+      Fatal, degenerative neurological disease (transmissible spongiform
+      encephalopathy). Required to enroll in USDA Scrapie Eradication
+      Program. Genetic testing available.
+    prevention:
+      - Enroll in USDA Scrapie Flock Certification Program
+      - Genotype breeding stock (select for RR at codon 171)
+      - Cull QQ and QR animals for breeding
+      - Maintain proper animal identification
+      - Practice good biosecurity
+    treatment: >
+      No treatment. Affected animals must be reported and euthanized.
+      Federal indemnity program available for positive flocks.
+    regional_risk:
+      northeast: low
+      southeast: low
+      midwest: low
+      southwest: low
+      mountain: low
+      pacific: low
+
+  pregnancy_toxemia:
+    description: >
+      Ketosis in late-pregnancy ewes carrying multiples. Caused by
+      negative energy balance when fetal nutrient demands exceed intake.
+    prevention:
+      - Body condition score of 3.0-3.5 at breeding
+      - Increase energy in last 6 weeks of pregnancy
+      - Ultrasound to identify ewes with multiples
+      - Feed multiples separately with higher plane
+      - Avoid stress and ensure adequate bunk space
+    treatment: >
+      Oral propylene glycol (60ml 2x daily), IV dextrose for
+      severe cases. Induce lambing or C-section if close to term.
+      Prognosis poor for recumbent ewes.
+    regional_risk:
+      northeast: moderate
+      southeast: moderate
+      midwest: moderate
+      southwest: moderate
+      mountain: moderate
+      pacific: moderate
+
+  mastitis:
+    description: >
+      Udder infection causing reduced milk production, lamb starvation,
+      and potential ewe mortality. Can be acute (hot, swollen) or
+      chronic (lumpy, reduced function).
+    prevention:
+      - Maintain clean lambing environment
+      - Ensure adequate colostrum intake by lambs
+      - Check udders at weaning
+      - Cull ewes with chronic mastitis or hard bags
+      - Trim teats if too large for lambs
+    treatment: >
+      Systemic antibiotics (consult vet for appropriate choice).
+      Strip affected half frequently. Supportive care.
+      Often results in loss of affected half for future lactations.
+    regional_risk:
+      northeast: moderate
+      southeast: high
+      midwest: moderate
+      southwest: low
+      mountain: low
+      pacific: moderate
+
+vaccination_schedules:
+  core_vaccines:
+    - name: CDT (Clostridium perfringens C&D + Tetanus)
+      ewes: "4-6 weeks before lambing, annual booster"
+      lambs: "6-8 weeks, booster 2-4 weeks later"
+      rams: "Annual, 30 days before breeding"
+
+  optional_vaccines:
+    - name: Footvax
+      use: "Endemic footrot flocks, before wet season"
+      schedule: "Annual or semi-annual"
+
+    - name: Case-Bac
+      use: "Endemic CL flocks"
+      schedule: "Annual"
+
+    - name: Pneumonia vaccine
+      use: "High-risk flocks with history"
+      schedule: "Before stress periods"
+
+notes:
+  veterinary_guidance: >
+    Always consult with a veterinarian for diagnosis and treatment
+    protocols. This guide provides general information only and
+    should not replace professional veterinary advice.
+
+  regional_variation: >
+    Risk levels are generalizations based on typical climate and
+    management. Individual farm conditions may vary significantly.
+    Local extension and veterinary guidance is essential.

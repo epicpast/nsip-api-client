@@ -1,0 +1,226 @@
+# Sheep Nutrition Guidelines
+#
+# Comprehensive nutrition guidance by life stage with regional considerations.
+# Energy values in TDN (Total Digestible Nutrients) percentage.
+# Protein values in Crude Protein (CP) percentage.
+
+life_stages:
+  maintenance:
+    description: "Non-pregnant, non-lactating adult sheep"
+    timing: "Year-round for dry ewes, rams out of breeding"
+    protein: "8-10%"
+    energy: "TDN 50-55%"
+    dry_matter_intake: "2.0-2.5% body weight"
+    notes: >
+      Goal is to maintain body condition. Adjust based on BCS -
+      increase if below 2.5, decrease if above 4.0.
+
+  flushing:
+    description: "Pre-breeding nutrition boost to increase ovulation"
+    timing: "2-3 weeks before ram turnout through breeding"
+    protein: "12-14%"
+    energy: "TDN 60-65%"
+    energy_increase: "15-20% above maintenance"
+    notes: >
+      Most effective for ewes in moderate condition (BCS 2.5-3.0).
+      Thin ewes need longer recovery; fat ewes may not respond.
+      Rising plane of nutrition is key, not absolute level.
+
+  early_gestation:
+    description: "First 100 days of pregnancy"
+    timing: "Day 1-100 of pregnancy"
+    protein: "10-12%"
+    energy: "TDN 55-60%"
+    notes: >
+      Fetal growth minimal during this period. Maintain BCS at 3.0.
+      Good time to recover condition on thin ewes. Avoid toxins
+      and stress that could cause embryonic loss.
+
+  late_gestation:
+    description: "Final 6 weeks of pregnancy"
+    timing: "Day 100-150 (or to lambing)"
+    protein: "14-16%"
+    energy: "TDN 65-70%"
+    energy_increase: "50-70% above maintenance"
+    critical_nutrients:
+      - calcium: "Gradually increase to 0.4-0.6% of diet"
+      - selenium: "0.3 ppm (supplement if deficient area)"
+      - vitamin_e: "15-30 IU/lb dry matter"
+      - iodine: "0.1-0.8 ppm"
+    notes: >
+      70% of fetal growth occurs in last 6 weeks. Ewes with twins/triplets
+      need higher plane. Monitor for pregnancy toxemia in thin ewes or
+      those with multiples. Ensure adequate bunk space - 18-24" per ewe.
+
+  lactation_early:
+    description: "Peak lactation (first 6-8 weeks)"
+    timing: "Lambing through 6-8 weeks"
+    protein: "16-18%"
+    energy: "TDN 70-75%"
+    energy_increase: "100-120% above maintenance for twins"
+    notes: >
+      Highest nutrient demand of entire production cycle. Ewes will
+      mobilize body reserves if underfed. Singles need less than twins.
+      Milk production peaks 3-4 weeks post-lambing.
+
+  lactation_late:
+    description: "Declining lactation to weaning"
+    timing: "6-8 weeks to weaning (60-90 days)"
+    protein: "14-16%"
+    energy: "TDN 65-70%"
+    notes: >
+      Gradually reduce nutrition as lamb consumption increases.
+      Goal is for ewes to regain condition before breeding while
+      still supporting lamb growth.
+
+  growing_lambs:
+    description: "Post-weaning to market/selection"
+    timing: "60 days to 5-7 months"
+    protein: "16-18% early, 14-16% later"
+    energy: "TDN 70-75%"
+    notes: >
+      Balance growth rate with management goals. Terminal lambs can
+      push for maximum gain. Replacement ewe lambs benefit from
+      moderate growth to ensure skeletal development.
+
+  finishing_lambs:
+    description: "Final feeding period before market"
+    timing: "Last 4-8 weeks before slaughter"
+    protein: "14-16%"
+    energy: "TDN 75-80%"
+    notes: >
+      High energy to maximize rate of gain and finish. Watch for
+      enterotoxemia - vaccinate and adapt gradually. Adequate
+      fiber (10%+ roughage) prevents acidosis.
+
+  breeding_rams:
+    description: "Rams during and after breeding season"
+    timing: "30 days before through breeding (60-90 days)"
+    protein: "14-16%"
+    energy: "TDN 65-70%"
+    notes: >
+      Rams lose 10-15% body weight during breeding. Start in good
+      condition (BCS 3.5-4.0). Supplement during breeding if
+      running with large groups.
+
+mineral_requirements:
+  macro_minerals:
+    calcium:
+      maintenance: "0.2-0.3%"
+      late_gestation: "0.4-0.6%"
+      lactation: "0.5-0.8%"
+      notes: "Ca:P ratio should be 2:1"
+
+    phosphorus:
+      all_stages: "0.2-0.3%"
+      notes: "Important for growth and reproduction"
+
+    magnesium:
+      all_stages: "0.12-0.18%"
+      notes: "Higher for lactating ewes on lush pasture (grass tetany risk)"
+
+    salt:
+      all_stages: "0.4-0.5%"
+      notes: "Free choice salt recommended"
+
+  trace_minerals:
+    selenium:
+      requirement: "0.1-0.3 ppm"
+      deficiency_areas: ["Pacific Northwest", "Great Lakes", "Northeast"]
+      notes: "Supplement in deficient areas; toxicity above 5 ppm"
+
+    copper:
+      requirement: "7-11 ppm"
+      notes: "Sheep very sensitive to copper toxicity. Never use cattle minerals."
+
+    zinc:
+      requirement: "20-33 ppm"
+      notes: "Important for immune function and hoof health"
+
+    iodine:
+      requirement: "0.1-0.8 ppm"
+      notes: "Goiter in deficient lambs; most areas adequate"
+
+regional_considerations:
+  northeast:
+    selenium_deficiency: true
+    grass_tetany_risk: "moderate"
+    summer_heat_stress: "occasional"
+    notes: >
+      Selenium supplementation often needed. Watch for grass tetany
+      on lush spring pasture. Most forages adequate quality.
+
+  southeast:
+    selenium_deficiency: false
+    grass_tetany_risk: "low"
+    summer_heat_stress: "significant"
+    endophyte_fescue: true
+    notes: >
+      Avoid endophyte-infected tall fescue during breeding and late
+      gestation - causes reduced conception, agalactia, prolonged
+      gestation. Heat stress reduces intake; provide shade, feed
+      during cool hours, ensure adequate water.
+
+  midwest:
+    selenium_deficiency: "variable"
+    grass_tetany_risk: "moderate"
+    summer_heat_stress: "moderate"
+    notes: >
+      Corn belt provides excellent feed options. Test soils and
+      forages for mineral content. Adequate quality forages available.
+
+  southwest:
+    selenium_deficiency: false
+    grass_tetany_risk: "low"
+    summer_heat_stress: "severe"
+    water_quality: "variable"
+    notes: >
+      Water access critical. May need to adjust feeding times.
+      Some areas have high TDS water affecting intake. Browse
+      and range plants often high in protein.
+
+  mountain:
+    selenium_deficiency: "variable"
+    grass_tetany_risk: "moderate"
+    altitude_effects: true
+    notes: >
+      High altitude reduces intake capacity. Range forage quality
+      varies seasonally. Supplementation critical during drought
+      or winter. Watch for poisonous plants.
+
+  pacific:
+    selenium_deficiency: true
+    grass_tetany_risk: "high"
+    notes: >
+      Selenium supplementation essential (Pacific Northwest especially).
+      Lush cool-season pastures increase grass tetany risk.
+      Vitamin E often needed with selenium.
+
+seasonal_adjustments:
+  summer:
+    heat_stress: |
+      - Provide shade and adequate water
+      - Feed during cool morning/evening hours
+      - Reduce handling during hot periods
+      - Consider electrolyte supplementation
+
+  winter:
+    cold_stress: |
+      - Increase energy 10-20% in severe cold
+      - Ensure adequate dry matter intake
+      - Protect from wind and wet conditions
+      - Unfrozen water critical
+
+  spring:
+    transition: |
+      - Gradual transition to lush pasture (7-10 days)
+      - Watch for grass tetany on cool-season grasses
+      - Monitor for bloat on legume pastures
+      - Parasite season begins
+
+  fall:
+    preparation: |
+      - Assess body condition before breeding
+      - Flush ewes if needed
+      - Stock up on winter feed
+      - Prepare for late gestation needs

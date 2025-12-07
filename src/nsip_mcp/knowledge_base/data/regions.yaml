@@ -1,0 +1,319 @@
+# NSIP Member Regions
+#
+# Regional information for sheep production in the United States,
+# organized by USDA climate regions with sheep-specific considerations.
+
+regions:
+  northeast:
+    name: "Northeast"
+    states:
+      - ME  # Maine
+      - NH  # New Hampshire
+      - VT  # Vermont
+      - MA  # Massachusetts
+      - RI  # Rhode Island
+      - CT  # Connecticut
+      - NY  # New York
+      - NJ  # New Jersey
+      - PA  # Pennsylvania
+    climate: "humid_continental"
+    primary_breeds:
+      - Katahdin
+      - Suffolk
+      - Dorset
+      - Tunis
+      - Finnsheep
+    lambing_season: "winter_spring"
+    typical_lambing: "January - April"
+    challenges:
+      - "Selenium deficiency in soils"
+      - "Foot rot in wet conditions"
+      - "Internal parasites moderate pressure"
+      - "Winter housing often required"
+      - "Small farm size limits scale"
+    opportunities:
+      - "Strong local food movement"
+      - "Direct marketing potential"
+      - "Ethnic market access"
+      - "Wool and fiber enthusiasts"
+    parasite_season: "May - October"
+    notes: >
+      Small to medium sized flocks predominate. Strong heritage breed
+      interest. Direct marketing to urban centers viable.
+
+  southeast:
+    name: "Southeast"
+    states:
+      - MD  # Maryland
+      - DE  # Delaware
+      - VA  # Virginia
+      - WV  # West Virginia
+      - NC  # North Carolina
+      - SC  # South Carolina
+      - GA  # Georgia
+      - FL  # Florida
+      - AL  # Alabama
+      - MS  # Mississippi
+      - LA  # Louisiana
+      - TN  # Tennessee
+      - KY  # Kentucky
+    climate: "humid_subtropical"
+    primary_breeds:
+      - Katahdin
+      - St. Croix
+      - Dorper
+      - Gulf Coast Native
+      - Barbados Blackbelly
+    lambing_season: "year_round"
+    typical_lambing: "Fall preferred, year-round possible"
+    challenges:
+      - "Severe internal parasite pressure (Haemonchus)"
+      - "Heat stress in summer"
+      - "Endophyte-infected tall fescue"
+      - "High humidity promotes disease"
+      - "Foot rot very common"
+    opportunities:
+      - "Year-round grazing possible"
+      - "Ethnic market demand strong"
+      - "Growing interest in hair sheep"
+      - "Low winter feed costs"
+    parasite_season: "Year-round (peaks March-October)"
+    notes: >
+      Hair sheep strongly preferred due to parasite pressure and heat.
+      FAMACHA selection critical. Avoid fescue for breeding stock.
+
+  midwest:
+    name: "Midwest"
+    states:
+      - OH  # Ohio
+      - IN  # Indiana
+      - IL  # Illinois
+      - MI  # Michigan
+      - WI  # Wisconsin
+      - MN  # Minnesota
+      - IA  # Iowa
+      - MO  # Missouri
+      - ND  # North Dakota
+      - SD  # South Dakota
+      - NE  # Nebraska
+      - KS  # Kansas
+    climate: "continental"
+    primary_breeds:
+      - Suffolk
+      - Hampshire
+      - Dorset
+      - Polypay
+      - Columbia
+    lambing_season: "late_winter"
+    typical_lambing: "February - April"
+    challenges:
+      - "Harsh winter weather"
+      - "Spring parasite surge"
+      - "Feedlot lamb competition"
+      - "Labor shortage"
+    opportunities:
+      - "Excellent feed resources (corn, soy)"
+      - "Strong 4-H/FFA market"
+      - "Purebred breeding stock sales"
+      - "Wool cooperative access"
+    parasite_season: "April - October"
+    notes: >
+      Corn belt provides excellent finishing options. Strong show
+      and purebred industry. Many university extension resources.
+
+  southwest:
+    name: "Southwest"
+    states:
+      - TX  # Texas
+      - OK  # Oklahoma
+      - AR  # Arkansas
+      - AZ  # Arizona
+      - NM  # New Mexico
+    climate: "semi_arid"
+    primary_breeds:
+      - Rambouillet
+      - Dorper
+      - Katahdin
+      - Suffolk
+      - Hair sheep crosses
+    lambing_season: "fall_spring"
+    typical_lambing: "November - December or March - April"
+    challenges:
+      - "Extreme heat in summer"
+      - "Water scarcity"
+      - "Predators (coyotes, mountain lions)"
+      - "Drought years"
+      - "Long distances to markets"
+    opportunities:
+      - "Large ranch operations viable"
+      - "Low land costs"
+      - "Hispanic market demand"
+      - "Export potential to Mexico"
+    parasite_season: "Variable with rainfall"
+    notes: >
+      Texas is largest sheep state. Mix of range operations and
+      intensive hair sheep. Water access determines carrying capacity.
+
+  mountain:
+    name: "Mountain"
+    states:
+      - MT  # Montana
+      - WY  # Wyoming
+      - CO  # Colorado
+      - UT  # Utah
+      - ID  # Idaho
+      - NV  # Nevada
+    climate: "alpine_semi_arid"
+    primary_breeds:
+      - Rambouillet
+      - Targhee
+      - Columbia
+      - Suffolk
+      - Polypay
+    lambing_season: "spring"
+    typical_lambing: "March - May"
+    challenges:
+      - "Harsh winters"
+      - "Short growing season"
+      - "Predators significant issue"
+      - "Long distances to market"
+      - "High altitude affects production"
+    opportunities:
+      - "Large band operations traditional"
+      - "Public land grazing"
+      - "Wool production emphasis"
+      - "Range lamb premium markets"
+    parasite_season: "June - September"
+    notes: >
+      Traditional range sheep industry. Band operations on public land.
+      Wool historically important. Predator control critical.
+
+  pacific:
+    name: "Pacific"
+    states:
+      - WA  # Washington
+      - OR  # Oregon
+      - CA  # California
+      - AK  # Alaska
+      - HI  # Hawaii
+    climate: "varied"
+    primary_breeds:
+      - Suffolk
+      - Hampshire
+      - Polypay
+      - Katahdin
+      - Dorper
+    lambing_season: "winter_spring"
+    typical_lambing: "January - April (varies by location)"
+    challenges:
+      - "Selenium deficiency severe (Pacific Northwest)"
+      - "Grass tetany on lush pasture"
+      - "Foot rot in wet conditions"
+      - "High land prices in California"
+    opportunities:
+      - "Strong local food movement"
+      - "Ethnic market diversity"
+      - "Wine country tourism"
+      - "Year-round grazing in California"
+    parasite_season: "March - November (coastal)"
+    notes: >
+      Varied climate from wet Pacific Northwest to dry California.
+      Selenium supplementation essential in Northwest. Strong direct
+      marketing potential.
+
+# State to region lookup helper
+state_lookup:
+  ME: northeast
+  NH: northeast
+  VT: northeast
+  MA: northeast
+  RI: northeast
+  CT: northeast
+  NY: northeast
+  NJ: northeast
+  PA: northeast
+  MD: southeast
+  DE: southeast
+  VA: southeast
+  WV: southeast
+  NC: southeast
+  SC: southeast
+  GA: southeast
+  FL: southeast
+  AL: southeast
+  MS: southeast
+  LA: southeast
+  TN: southeast
+  KY: southeast
+  OH: midwest
+  IN: midwest
+  IL: midwest
+  MI: midwest
+  WI: midwest
+  MN: midwest
+  IA: midwest
+  MO: midwest
+  ND: midwest
+  SD: midwest
+  NE: midwest
+  KS: midwest
+  TX: southwest
+  OK: southwest
+  AR: southwest
+  AZ: southwest
+  NM: southwest
+  MT: mountain
+  WY: mountain
+  CO: mountain
+  UT: mountain
+  ID: mountain
+  NV: mountain
+  WA: pacific
+  OR: pacific
+  CA: pacific
+  AK: pacific
+  HI: pacific
+
+# Climate considerations
+climate_info:
+  humid_continental:
+    description: "Cold winters, warm summers, year-round precipitation"
+    sheep_considerations:
+      - "Winter shelter or windbreak essential"
+      - "Good pasture growth spring through fall"
+      - "Hay storage for winter feeding"
+
+  humid_subtropical:
+    description: "Hot humid summers, mild winters"
+    sheep_considerations:
+      - "Heat stress major concern"
+      - "Parasite pressure year-round"
+      - "Hair sheep strongly favored"
+
+  continental:
+    description: "Hot summers, cold winters, moderate precipitation"
+    sheep_considerations:
+      - "Four distinct management seasons"
+      - "Excellent feedlot finishing conditions"
+      - "Barn lambing in cold weather"
+
+  semi_arid:
+    description: "Hot summers, mild winters, low precipitation"
+    sheep_considerations:
+      - "Water access determines management"
+      - "Heat tolerance essential"
+      - "Browse and range plants important"
+
+  alpine_semi_arid:
+    description: "Cold winters, cool summers, low precipitation"
+    sheep_considerations:
+      - "Short growing season"
+      - "Band operations on range"
+      - "Altitude affects feed requirements"
+
+  varied:
+    description: "Multiple climate zones within region"
+    sheep_considerations:
+      - "Local conditions highly variable"
+      - "Consult regional extension"
+      - "Match breed to specific location"
