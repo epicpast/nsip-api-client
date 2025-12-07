@@ -8,18 +8,18 @@ provide evidence-based recommendations.
 
 from typing import Any
 
-from nsip_mcp.server import mcp
-from nsip_mcp.metrics import server_metrics
 from nsip_mcp.knowledge_base import (
-    get_region_info,
-    get_disease_guide,
-    get_nutrition_guide,
     get_calendar_template,
+    get_disease_guide,
     get_economics_template,
-    get_selection_index,
     get_heritabilities,
+    get_nutrition_guide,
+    get_region_info,
+    get_selection_index,
     list_regions,
 )
+from nsip_mcp.metrics import server_metrics
+from nsip_mcp.server import mcp
 
 
 def _record_prompt_execution(prompt_name: str, success: bool) -> None:

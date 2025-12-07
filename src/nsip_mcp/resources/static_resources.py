@@ -21,21 +21,21 @@ Resource URIs:
 import time
 from typing import Any
 
-from nsip_mcp.server import mcp
-from nsip_mcp.metrics import server_metrics
 from nsip_mcp.knowledge_base import (
-    get_heritabilities,
-    get_trait_info,
-    list_traits,
-    get_selection_index,
-    list_selection_indexes,
-    get_region_info,
-    list_regions,
-    get_disease_guide,
-    get_nutrition_guide,
     get_calendar_template,
+    get_disease_guide,
     get_economics_template,
+    get_heritabilities,
+    get_nutrition_guide,
+    get_region_info,
+    get_selection_index,
+    get_trait_info,
+    list_regions,
+    list_selection_indexes,
+    list_traits,
 )
+from nsip_mcp.metrics import server_metrics
+from nsip_mcp.server import mcp
 
 
 def _record_resource_access(uri_pattern: str, start_time: float) -> None:

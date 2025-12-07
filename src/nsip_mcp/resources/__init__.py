@@ -13,10 +13,10 @@ Resource URI Scheme:
 
 # Import resource modules to register them with the MCP server
 # These are imported after server.py imports this module
-from nsip_mcp.resources import static_resources  # noqa: F401
 from nsip_mcp.resources import animal_resources  # noqa: F401
 from nsip_mcp.resources import breeding_resources  # noqa: F401
 from nsip_mcp.resources import flock_resources  # noqa: F401
+from nsip_mcp.resources import static_resources  # noqa: F401
 
 __all__ = [
     "static_resources",

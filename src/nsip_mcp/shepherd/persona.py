@@ -4,7 +4,7 @@ The Shepherd uses a neutral expert persona - professional like a veterinarian,
 evidence-based, and respectful of regional differences in sheep production.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
@@ -83,19 +83,16 @@ You can help with:
   optimization, breakeven analysis
 """
 
-    UNCERTAINTY_PHRASES: list = None
-
-    def __post_init__(self):
-        """Initialize default uncertainty phrases."""
-        if self.UNCERTAINTY_PHRASES is None:
-            self.UNCERTAINTY_PHRASES = [
-                "Based on available data,",
-                "In most cases,",
-                "Typically,",
-                "Research suggests,",
-                "Regional variation exists, but generally,",
-                "Consult your local extension for specifics, however,",
-            ]
+    UNCERTAINTY_PHRASES: list[str] = field(
+        default_factory=lambda: [
+            "Based on available data,",
+            "In most cases,",
+            "Typically,",
+            "Research suggests,",
+            "Regional variation exists, but generally,",
+            "Consult your local extension for specifics, however,",
+        ]
+    )
 
     def get_system_prompt(self) -> str:
         """Get the full system prompt for the Shepherd persona."""

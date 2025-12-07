@@ -9,13 +9,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-from nsip_mcp.shepherd.persona import ShepherdPersona
-from nsip_mcp.shepherd.regions import detect_region, get_region_context
+from nsip_mcp.metrics import server_metrics
 from nsip_mcp.shepherd.domains.breeding import BreedingDomain
-from nsip_mcp.shepherd.domains.health import HealthDomain
 from nsip_mcp.shepherd.domains.calendar import CalendarDomain
 from nsip_mcp.shepherd.domains.economics import EconomicsDomain
-from nsip_mcp.metrics import server_metrics
+from nsip_mcp.shepherd.domains.health import HealthDomain
+from nsip_mcp.shepherd.persona import ShepherdPersona
+from nsip_mcp.shepherd.regions import detect_region, get_region_context
 
 
 class Domain(Enum):
@@ -209,7 +209,7 @@ class ShepherdAgent:
         region_context = self.get_region_context() if self.region else {}
 
         # Route to appropriate domain handler
-        result = {
+        result: dict[str, Any] = {
             "domain": domain.value,
             "region": self.region,
             "question": question,

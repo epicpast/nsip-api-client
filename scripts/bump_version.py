@@ -44,7 +44,7 @@ def read_version(init_path: Path) -> tuple[int, int, int]:
 def write_version(init_path: Path, major: int, minor: int, patch: int) -> None:
     """Write version to __init__.py file."""
     content = init_path.read_text()
-    new_version = f'{major}.{minor}.{patch}'
+    new_version = f"{major}.{minor}.{patch}"
     new_content = VERSION_PATTERN.sub(f'__version__ = "{new_version}"', content)
     init_path.write_text(new_content)
     print(f"Updated {init_path.name}: {new_version}")
@@ -54,15 +54,13 @@ def update_dependency(pyproject_path: Path, major: int, minor: int, patch: int) 
     """Update nsip-client dependency pin in pyproject.toml."""
     content = pyproject_path.read_text()
     new_version = f"{major}.{minor}.{patch}"
-    new_content = DEPENDENCY_PATTERN.sub(rf'\g<1>{new_version}\g<3>', content)
+    new_content = DEPENDENCY_PATTERN.sub(rf"\g<1>{new_version}\g<3>", content)
     if content != new_content:
         pyproject_path.write_text(new_content)
         print(f"Updated {pyproject_path.parent.name} dependency: nsip-client>={new_version}")
 
 
-def bump_version(
-    version: tuple[int, int, int], bump_type: str
-) -> tuple[int, int, int]:
+def bump_version(version: tuple[int, int, int], bump_type: str) -> tuple[int, int, int]:
     """Increment version based on bump type."""
     major, minor, patch = version
     if bump_type == "major":

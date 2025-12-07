@@ -253,3 +253,77 @@ class TestErrorResponseSerialization:
                 "suggestion": "Use page_size between 1-100 (e.g., 15), not 200",
             },
         }
+
+
+class TestAdditionalErrorFactories:
+    """Tests for additional error factory methods."""
+
+    def test_resource_not_found_factory(self):
+        """Verify resource_not_found creates proper error response."""
+        error = McpErrorResponse.resource_not_found(
+            uri="nsip://animals/12345/details",
+            suggestion="Check if the animal exists in NSIP",
+        )
+
+        result = error.to_dict()
+        assert result["code"] == -32005
+        assert "Resource not found" in result["message"]
+        assert result["data"]["parameter"] == "uri"
+        assert "12345" in result["data"]["value"]
+
+    def test_resource_not_found_default_suggestion(self):
+        """Verify resource_not_found uses default suggestion if not provided."""
+        error = McpErrorResponse.resource_not_found(uri="nsip://test")
+        result = error.to_dict()
+        assert "Verify the resource URI" in result["data"]["suggestion"]
+
+    def test_prompt_execution_error_factory(self):
+        """Verify prompt_execution_error creates proper error response."""
+        error = McpErrorResponse.prompt_execution_error(
+            prompt_name="shepherd_consult",
+            message="Failed to generate response",
+            suggestion="Try again with different parameters",
+        )
+
+        result = error.to_dict()
+        assert result["code"] == -32006
+        assert "Prompt execution failed" in result["message"]
+        assert result["data"]["parameter"] == "prompt"
+
+    def test_prompt_execution_error_default_suggestion(self):
+        """Verify prompt_execution_error uses default suggestion if not provided."""
+        error = McpErrorResponse.prompt_execution_error(
+            prompt_name="test_prompt", message="Error occurred"
+        )
+        result = error.to_dict()
+        assert "Check prompt parameters" in result["data"]["suggestion"]
+
+    def test_sampling_error_factory(self):
+        """Verify sampling_error creates proper error response."""
+        error = McpErrorResponse.sampling_error(message="Rate limit exceeded", retry_after=30)
+
+        result = error.to_dict()
+        assert result["code"] == -32007
+        assert "Rate limit exceeded" in result["message"]
+        assert result["data"]["suggestion"] is not None
+
+    def test_region_unknown_factory(self):
+        """Verify region_unknown creates proper error response."""
+        error = McpErrorResponse.region_unknown(region="invalid_region")
+
+        result = error.to_dict()
+        assert result["code"] == -32008
+        assert "Unknown region" in result["message"]
+        assert result["data"]["parameter"] == "region"
+        assert "Valid NSIP region" in result["data"]["expected"]
+
+    def test_knowledge_base_error_factory(self):
+        """Verify knowledge_base_error creates proper error response."""
+        error = McpErrorResponse.knowledge_base_error(
+            resource="heritabilities.yaml", message="File not found"
+        )
+
+        result = error.to_dict()
+        assert result["code"] == -32009
+        assert "File not found" in result["message"]
+        assert result["data"]["parameter"] == "kb_resource"

@@ -8,7 +8,7 @@ Provides expert guidance on:
 - Breakeven analysis
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from nsip_mcp.knowledge_base import get_economics_template
@@ -23,12 +23,7 @@ class EconomicsDomain:
     profitability analysis, and business decision-making.
     """
 
-    persona: ShepherdPersona = None
-
-    def __post_init__(self):
-        """Initialize default persona if not provided."""
-        if self.persona is None:
-            self.persona = ShepherdPersona()
+    persona: ShepherdPersona = field(default_factory=ShepherdPersona)
 
     def get_cost_breakdown(
         self,
@@ -73,7 +68,7 @@ class EconomicsDomain:
 
         combined_factor = scale_factor * system_factor
 
-        breakdown = {
+        breakdown: dict[str, Any] = {
             "flock_size": flock_size,
             "production_system": production_system,
             "annual_per_ewe": {},

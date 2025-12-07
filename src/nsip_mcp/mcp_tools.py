@@ -5,7 +5,7 @@ LLM-friendly interfaces with automatic caching, context management, and error ha
 """
 
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Awaitable, Optional, cast
 
 from nsip_client.exceptions import (
     NSIPAPIError,
@@ -626,7 +626,10 @@ async def shepherd_consult_tool(
 
     try:
         # Access .fn to get the underlying async function from the FunctionPrompt
-        messages = await shepherd_consult_prompt.fn(question=question, region=region)
+        messages = await cast(
+            Awaitable[list[dict[str, Any]]],
+            shepherd_consult_prompt.fn(question=question, region=region),
+        )
         # Extract the text content from the prompt messages
         if messages and len(messages) > 0:
             for msg in messages:
@@ -667,8 +670,11 @@ async def shepherd_breeding_tool(
 
     try:
         # Access .fn to get the underlying async function from the FunctionPrompt
-        messages = await shepherd_breeding_prompt.fn(
-            question=question, region=region, production_goal=production_goal
+        messages = await cast(
+            Awaitable[list[dict[str, Any]]],
+            shepherd_breeding_prompt.fn(
+                question=question, region=region, production_goal=production_goal
+            ),
         )
         if messages and len(messages) > 0:
             for msg in messages:
@@ -709,8 +715,9 @@ async def shepherd_health_tool(
 
     try:
         # Access .fn to get the underlying async function from the FunctionPrompt
-        messages = await shepherd_health_prompt.fn(
-            question=question, region=region, life_stage=life_stage
+        messages = await cast(
+            Awaitable[list[dict[str, Any]]],
+            shepherd_health_prompt.fn(question=question, region=region, life_stage=life_stage),
         )
         if messages and len(messages) > 0:
             for msg in messages:
@@ -751,8 +758,9 @@ async def shepherd_calendar_tool(
 
     try:
         # Access .fn to get the underlying async function from the FunctionPrompt
-        messages = await shepherd_calendar_prompt.fn(
-            question=question, region=region, task_type=task_type
+        messages = await cast(
+            Awaitable[list[dict[str, Any]]],
+            shepherd_calendar_prompt.fn(question=question, region=region, task_type=task_type),
         )
         if messages and len(messages) > 0:
             for msg in messages:
@@ -793,8 +801,11 @@ async def shepherd_economics_tool(
 
     try:
         # Access .fn to get the underlying async function from the FunctionPrompt
-        messages = await shepherd_economics_prompt.fn(
-            question=question, flock_size=flock_size, market_focus=market_focus
+        messages = await cast(
+            Awaitable[list[dict[str, Any]]],
+            shepherd_economics_prompt.fn(
+                question=question, flock_size=flock_size, market_focus=market_focus
+            ),
         )
         if messages and len(messages) > 0:
             for msg in messages:

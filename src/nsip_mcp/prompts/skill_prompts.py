@@ -18,13 +18,13 @@ Prompts:
 
 from typing import Any
 
-from nsip_mcp.server import mcp
-from nsip_mcp.metrics import server_metrics
-from nsip_mcp.tools import get_nsip_client
 from nsip_mcp.knowledge_base import (
     get_selection_index,
     get_trait_info,
 )
+from nsip_mcp.metrics import server_metrics
+from nsip_mcp.server import mcp
+from nsip_mcp.tools import get_nsip_client
 
 
 def _record_prompt_execution(prompt_name: str, success: bool) -> None:
@@ -54,7 +54,7 @@ async def ebv_analyzer_prompt(
         trait_list = [t.strip().upper() for t in traits.split(",")]
 
         # Fetch animal data
-        animals_data = []
+        animals_data: list[dict[str, Any]] = []
         for lpn in lpn_list:
             try:
                 animal = client.get_animal_details(search_string=lpn)
@@ -74,9 +74,9 @@ async def ebv_analyzer_prompt(
         table_rows.append("| " + " | ".join(header) + " |")
         table_rows.append("| " + " | ".join(["---"] * len(header)) + " |")
 
-        for animal in animals_data:
-            name = animal.get("name", animal.get("lpn_id", "Unknown"))
-            ebvs = animal.get("ebvs", {})
+        for animal_dict in animals_data:
+            name = animal_dict.get("name", animal_dict.get("lpn_id", "Unknown"))
+            ebvs = animal_dict.get("ebvs", {})
             row = [name]
             for trait in trait_list:
                 value = ebvs.get(trait)
@@ -149,7 +149,7 @@ async def selection_index_prompt(
         weights = index_def.get("weights", {})
 
         # Calculate scores
-        scored_animals = []
+        scored_animals: list[dict[str, Any]] = []
         for lpn in lpn_list:
             try:
                 animal = client.get_animal_details(search_string=lpn)
@@ -205,10 +205,10 @@ async def selection_index_prompt(
 | Rank | Animal | Score |
 | --- | --- | --- |
 """
-        for i, animal in enumerate(scored_animals, 1):
-            name = animal["name"]
-            lpn = animal["lpn_id"]
-            score = animal["score"]
+        for i, scored in enumerate(scored_animals, 1):
+            name = scored["name"]
+            lpn = scored["lpn_id"]
+            score = scored["score"]
             result += f"| {i} | {name} ({lpn}) | {score:.2f} |\n"
 
         result += """
@@ -646,7 +646,7 @@ async def flock_dashboard_prompt(flock_prefix: str) -> list[dict[str, Any]]:
         search_result = client.search_animals(
             page=0, page_size=100, search_criteria=search_criteria  # Max allowed by API
         )
-        if not search_result or not search_result.animals:
+        if not search_result or not search_result.results:
             _record_prompt_execution("flock_dashboard", False)
             return [
                 {
@@ -658,7 +658,8 @@ async def flock_dashboard_prompt(flock_prefix: str) -> list[dict[str, Any]]:
                 }
             ]
 
-        animals = [a.to_dict() for a in search_result.animals]
+        # search_result.results is a list of dicts from the API
+        animals: list[dict[str, Any]] = search_result.results
 
         # Calculate statistics
         total = len(animals)

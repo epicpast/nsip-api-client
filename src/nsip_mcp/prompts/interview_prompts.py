@@ -13,14 +13,14 @@ Interview Prompts:
 
 from typing import Any
 
-from nsip_mcp.server import mcp
-from nsip_mcp.metrics import server_metrics
 from nsip_mcp.knowledge_base import (
-    get_selection_index,
     get_heritabilities,
     get_region_info,
+    get_selection_index,
     list_regions,
 )
+from nsip_mcp.metrics import server_metrics
+from nsip_mcp.server import mcp
 
 
 def _record_prompt_execution(prompt_name: str, success: bool) -> None:
@@ -211,8 +211,9 @@ Understanding heritability helps set realistic expectations:
 ### Current Inputs
 """
         if trait:
-            h2 = heritabilities.get(trait, "unknown")
-            context += f"- **Target trait**: {trait} (h² = {h2})\n"
+            h2_value = heritabilities.get(trait)
+            h2_str = str(h2_value) if h2_value is not None else "unknown"
+            context += f"- **Target trait**: {trait} (h² = {h2_str})\n"
         else:
             context += "- **Target trait**: Not yet specified\n"
 
@@ -346,9 +347,9 @@ I'll help you develop a comprehensive breeding strategy tailored to your operati
 
 """
         if all_regions:
-            for reg in all_regions[:6]:
-                name = reg.get("name", reg.get("id", "Unknown"))
-                context += f"- {name}\n"
+            for reg_id in all_regions[:6]:
+                # list_regions() returns list of region ID strings
+                context += f"- {reg_id}\n"
 
         context += """
 ### Current Information

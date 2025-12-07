@@ -16,11 +16,11 @@ Note:
 import time
 from typing import Any
 
-from nsip_mcp.server import mcp
-from nsip_mcp.metrics import server_metrics
-from nsip_mcp.tools import get_nsip_client
-from nsip_mcp.cache import response_cache
 from nsip_client.exceptions import NSIPAPIError
+from nsip_mcp.cache import response_cache
+from nsip_mcp.metrics import server_metrics
+from nsip_mcp.server import mcp
+from nsip_mcp.tools import get_nsip_client
 
 
 def _record_resource_access(uri_pattern: str, start_time: float) -> None:
@@ -97,11 +97,12 @@ async def get_flock_summary(flock_id: str) -> dict[str, Any]:
             # Note: NSIP API may not support prefix search; this is best-effort
             search_result = client.search_animals(page_size=100)
             # Filter client-side by flock prefix
-            if search_result and search_result.animals:
+            if search_result and search_result.results:
                 animals = [
-                    a.to_dict()
-                    for a in search_result.animals
-                    if a.lpn_id and a.lpn_id.startswith(flock_id)
+                    a
+                    for a in search_result.results
+                    if isinstance(a, dict)
+                    and (a.get("lpn_id") or a.get("LpnId") or "").startswith(flock_id)
                 ][
                     :100
                 ]  # Limit to 100 for performance
@@ -124,13 +125,13 @@ async def get_flock_summary(flock_id: str) -> dict[str, Any]:
         females = sum(1 for a in animals if a.get("sex") == "F")
 
         # Status breakdown
-        status_counts = {}
+        status_counts: dict[str, int] = {}
         for animal in animals:
             status = animal.get("status", "Unknown")
             status_counts[status] = status_counts.get(status, 0) + 1
 
         # Birth year distribution
-        birth_years = {}
+        birth_years: dict[str, int] = {}
         for animal in animals:
             birth_date = animal.get("birth_date") or animal.get("birthDate")
             if birth_date:
@@ -186,11 +187,12 @@ async def get_flock_ebv_averages(flock_id: str) -> dict[str, Any]:
             server_metrics.record_cache_miss()
             # Search using search_criteria; filter client-side by flock prefix
             search_result = client.search_animals(page_size=100)
-            if search_result and search_result.animals:
+            if search_result and search_result.results:
                 animals = [
-                    a.to_dict()
-                    for a in search_result.animals
-                    if a.lpn_id and a.lpn_id.startswith(flock_id)
+                    a
+                    for a in search_result.results
+                    if isinstance(a, dict)
+                    and (a.get("lpn_id") or a.get("LpnId") or "").startswith(flock_id)
                 ][:100]
             else:
                 animals = []

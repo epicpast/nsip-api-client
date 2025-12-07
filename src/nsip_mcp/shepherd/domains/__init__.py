@@ -8,9 +8,9 @@ Each domain provides expert-level guidance in a specific area:
 """
 
 from nsip_mcp.shepherd.domains.breeding import BreedingDomain
-from nsip_mcp.shepherd.domains.health import HealthDomain
 from nsip_mcp.shepherd.domains.calendar import CalendarDomain
 from nsip_mcp.shepherd.domains.economics import EconomicsDomain
+from nsip_mcp.shepherd.domains.health import HealthDomain
 
 __all__ = [
     "BreedingDomain",

@@ -8,7 +8,7 @@ Provides expert guidance on:
 - Marketing windows
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -27,12 +27,7 @@ class CalendarDomain:
     task scheduling, and production cycle planning.
     """
 
-    persona: ShepherdPersona = None
-
-    def __post_init__(self):
-        """Initialize default persona if not provided."""
-        if self.persona is None:
-            self.persona = ShepherdPersona()
+    persona: ShepherdPersona = field(default_factory=ShepherdPersona)
 
     def get_seasonal_tasks(
         self,
@@ -56,7 +51,7 @@ class CalendarDomain:
         if not calendar:
             calendar = self._default_calendar(task_type)
 
-        result = {
+        result: dict[str, Any] = {
             "task_type": task_type,
             "tasks": [],
             "regional_adjustments": [],
@@ -463,7 +458,7 @@ class CalendarDomain:
             },
         }
 
-        result = {
+        result: dict[str, Any] = {
             "product_type": product_type,
         }
         result.update(windows.get(product_type, windows["market_lambs"]))

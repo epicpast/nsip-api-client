@@ -16,9 +16,9 @@ evidence-based recommendations with proper uncertainty acknowledgment.
 from nsip_mcp.shepherd.agent import ShepherdAgent
 from nsip_mcp.shepherd.persona import ShepherdPersona, format_shepherd_response
 from nsip_mcp.shepherd.regions import (
+    NSIP_REGIONS,
     detect_region,
     get_region_context,
-    NSIP_REGIONS,
 )
 
 __all__ = [

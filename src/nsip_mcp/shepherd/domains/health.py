@@ -8,7 +8,7 @@ Provides expert guidance on:
 - Vaccination schedules
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from nsip_mcp.knowledge_base import (
@@ -27,12 +27,7 @@ class HealthDomain:
     disease prevention, parasite management, and nutrition.
     """
 
-    persona: ShepherdPersona = None
-
-    def __post_init__(self):
-        """Initialize default persona if not provided."""
-        if self.persona is None:
-            self.persona = ShepherdPersona()
+    persona: ShepherdPersona = field(default_factory=ShepherdPersona)
 
     def get_disease_prevention(
         self,
@@ -85,7 +80,7 @@ class HealthDomain:
             seasonal_diseases = diseases_list
 
         # Build prevention guide
-        prevention = {
+        prevention: dict[str, Any] = {
             "region": region_info.get("name", region) if region_info else region,
             "climate": region_info.get("climate", "varies") if region_info else "varies",
             "parasite_season": (
@@ -135,7 +130,7 @@ class HealthDomain:
             # Return general defaults
             nutrition = self._default_nutrition(life_stage)
 
-        recommendations = {
+        recommendations: dict[str, Any] = {
             "life_stage": life_stage,
             "requirements": nutrition,
             "adjustments": [],
@@ -160,7 +155,7 @@ class HealthDomain:
 
     def _default_nutrition(self, life_stage: str) -> dict[str, Any]:
         """Get default nutrition values for a life stage."""
-        defaults = {
+        defaults: dict[str, dict[str, Any]] = {
             "maintenance": {
                 "energy": "2.0-2.4 Mcal ME/day",
                 "protein": "8-10% CP",

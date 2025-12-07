@@ -14,11 +14,11 @@ Resource URIs:
 import time
 from typing import Any
 
-from nsip_mcp.server import mcp
-from nsip_mcp.metrics import server_metrics
-from nsip_mcp.tools import get_nsip_client
-from nsip_mcp.cache import response_cache
 from nsip_client.exceptions import NSIPAPIError, NSIPNotFoundError
+from nsip_mcp.cache import response_cache
+from nsip_mcp.metrics import server_metrics
+from nsip_mcp.server import mcp
+from nsip_mcp.tools import get_nsip_client
 
 
 def _record_resource_access(uri_pattern: str, start_time: float) -> None:
@@ -153,8 +153,8 @@ async def get_animal_progeny_resource(lpn_id: str) -> dict[str, Any]:
 
         def api_call():
             progeny = client.get_progeny(lpn_id=lpn_id)
-            if progeny:
-                return [p.to_dict() for p in progeny]
+            if progeny and progeny.animals:
+                return [p.to_dict() for p in progeny.animals]
             return []
 
         result = _cached_api_call("get_progeny", lpn_id, api_call)
@@ -218,7 +218,7 @@ async def get_animal_profile_resource(lpn_id: str) -> dict[str, Any]:
         # Get progeny
         def progeny_call():
             progeny = client.get_progeny(lpn_id=lpn_id)
-            return [p.to_dict() for p in progeny] if progeny else []
+            return [p.to_dict() for p in progeny.animals] if progeny and progeny.animals else []
 
         progeny = _cached_api_call("get_progeny", lpn_id, progeny_call)
 

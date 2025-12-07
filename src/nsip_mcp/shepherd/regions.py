@@ -8,7 +8,6 @@ from typing import Any, Optional
 
 from nsip_mcp.knowledge_base import get_region_info, list_regions
 
-
 # NSIP member regions with state mappings
 NSIP_REGIONS = {
     "northeast": {
@@ -169,10 +168,18 @@ def list_all_regions() -> list[dict[str, Any]]:
     Returns:
         List of region dicts with id, name, and state count
     """
-    # First try knowledge base
-    kb_regions = list_regions()
-    if kb_regions:
-        return kb_regions
+    # First try knowledge base - returns list of region IDs (strings)
+    kb_region_ids = list_regions()
+    if kb_region_ids:
+        # Convert string IDs to full region dicts
+        return [
+            {
+                "id": region_id,
+                "name": NSIP_REGIONS.get(region_id, {}).get("name", region_id.title()),
+                "states": NSIP_REGIONS.get(region_id, {}).get("states", []),
+            }
+            for region_id in kb_region_ids
+        ]
 
     # Fall back to static data
     return [

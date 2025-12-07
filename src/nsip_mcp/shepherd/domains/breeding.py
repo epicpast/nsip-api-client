@@ -8,7 +8,7 @@ Provides expert guidance on:
 - Genetic progress estimation
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from nsip_mcp.knowledge_base import (
@@ -27,12 +27,7 @@ class BreedingDomain:
     EBV interpretation, mating recommendations, and trait improvement.
     """
 
-    persona: ShepherdPersona = None
-
-    def __post_init__(self):
-        """Initialize default persona if not provided."""
-        if self.persona is None:
-            self.persona = ShepherdPersona()
+    persona: ShepherdPersona = field(default_factory=ShepherdPersona)
 
     def interpret_ebv(
         self,

@@ -13,12 +13,12 @@ Resource URIs:
 import time
 from typing import Any
 
-from nsip_mcp.server import mcp
-from nsip_mcp.metrics import server_metrics
-from nsip_mcp.tools import get_nsip_client
+from nsip_client.exceptions import NSIPAPIError, NSIPNotFoundError
 from nsip_mcp.cache import response_cache
 from nsip_mcp.knowledge_base import get_heritabilities
-from nsip_client.exceptions import NSIPAPIError, NSIPNotFoundError
+from nsip_mcp.metrics import server_metrics
+from nsip_mcp.server import mcp
+from nsip_mcp.tools import get_nsip_client
 
 
 def _record_resource_access(uri_pattern: str, start_time: float) -> None:
