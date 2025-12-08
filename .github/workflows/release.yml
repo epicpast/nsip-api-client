@@ -212,7 +212,7 @@ jobs:
         generate_release_notes: true
 
     - name: Upload release artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: release-${{ needs.bump-and-tag.outputs.release_tag }}
         path: dist/
