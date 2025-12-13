@@ -8,6 +8,8 @@ Python client, MCP server, and breeding decision support tools for the NSIP (Nat
 
 **Key Technologies:** Python 3.10+, FastMCP 2.12.4+, pytest, tiktoken, pandas
 
+**Current Versions:** nsip_client 1.3.5, nsip_mcp 1.3.7, nsip_skills 1.3.4
+
 ## Architecture
 
 ```
@@ -102,6 +104,26 @@ MCP Client → mcp_tools.py → cache.py → client.py → NSIP API
 2. **Summarization is opt-in** - All MCP tools preserve full data by default; pass `summarize=True` to reduce tokens
 3. **Context threshold** - Responses >2000 tokens get metadata tags; summarization targets 70% reduction
 4. **Cache key format** - `method_name:sorted_json_params` ensures deterministic keys
+
+### Key Algorithms
+
+**Inbreeding Calculation** (Wright's Path Coefficient Method):
+```
+F = Σ[(1/2)^(n1+n2+1) × (1 + FA)]
+```
+Where n1/n2 are path lengths through common ancestor, FA is ancestor's inbreeding coefficient.
+
+**Genetic Gain Formula** (trait_planner.py):
+```
+R = h² × i × σp
+```
+Where R = response per generation, h² = heritability, i = selection intensity, σp = phenotypic std dev.
+
+**Preset Selection Indexes** (weights in data_models.py):
+- **Terminal**: BWT(-0.5), WWT(1.0), PWWT(1.5), YWT(1.0), YEMD(0.8), YFAT(-0.3)
+- **Maternal**: NLB(2.0), NLW(2.5), MWWT(1.5), BWT(-1.0), WWT(0.5)
+- **Range**: BWT(-0.5), WWT(1.0), PWWT(1.0), NLW(1.5), MWWT(1.0)
+- **Hair**: BWT(-0.5), WWT(1.2), PWWT(1.5), NLB(1.5), NLW(2.0), DAG(-0.5)
 
 ## Development Setup
 
@@ -297,6 +319,23 @@ def test_get_animal_details_api_error(self) -> None:
 - `sample_lpn_id` → `"6####92020###249"`
 - `sample_breed_id` → `486` (South African Meat Merino)
 
+### Skills Mock Classes (tests/nsip_skills_helpers.py)
+
+For testing nsip_skills modules, use these mock classes instead of calling the real API:
+
+```python
+from tests.nsip_skills_helpers import MockNSIPClient, MockAnimalDetails, MockLineage
+
+# Create mock client with pre-populated data
+mock_client = MockNSIPClient(
+    animals={lpn_id: MockAnimalDetails.create_sample(lpn_id, sire="...", dam="...")},
+    lineages={lpn_id: MockLineage(...)},
+    progeny={lpn_id: [MockProgeny(...)]}
+)
+```
+
+The `tests/unit/nsip_skills/conftest.py` provides ready-to-use fixtures: `mock_animals`, `mock_lineages`, `mock_progeny`, `mock_client`.
+
 ## Error Codes Reference
 
 JSON-RPC 2.0 error codes used in `errors.py`:
@@ -373,6 +412,12 @@ The Shepherd is an AI-powered breeding advisor with four domains:
 
 **Persona**: Neutral expert (veterinarian-like), evidence-based, acknowledges uncertainty
 
+**Uncertainty Thresholds** (persona.py):
+- Confidence ≥0.9: No qualifier
+- Confidence ≥0.7: "Based on available data..."
+- Confidence ≥0.5: "Research suggests..."
+- Confidence <0.5: "There is limited data, but..."
+
 Detailed documentation: `docs/shepherd-agent.md`
 
 ## Additional Documentation
@@ -400,3 +445,31 @@ docker run -p 8000:8000 -e MCP_TRANSPORT=streamable-http ghcr.io/epicpast/nsip-a
 ```
 
 See `docker/` directory for Dockerfile and configuration.
+
+## Server Metrics (Success Criteria)
+
+The MCP server tracks performance metrics defined in `metrics.py`:
+
+| Code | Target | Description |
+|------|--------|-------------|
+| SC-001 | <5s | Tool discovery time |
+| SC-002 | ≥70% | Token reduction when summarizing |
+| SC-003 | ≥95% | Validation success rate |
+| SC-005 | 50+ | Concurrent connections |
+| SC-006 | ≥40% | Cache hit rate |
+| SC-007 | <3s | Server startup time |
+
+Use `get_server_health` tool or check `server_metrics.to_dict()` to see current metrics.
+
+## Exception Hierarchy (nsip_client)
+
+```
+NSIPError
+├── NSIPAPIError (status_code, response)
+│   └── NSIPNotFoundError (search_string, always 404)
+├── NSIPConnectionError
+├── NSIPTimeoutError
+└── NSIPValidationError
+```
+
+When handling API errors in MCP tools, convert to `McpErrorResponse` with appropriate error code.
