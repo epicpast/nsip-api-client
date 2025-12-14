@@ -110,8 +110,7 @@ def validate_lpn_id(lpn_id: str, parameter_name: str = "lpn_id") -> dict[str, An
         # Sanitize user input to prevent log injection (M1)
         safe_input = lpn_id[:50].replace("\n", "").replace("\r", "")
         suggestion = (
-            f"Provide full {parameter_name} "
-            f"(e.g., '6####92020###249', not '{safe_input}')"
+            f"Provide full {parameter_name} " f"(e.g., '6####92020###249', not '{safe_input}')"
         )
         return McpErrorResponse.invalid_params(
             parameter=parameter_name,
