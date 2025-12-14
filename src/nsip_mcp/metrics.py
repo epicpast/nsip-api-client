@@ -88,7 +88,7 @@ class ServerMetrics:
         """Record a validation attempt.
 
         Args:
-            success: True if validation caught invalid input
+            success: True if input passed validation, False if invalid
         """
         with self._lock:
             self.validation_attempts += 1
