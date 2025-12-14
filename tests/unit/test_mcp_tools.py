@@ -1270,6 +1270,69 @@ class TestCachedApiCallDecorator:
         result = test_function(arg1="value1", arg2="value2")
         assert result == {"arg1": "value1", "arg2": "value2"}
 
+    def test_decorator_with_positional_args(self):
+        """Test decorator correctly converts positional args to kwargs for caching."""
+        from nsip_mcp.tools import cached_api_call
+
+        call_count = 0
+
+        @cached_api_call("test_positional")
+        def test_function(arg1, arg2, arg3="default"):
+            nonlocal call_count
+            call_count += 1
+            return {"arg1": arg1, "arg2": arg2, "arg3": arg3}
+
+        # First call with positional args - should miss cache
+        result1 = test_function("val1", "val2")
+        assert result1 == {"arg1": "val1", "arg2": "val2", "arg3": "default"}
+        assert call_count == 1
+
+        # Second call with same positional args - should hit cache
+        result2 = test_function("val1", "val2")
+        assert result2 == {"arg1": "val1", "arg2": "val2", "arg3": "default"}
+        assert call_count == 1  # Still 1, cached
+
+        # Third call with kwargs (same values) - should hit cache due to conversion
+        result3 = test_function(arg1="val1", arg2="val2")
+        assert result3 == {"arg1": "val1", "arg2": "val2", "arg3": "default"}
+        assert call_count == 1  # Still 1, same cache key
+
+    def test_decorator_mixed_positional_and_kwargs(self):
+        """Test decorator with mixed positional and keyword arguments."""
+        from nsip_mcp.tools import cached_api_call
+
+        call_count = 0
+
+        @cached_api_call("test_mixed")
+        def test_function(arg1, arg2, arg3="default"):
+            nonlocal call_count
+            call_count += 1
+            return {"arg1": arg1, "arg2": arg2, "arg3": arg3}
+
+        # Call with mixed positional and kwargs
+        result = test_function("val1", arg2="val2", arg3="val3")
+        assert result == {"arg1": "val1", "arg2": "val2", "arg3": "val3"}
+        assert call_count == 1
+
+        # Same call should hit cache
+        result2 = test_function("val1", arg2="val2", arg3="val3")
+        assert result2 == result
+        assert call_count == 1  # Cached
+
+    def test_decorator_raises_on_duplicate_args(self):
+        """Test decorator raises TypeError when same arg passed positionally and as kwarg."""
+        from nsip_mcp.tools import cached_api_call
+
+        @cached_api_call("test_duplicate")
+        def test_function(arg1, arg2):
+            return {"arg1": arg1, "arg2": arg2}
+
+        # Passing same argument both ways should raise TypeError
+        with pytest.raises(TypeError) as exc_info:
+            test_function("val1", arg1="other_val")
+
+        assert "got multiple values for argument 'arg1'" in str(exc_info.value)
+
 
 class TestValidateLpnId:
     """Tests for validate_lpn_id function."""

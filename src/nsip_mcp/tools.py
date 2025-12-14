@@ -63,7 +63,12 @@ def cached_api_call(method_name: str) -> Callable:
                 param_names = list(sig.parameters.keys())
                 for i, arg in enumerate(args):
                     if i < len(param_names):
-                        kwargs[param_names[i]] = arg
+                        param = param_names[i]
+                        if param in kwargs:
+                            raise TypeError(
+                                f"{func.__name__}() got multiple values for argument '{param}'"
+                            )
+                        kwargs[param] = arg
 
             # Generate cache key from method name and parameters
             cache_key = response_cache.make_key(method_name, **kwargs)
