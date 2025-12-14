@@ -48,6 +48,11 @@ def cached_api_call(method_name: str) -> Callable:
     Returns:
         Decorator function that wraps the tool function
 
+    Note:
+        - self/cls parameters are excluded from cache keys (methods share cache)
+        - VAR_POSITIONAL (*args) and VAR_KEYWORD (**kwargs) are excluded from cache keys
+        - Positional-only parameters are supported for cache keys but kept positional for calls
+
     Example:
         >>> @cached_api_call("get_animal_details")
         >>> def nsip_get_animal(search_string: str) -> dict:
@@ -58,91 +63,77 @@ def cached_api_call(method_name: str) -> Callable:
     def decorator(func: Callable) -> Callable:
         # Cache signature at decoration time for performance (M2)
         sig = inspect.signature(func)
-        # Build lists of param names by kind for proper handling
-        # Filter out VAR_POSITIONAL (*args) and VAR_KEYWORD (**kwargs) parameters (H1)
-        positional_only_names: list[str] = []
-        convertible_names: list[str] = []  # POSITIONAL_OR_KEYWORD params
-        keyword_only_names: list[str] = []
-
-        for name, param in sig.parameters.items():
-            # Skip 'self' and 'cls' for methods - they can't be serialized for cache keys
-            if name in ("self", "cls"):
-                continue
-            if param.kind == Parameter.POSITIONAL_ONLY:
-                positional_only_names.append(name)
-            elif param.kind == Parameter.POSITIONAL_OR_KEYWORD:
-                convertible_names.append(name)
-            elif param.kind == Parameter.KEYWORD_ONLY:
-                keyword_only_names.append(name)
-            # VAR_POSITIONAL and VAR_KEYWORD are filtered out
-
-        # Combined list for positional arg handling (excludes keyword-only)
-        positional_param_names = positional_only_names + convertible_names
+        # Build param info, filtering out VAR_POSITIONAL/VAR_KEYWORD (H1) and self/cls
+        param_info = _extract_param_info(sig)
 
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            # Track positional-only args separately (they must stay positional)
-            positional_only_args: list[Any] = []
-            cache_kwargs: dict[str, Any] = dict(kwargs)
-
-            # Convert positional args to kwargs for cache key generation
-            # But keep positional-only args separate for the actual call
-            if args:
-                # Skip 'self'/'cls' if this is a method (first arg is the instance)
-                arg_offset = 0
-                if (
-                    args
-                    and hasattr(args[0], "__class__")
-                    and not isinstance(
-                        args[0], (str, int, float, bool, type(None), list, dict, tuple)
-                    )
-                ):
-                    # Likely a method call - first arg is self/cls, skip it for caching
-                    arg_offset = 1
-
-                for i, arg in enumerate(args):
-                    param_idx = i - arg_offset
-                    if param_idx < 0:
-                        # This is 'self' or 'cls' - pass through but don't cache
-                        continue
-                    if param_idx < len(positional_param_names):
-                        param = positional_param_names[param_idx]
-                        if param in cache_kwargs:
-                            raise TypeError(
-                                f"{func.__name__}() got multiple values for argument '{param}'"
-                            )
-                        # Add to cache kwargs for key generation
-                        cache_kwargs[param] = arg
-                        # Track positional-only args separately
-                        if param_idx < len(positional_only_names):
-                            positional_only_args.append(arg)
-
-            # Generate cache key from method name and parameters (use cache_kwargs)
-            cache_key = response_cache.make_key(method_name, **cache_kwargs)
+            # Build cache kwargs from positional and keyword args
+            cache_kwargs = _build_cache_kwargs(args, kwargs, param_info, func.__name__)
 
             # Check cache first
+            cache_key = response_cache.make_key(method_name, **cache_kwargs)
             cached_result = response_cache.get(cache_key)
             if cached_result is not None:
                 return cached_result
 
-            # Cache miss - call the actual function
-            # For methods and positional-only params, pass original args
-            # For regular functions, use converted kwargs
-            if positional_only_args or (args and len(args) > len(positional_param_names)):
-                # Has positional-only args or extra positional args - use original call style
+            # Cache miss - call function
+            # Use original args if: has positional-only params OR is a method (has self/cls)
+            if param_info["has_positional_only"] or param_info["has_self"]:
                 result = func(*args, **kwargs)
             else:
-                # All args converted to kwargs safely
                 result = func(**cache_kwargs)
 
-            # Store in cache
             response_cache.set(cache_key, result)
-
             return result
 
         return wrapper
 
     return decorator
+
+
+def _extract_param_info(sig: inspect.Signature) -> dict[str, Any]:
+    """Extract parameter information from signature for caching logic."""
+    positional_names: list[str] = []
+    has_positional_only = False
+    has_self = False
+    param_list = list(sig.parameters.items())
+
+    for name, param in param_list:
+        if name in ("self", "cls"):
+            has_self = True
+            continue
+        if param.kind == Parameter.POSITIONAL_ONLY:
+            positional_names.append(name)
+            has_positional_only = True
+        elif param.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY):
+            positional_names.append(name)
+        # VAR_POSITIONAL and VAR_KEYWORD are filtered out
+
+    return {
+        "names": positional_names,
+        "has_positional_only": has_positional_only,
+        "has_self": has_self,
+    }
+
+
+def _build_cache_kwargs(
+    args: tuple, kwargs: dict, param_info: dict, func_name: str
+) -> dict[str, Any]:
+    """Convert positional args to kwargs for cache key generation."""
+    cache_kwargs = dict(kwargs)
+    param_names = param_info["names"]
+    # Skip first arg if this is a method (self/cls)
+    arg_offset = 1 if param_info["has_self"] else 0
+
+    for i, arg in enumerate(args[arg_offset:]):
+        if i < len(param_names):
+            param = param_names[i]
+            if param in cache_kwargs:
+                raise TypeError(f"{func_name}() got multiple values for argument '{param}'")
+            cache_kwargs[param] = arg
+
+    return cache_kwargs
 
 
 def reset_client() -> None:
