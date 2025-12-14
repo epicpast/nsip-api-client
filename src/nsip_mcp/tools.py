@@ -5,6 +5,7 @@ including caching and client lifecycle management.
 """
 
 import functools
+import inspect
 from collections.abc import Callable
 from typing import Any
 
@@ -55,7 +56,15 @@ def cached_api_call(method_name: str) -> Callable:
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(**kwargs) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            # Convert positional args to kwargs for consistent cache key generation
+            if args:
+                sig = inspect.signature(func)
+                param_names = list(sig.parameters.keys())
+                for i, arg in enumerate(args):
+                    if i < len(param_names):
+                        kwargs[param_names[i]] = arg
+
             # Generate cache key from method name and parameters
             cache_key = response_cache.make_key(method_name, **kwargs)
 
@@ -64,7 +73,7 @@ def cached_api_call(method_name: str) -> Callable:
             if cached_result is not None:
                 return cached_result
 
-            # Cache miss - call the actual function
+            # Cache miss - call the actual function (use kwargs since we converted args)
             result = func(**kwargs)
 
             # Store in cache

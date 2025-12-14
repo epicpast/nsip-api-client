@@ -92,11 +92,10 @@ def validate_lpn_id(lpn_id: str, parameter_name: str = "lpn_id") -> dict[str, An
     Note:
         LPN IDs must be at least 5 characters long
     """
-    # Record validation attempt (SC-003)
-    if server_metrics:
-        server_metrics.record_validation(success=False)  # Assume failure initially
-
     if not lpn_id or not lpn_id.strip():
+        # Record validation failure (SC-003)
+        if server_metrics:
+            server_metrics.record_validation(success=False)
         return McpErrorResponse.invalid_params(
             parameter=parameter_name,
             value=lpn_id,
@@ -105,6 +104,9 @@ def validate_lpn_id(lpn_id: str, parameter_name: str = "lpn_id") -> dict[str, An
         ).to_dict()
 
     if len(lpn_id.strip()) < 5:
+        # Record validation failure (SC-003)
+        if server_metrics:
+            server_metrics.record_validation(success=False)
         return McpErrorResponse.invalid_params(
             parameter=parameter_name,
             value=lpn_id,
@@ -132,11 +134,10 @@ def validate_breed_id(breed_id: int, parameter_name: str = "breed_id") -> dict[s
     Note:
         Breed IDs must be positive integers
     """
-    # Record validation attempt (SC-003)
-    if server_metrics:
-        server_metrics.record_validation(success=False)  # Assume failure initially
-
     if not isinstance(breed_id, int) or breed_id <= 0:
+        # Record validation failure (SC-003)
+        if server_metrics:
+            server_metrics.record_validation(success=False)
         return McpErrorResponse.invalid_params(
             parameter=parameter_name,
             value=breed_id,
@@ -161,11 +162,10 @@ def validate_pagination(page: int, page_size: int) -> dict[str, Any] | None:
     Returns:
         None if validation succeeds, error dict if validation fails
     """
-    # Record validation attempt (SC-003)
-    if server_metrics:
-        server_metrics.record_validation(success=False)  # Assume failure initially
-
     if page < 0:
+        # Record validation failure (SC-003)
+        if server_metrics:
+            server_metrics.record_validation(success=False)
         return McpErrorResponse.invalid_params(
             parameter="page",
             value=page,
@@ -174,6 +174,9 @@ def validate_pagination(page: int, page_size: int) -> dict[str, Any] | None:
         ).to_dict()
 
     if page_size < 1 or page_size > 100:
+        # Record validation failure (SC-003)
+        if server_metrics:
+            server_metrics.record_validation(success=False)
         return McpErrorResponse.invalid_params(
             parameter="page_size",
             value=page_size,

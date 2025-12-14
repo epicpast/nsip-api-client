@@ -12,7 +12,7 @@ class NSIPError(Exception):
 class NSIPAPIError(NSIPError):
     """Raised when the API returns an error response"""
 
-    def __init__(self, message: str, status_code: int = None, response: dict = None):
+    def __init__(self, message: str, status_code: int | None = None, response: dict | None = None):
         super().__init__(message)
         self.status_code = status_code
         self.response = response
@@ -21,7 +21,7 @@ class NSIPAPIError(NSIPError):
 class NSIPNotFoundError(NSIPAPIError):
     """Raised when an animal or resource is not found"""
 
-    def __init__(self, message: str, search_string: str = None):
+    def __init__(self, message: str, search_string: str | None = None):
         super().__init__(message, status_code=404)
         self.search_string = search_string
 
