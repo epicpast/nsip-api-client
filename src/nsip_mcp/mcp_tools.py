@@ -107,11 +107,17 @@ def validate_lpn_id(lpn_id: str, parameter_name: str = "lpn_id") -> dict[str, An
         # Record validation failure (SC-003)
         if server_metrics:
             server_metrics.record_validation(success=False)
+        # Sanitize user input to prevent log injection (M1)
+        safe_input = lpn_id[:50].replace("\n", "").replace("\r", "")
+        suggestion = (
+            f"Provide full {parameter_name} "
+            f"(e.g., '6####92020###249', not '{safe_input}')"
+        )
         return McpErrorResponse.invalid_params(
             parameter=parameter_name,
             value=lpn_id,
             expected="Minimum 5 characters",
-            suggestion=f"Provide full {parameter_name} (e.g., '6####92020###249', not '{lpn_id}')",
+            suggestion=suggestion,
         ).to_dict()
 
     # Validation passed - record success (SC-003)

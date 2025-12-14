@@ -1333,9 +1333,165 @@ class TestCachedApiCallDecorator:
 
         assert "got multiple values for argument 'arg1'" in str(exc_info.value)
 
+    def test_decorator_on_method(self):
+        """Test decorator behavior on instance methods documents self handling (H3).
+
+        KNOWN LIMITATION: When the decorator is used on a method, 'self' is excluded
+        from cache key generation. This means different instances SHARE the same cache
+        for the same arguments. This is acceptable for methods that don't depend on
+        instance state, but may be incorrect for stateful methods.
+
+        Currently, no decorated functions in this codebase are instance methods.
+        """
+        from nsip_mcp.tools import cached_api_call
+
+        call_count = 0
+
+        class TestClass:
+            @cached_api_call("test_method")
+            def method(self, arg1):
+                nonlocal call_count
+                call_count += 1
+                return {"arg1": arg1, "id": id(self)}
+
+        obj1 = TestClass()
+        obj2 = TestClass()
+
+        # First call on obj1
+        result1 = obj1.method("val1")
+        assert result1["arg1"] == "val1"
+        assert call_count == 1
+
+        # Second call on obj2 with same arg - SHARES cache (known limitation)
+        result2 = obj2.method("val1")
+        assert result2["arg1"] == "val1"
+        # The cached result from obj1 is returned (self is excluded from cache key)
+        assert result2["id"] == result1["id"]  # Same cached result
+        assert call_count == 1  # Still 1 - cache hit
+
+        # Third call on obj1 should also hit cache
+        result3 = obj1.method("val1")
+        assert result3["id"] == result1["id"]
+        assert call_count == 1  # Still 1 - cache hit
+
+    def test_decorator_filters_var_positional(self):
+        """Test decorator correctly filters *args from param_names (H1)."""
+        from nsip_mcp.tools import cached_api_call
+
+        call_count = 0
+
+        @cached_api_call("test_var_positional")
+        def test_function(arg1, *args):
+            nonlocal call_count
+            call_count += 1
+            return {"arg1": arg1, "extra": args}
+
+        # Call with positional arg only (args should be filtered from cache key)
+        result1 = test_function("val1")
+        assert result1 == {"arg1": "val1", "extra": ()}
+        assert call_count == 1
+
+        # Same call should hit cache (only arg1 in cache key)
+        result2 = test_function("val1")
+        assert result2 == result1
+        assert call_count == 1  # Cached
+
+    def test_decorator_filters_var_keyword(self):
+        """Test decorator correctly filters **kwargs from param_names (H1)."""
+        from nsip_mcp.tools import cached_api_call
+
+        call_count = 0
+
+        @cached_api_call("test_var_keyword")
+        def test_function(arg1, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            return {"arg1": arg1, "extra": kwargs}
+
+        # Call with only required arg
+        result1 = test_function(arg1="val1")
+        assert result1 == {"arg1": "val1", "extra": {}}
+        assert call_count == 1
+
+        # Same call should hit cache
+        result2 = test_function(arg1="val1")
+        assert result2 == result1
+        assert call_count == 1  # Cached
+
+    def test_decorator_with_keyword_only_params(self):
+        """Test decorator handles keyword-only parameters correctly (M3)."""
+        from nsip_mcp.tools import cached_api_call
+
+        call_count = 0
+
+        @cached_api_call("test_keyword_only")
+        def test_function(arg1, *, kwonly1, kwonly2="default"):
+            nonlocal call_count
+            call_count += 1
+            return {"arg1": arg1, "kwonly1": kwonly1, "kwonly2": kwonly2}
+
+        # First call with keyword-only args
+        result1 = test_function("val1", kwonly1="kw1")
+        assert result1 == {"arg1": "val1", "kwonly1": "kw1", "kwonly2": "default"}
+        assert call_count == 1
+
+        # Same call should hit cache
+        result2 = test_function("val1", kwonly1="kw1")
+        assert result2 == result1
+        assert call_count == 1  # Cached
+
+        # Different kwonly1 value should miss cache
+        result3 = test_function("val1", kwonly1="different")
+        assert result3["kwonly1"] == "different"
+        assert call_count == 2  # New call
+
+    def test_decorator_with_positional_only_params(self):
+        """Test decorator handles positional-only parameters correctly (M3).
+
+        Python 3.8+ syntax: parameters before / are positional-only.
+        """
+        from nsip_mcp.tools import cached_api_call
+
+        call_count = 0
+
+        @cached_api_call("test_positional_only")
+        def test_function(pos_only, /, regular):
+            nonlocal call_count
+            call_count += 1
+            return {"pos_only": pos_only, "regular": regular}
+
+        # First call
+        result1 = test_function("pos1", "reg1")
+        assert result1 == {"pos_only": "pos1", "regular": "reg1"}
+        assert call_count == 1
+
+        # Same positional values should hit cache
+        result2 = test_function("pos1", "reg1")
+        assert result2 == result1
+        assert call_count == 1  # Cached
+
+        # Different positional-only value should miss cache
+        result3 = test_function("pos2", "reg1")
+        assert result3["pos_only"] == "pos2"
+        assert call_count == 2  # New call
+
 
 class TestValidateLpnId:
     """Tests for validate_lpn_id function."""
+
+    def test_valid_lpn_id_records_success_metric(self):
+        """Test valid LPN ID records validation success in metrics (H2)."""
+        from unittest.mock import MagicMock, patch
+
+        from nsip_mcp.mcp_tools import validate_lpn_id
+
+        mock_metrics = MagicMock()
+
+        with patch("nsip_mcp.mcp_tools.server_metrics", mock_metrics):
+            result = validate_lpn_id("6####92020###249")
+
+        assert result is None  # Validation passed
+        mock_metrics.record_validation.assert_called_once_with(success=True)
 
     def test_empty_lpn_id_returns_error(self):
         """Test empty LPN ID returns validation error."""
