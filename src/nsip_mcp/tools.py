@@ -8,13 +8,21 @@ import functools
 import inspect
 from collections.abc import Callable
 from inspect import Parameter
-from typing import Any
+from typing import Any, TypedDict
 
 from nsip_client.client import NSIPClient
 from nsip_mcp.cache import response_cache
 
 # Lazy-initialized client instance (created on first use)
 _client_instance: NSIPClient | None = None
+
+
+class ParamInfo(TypedDict):
+    """Type definition for parameter extraction results."""
+
+    names: list[str]
+    has_positional_only: bool
+    has_self: bool
 
 
 def get_nsip_client() -> NSIPClient:
@@ -92,14 +100,13 @@ def cached_api_call(method_name: str) -> Callable:
     return decorator
 
 
-def _extract_param_info(sig: inspect.Signature) -> dict[str, Any]:
+def _extract_param_info(sig: inspect.Signature) -> ParamInfo:
     """Extract parameter information from signature for caching logic."""
     positional_names: list[str] = []
     has_positional_only = False
     has_self = False
-    param_list = list(sig.parameters.items())
 
-    for name, param in param_list:
+    for name, param in sig.parameters.items():
         if name in ("self", "cls"):
             has_self = True
             continue
@@ -118,7 +125,7 @@ def _extract_param_info(sig: inspect.Signature) -> dict[str, Any]:
 
 
 def _build_cache_kwargs(
-    args: tuple, kwargs: dict, param_info: dict, func_name: str
+    args: tuple, kwargs: dict, param_info: ParamInfo, func_name: str
 ) -> dict[str, Any]:
     """Convert positional args to kwargs for cache key generation."""
     cache_kwargs = dict(kwargs)
