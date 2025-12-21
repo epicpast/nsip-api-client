@@ -166,13 +166,13 @@ jobs:
         cp dist/* ../../dist/
         cd ../..
 
-        # Build server (GitHub release only)
+        # Build server
         cd packaging/nsip-mcp-server
         python -m build
         cp dist/* ../../dist/
         cd ../..
 
-        # Build skills (GitHub release only)
+        # Build skills
         cd packaging/nsip-skills
         python -m build
         cp dist/* ../../dist/
@@ -188,6 +188,20 @@ jobs:
         packages-dir: packaging/nsip-client/dist/
         verbose: true
 
+    - name: Publish nsip-mcp-server to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_TOKEN }}
+        packages-dir: packaging/nsip-mcp-server/dist/
+        verbose: true
+
+    - name: Publish nsip-skills to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_TOKEN }}
+        packages-dir: packaging/nsip-skills/dist/
+        verbose: true
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       env:
@@ -198,26 +212,18 @@ jobs:
         body: |
           ## Packages
 
-          | Package | Version | Source |
-          |---------|---------|--------|
-          | nsip-client | ${{ needs.bump-and-tag.outputs.client_version }} | PyPI |
-          | nsip-mcp-server | ${{ needs.bump-and-tag.outputs.server_version }} | GitHub Release |
-          | nsip-skills | ${{ needs.bump-and-tag.outputs.skills_version }} | GitHub Release |
+          | Package | Version |
+          |---------|---------|
+          | [nsip-client](https://pypi.org/project/nsip-client/) | ${{ needs.bump-and-tag.outputs.client_version }} |
+          | [nsip-mcp-server](https://pypi.org/project/nsip-mcp-server/) | ${{ needs.bump-and-tag.outputs.server_version }} |
+          | [nsip-skills](https://pypi.org/project/nsip-skills/) | ${{ needs.bump-and-tag.outputs.skills_version }} |
 
           ## Installation
 
-          ### nsip-client (PyPI)
-
           ```bash
           pip install nsip-client
-          ```
-
-          ### MCP Server & Skills (from release artifacts)
-
-          ```bash
-          # Download wheels from this release, then:
-          pip install ./nsip_mcp_server-${{ needs.bump-and-tag.outputs.server_version }}-py3-none-any.whl
-          pip install ./nsip_skills-${{ needs.bump-and-tag.outputs.skills_version }}-py3-none-any.whl
+          pip install nsip-mcp-server
+          pip install nsip-skills
           ```
 
           ## Changes
