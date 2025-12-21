@@ -155,19 +155,19 @@ jobs:
       run: |
         mkdir -p dist
 
-        # Build client
+        # Build client (published to PyPI)
         cd packaging/nsip-client
         python -m build
         cp dist/* ../../dist/
         cd ../..
 
-        # Build server
+        # Build server (GitHub release only)
         cd packaging/nsip-mcp-server
         python -m build
         cp dist/* ../../dist/
         cd ../..
 
-        # Build skills
+        # Build skills (GitHub release only)
         cd packaging/nsip-skills
         python -m build
         cp dist/* ../../dist/
@@ -176,10 +176,11 @@ jobs:
         # Verify all packages
         twine check dist/*
 
-    - name: Publish to PyPI
+    - name: Publish nsip-client to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_TOKEN }}
+        packages-dir: packaging/nsip-client/dist/
         verbose: true
 
     - name: Create GitHub Release
@@ -192,35 +193,25 @@ jobs:
         body: |
           ## Packages
 
-          - **nsip-client**: ${{ needs.bump-and-tag.outputs.client_version }}
-          - **nsip-mcp-server**: ${{ needs.bump-and-tag.outputs.server_version }}
-          - **nsip-skills**: ${{ needs.bump-and-tag.outputs.skills_version }}
+          | Package | Version | Source |
+          |---------|---------|--------|
+          | nsip-client | ${{ needs.bump-and-tag.outputs.client_version }} | PyPI |
+          | nsip-mcp-server | ${{ needs.bump-and-tag.outputs.server_version }} | GitHub Release |
+          | nsip-skills | ${{ needs.bump-and-tag.outputs.skills_version }} | GitHub Release |
 
           ## Installation
 
-          ### From PyPI (recommended)
+          ### nsip-client (PyPI)
 
           ```bash
-          # Install the API client
           pip install nsip-client
-
-          # Install the MCP server (includes client as dependency)
-          pip install nsip-mcp-server
-
-          # Install the breeding tools (includes client as dependency)
-          pip install nsip-skills
           ```
 
-          ### From Release Artifacts
+          ### MCP Server & Skills (from release artifacts)
 
           ```bash
-          # Install the API client
-          pip install ./nsip_client-${{ needs.bump-and-tag.outputs.client_version }}-py3-none-any.whl
-
-          # Install the MCP server (includes client as dependency)
+          # Download wheels from this release, then:
           pip install ./nsip_mcp_server-${{ needs.bump-and-tag.outputs.server_version }}-py3-none-any.whl
-
-          # Install the breeding tools (includes client as dependency)
           pip install ./nsip_skills-${{ needs.bump-and-tag.outputs.skills_version }}-py3-none-any.whl
           ```
 

@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "nsip-client"
 dynamic = ["version"]
 description = "Python client for the NSIP (National Sheep Improvement Program) Search API"
+readme = "../../README.md"
 authors = [
     {name = "Robert Allen", email = "bob@epicpastures.com"}
 ]
