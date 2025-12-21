@@ -1,0 +1,13 @@
+# Default owners for everything
+* @epicpast
+
+# Core packages
+/packaging/nsip-client/ @epicpast
+/packaging/nsip-mcp-server/ @epicpast
+/packaging/nsip-skills/ @epicpast
+
+# Source code
+/src/ @epicpast
+
+# CI/CD
+/.github/ @epicpast

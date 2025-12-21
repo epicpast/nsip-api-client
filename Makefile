@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-cov lint typecheck security coverage format clean build docker-build publish docs quality
+.PHONY: help install install-dev test test-cov lint typecheck security coverage format clean build docker-build publish docs quality release-patch release-minor release-major
 
 .DEFAULT_GOAL := help
 
@@ -23,6 +23,9 @@ help:  ## Show this help message with categorized targets
 	@echo ''
 	@echo '🔨 Build & Package:'
 	@grep -E '^(build|docker-build|check-package|clean):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo '🚀 Release (triggers GitHub Actions):'
+	@grep -E '^(release-patch|release-minor|release-major):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ''
 	@echo '📚 Documentation & Examples:'
 	@grep -E '^(docs|run-example|run-advanced):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -165,3 +168,56 @@ init-dev:  ## Initialize development environment
 	@echo "  source venv/bin/activate  (Linux/Mac)"
 	@echo "  venv\\Scripts\\activate     (Windows)"
 	@echo "Then run: make install-dev"
+
+# ============================================================================
+# Release targets - bump version and push to trigger GitHub Actions workflow
+# ============================================================================
+
+release-patch:  ## Bump patch version for all packages and push (triggers release)
+	@echo "========================================="
+	@echo "Patch Release - All Packages"
+	@echo "========================================="
+	python scripts/bump_version.py --package all --bump patch
+	@echo ""
+	@echo "Committing and pushing changes..."
+	git add -A
+	git commit -m "chore: bump version (patch release)"
+	git push
+	@echo ""
+	@echo "✅ Release triggered! GitHub Actions will:"
+	@echo "   1. Detect changes and create release tag"
+	@echo "   2. Build all packages"
+	@echo "   3. Create GitHub Release with artifacts"
+	@echo "   4. Build and push Docker image"
+	@echo ""
+	@echo "📦 Monitor at: https://github.com/epicpast/nsip-api-client/actions"
+
+release-minor:  ## Bump minor version for all packages and push (triggers release)
+	@echo "========================================="
+	@echo "Minor Release - All Packages"
+	@echo "========================================="
+	python scripts/bump_version.py --package all --bump minor
+	@echo ""
+	@echo "Committing and pushing changes..."
+	git add -A
+	git commit -m "chore: bump version (minor release)"
+	git push
+	@echo ""
+	@echo "✅ Release triggered! GitHub Actions will handle the rest."
+	@echo "📦 Monitor at: https://github.com/epicpast/nsip-api-client/actions"
+
+release-major:  ## Bump major version for all packages and push (triggers release)
+	@echo "========================================="
+	@echo "Major Release - All Packages"
+	@echo "========================================="
+	@echo "⚠️  Major releases are BREAKING CHANGES"
+	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ]
+	python scripts/bump_version.py --package all --bump major
+	@echo ""
+	@echo "Committing and pushing changes..."
+	git add -A
+	git commit -m "chore: bump version (major release)"
+	git push
+	@echo ""
+	@echo "✅ Release triggered! GitHub Actions will handle the rest."
+	@echo "📦 Monitor at: https://github.com/epicpast/nsip-api-client/actions"
