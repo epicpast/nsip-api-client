@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "nsip-skills"
 dynamic = ["version"]
 description = "Breeding decision support tools for sheep genetics using NSIP EBV data"
+readme = "README.md"
 authors = [
     {name = "Robert Allen", email = "bob@epicpastures.com"}
 ]

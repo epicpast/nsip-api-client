@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "nsip-mcp-server"
 dynamic = ["version"]
 description = "MCP server for NSIP sheep breeding data - Context-efficient API-to-MCP gateway"
+readme = "README.md"
 authors = [
     {name = "Robert Allen", email = "bob@epicpastures.com"}
 ]

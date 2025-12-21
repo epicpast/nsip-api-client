@@ -158,3 +158,6 @@ Thumbs.db
 
 # Test output files (enriched flock data)
 enriched_*.csv
+
+# Copied READMEs in packaging directories (created during CI build)
+packaging/*/README.md

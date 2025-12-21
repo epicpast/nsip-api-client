@@ -155,6 +155,11 @@ jobs:
       run: |
         mkdir -p dist
 
+        # Copy README to packaging directories (required for PyPI descriptions)
+        cp README.md packaging/nsip-client/README.md
+        cp README.md packaging/nsip-mcp-server/README.md
+        cp README.md packaging/nsip-skills/README.md
+
         # Build client (published to PyPI)
         cd packaging/nsip-client
         python -m build
