@@ -6,7 +6,7 @@ from .client import NSIPClient
 from .exceptions import NSIPAPIError, NSIPError, NSIPNotFoundError
 from .models import AnimalDetails, Lineage, Progeny, SearchCriteria
 
-__version__ = "1.3.18"
+__version__ = "1.3.19"
 __all__ = [
     "NSIPClient",
     "SearchCriteria",
