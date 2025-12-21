@@ -149,9 +149,8 @@ docker-build:  ## Build Docker image
 check-package:  ## Validate package without publishing
 	python -m build
 	twine check dist/*
-	@echo "✅ Package is valid and ready for GitHub release"
-	@echo "⚠️  This project does NOT publish to PyPI"
-	@echo "📦 Users install from GitHub releases"
+	@echo "✅ Package is valid and ready for release"
+	@echo "📦 Packages published to PyPI and GitHub Releases"
 
 docs:  ## Build documentation
 	cd docs && make html

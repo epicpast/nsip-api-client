@@ -176,6 +176,12 @@ jobs:
         # Verify all packages
         twine check dist/*
 
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_TOKEN }}
+        verbose: true
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       env:
@@ -191,6 +197,21 @@ jobs:
           - **nsip-skills**: ${{ needs.bump-and-tag.outputs.skills_version }}
 
           ## Installation
+
+          ### From PyPI (recommended)
+
+          ```bash
+          # Install the API client
+          pip install nsip-client
+
+          # Install the MCP server (includes client as dependency)
+          pip install nsip-mcp-server
+
+          # Install the breeding tools (includes client as dependency)
+          pip install nsip-skills
+          ```
+
+          ### From Release Artifacts
 
           ```bash
           # Install the API client
