@@ -27,7 +27,7 @@ For detailed documentation, see docs/mcp-resources.md, docs/mcp-prompts.md,
 and docs/shepherd-agent.md.
 """
 
-__version__ = "1.3.15"
+__version__ = "1.3.16"
 __author__ = "Allen R"
 __all__ = [
     "__version__",
