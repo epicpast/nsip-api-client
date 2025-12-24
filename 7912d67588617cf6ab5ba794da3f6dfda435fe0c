@@ -120,3 +120,15 @@ Investigation confirmed the NSIP Search API (nsipsearch.nsip.org) does not have 
 
 ## Related Files
 - src/nsip_client/client.py:39 (BASE_URL uses http://)
+
+---
+type: learnings
+timestamp: '2025-12-24T19:24:56.745179+00:00'
+summary: Switched to branch `main`. Note that `CLAUDE.md` has uncommitted changes
+  from the LSP setup we ju...
+tags:
+- auto-captured
+- pre-compact
+---
+
+Switched to branch `main`. Note that `CLAUDE.md` has uncommitted changes from the LSP setup we just did on the previous branch.
