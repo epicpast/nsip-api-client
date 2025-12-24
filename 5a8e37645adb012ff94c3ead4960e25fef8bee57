@@ -1,0 +1,23 @@
+---
+type: decisions
+timestamp: '2025-12-24T18:12:27.417981+00:00'
+summary: '▶ decision ─────────────────────────────────────
+
+  User requested full remediation across all sever...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+User requested full remediation across all severities and categories
+## Context
+User explicitly selected Critical + High + Medium + Low severities, and Performance + Architecture + Code Quality + Documentation categories - effectively requesting complete remediation.
+
+## Rationale
+- User wants comprehensive code improvements
+- Will prioritize CRITICAL first, then HIGH, then by category
+- Full verification with tests + linters will be run
+- Changes will remain uncommitted for review
+
+## Related Files
+- docs/code-review/2025/12/24/REMEDIATION_TASKS.md
