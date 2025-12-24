@@ -167,3 +167,26 @@ tags:
 ---
 
 Switched to branch `main`. Note that `CLAUDE.md` has uncommitted changes from the LSP setup we just did on the previous branch.
+
+---
+type: learnings
+timestamp: '2025-12-24T19:46:23.080313+00:00'
+summary: '▶ learned ─────────────────────────────────────
+
+  NSIP API does not support HTTPS - SSL certificate...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+NSIP API does not support HTTPS - SSL certificate mismatch
+## Summary
+Investigation confirmed the NSIP Search API (nsipsearch.nsip.org) does not have valid HTTPS support. Certificate subject name mismatch prevents secure connections.
+
+## Technical Details
+- SSL Error: "no alternative certificate subject name matches target host name"
+- This is an upstream service limitation, not fixable in client code
+- HTTP works correctly (Microsoft-IIS/10.0)
+
+## Related Files
+- src/nsip_client/client.py:39 (BASE_URL uses http://)
