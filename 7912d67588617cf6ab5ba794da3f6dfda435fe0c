@@ -466,3 +466,17 @@ tags:
 
 `★ Insight ─────────────────────────────────────`
 The singleton pattern in `tools.py` uses a module-level global (`_client_instance`) with lazy initialization. This...
+
+---
+type: patterns
+timestamp: '2025-12-24T19:58:22.150424+00:00'
+summary: '`★ Insight ─────────────────────────────────────`
+
+  The CLI uses a common error-handling pattern: c...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+`★ Insight ─────────────────────────────────────`
+The CLI uses a common error-handling pattern: catching specific exceptions (`ValueError`) for user-friendly messages before the generic...
