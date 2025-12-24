@@ -1405,3 +1405,36 @@ Completed 5 of 7 MEDIUM Test Coverage remediation tasks with 22 new tests passin
 - tests/unit/test_mcp_cli.py:1-56 (new file)
 - tests/unit/test_mcp_tools.py:1899-1971
 - tests/unit/test_cache.py:516-555
+
+---
+type: progress
+timestamp: '2025-12-24T19:46:23.268301+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Completed MEDIUM Test Coverage remediation: All ...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Completed MEDIUM Test Coverage remediation: All 7 items addressed
+## Summary
+Added 31 new tests across 4 test files. Coverage at 91%, 1326 tests passing.
+
+## Changes Made
+- `test_context_manager.py`: 11 tests (accuracy normalization + progeny handling)
+- `test_mcp_tools.py`: 13 tests (singleton + shepherd edge cases)
+- `test_mcp_cli.py`: 5 tests (new file for CLI exception paths)
+- `test_cache.py`: 2 tests (non-serializable type handling)
+
+## Coverage Highlights
+- mcp_tools.py: 22% → 98%
+- tools.py: 54% → 100%
+- cli.py: 0% → 94%
+- cache.py: 41% → 97%
+
+## Related Files
+- tests/unit/test_context_manager.py:230-330
+- tests/unit/test_mcp_tools.py:1899-2134
+- tests/unit/test_mcp_cli.py:1-56
+- tests/unit/test_cache.py:516-555
