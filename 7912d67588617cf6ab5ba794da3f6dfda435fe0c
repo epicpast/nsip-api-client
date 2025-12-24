@@ -423,3 +423,17 @@ tags:
 ---
 
 Let me add the optimization to fix the O(n²) pattern in the inbreeding calculation:
+
+---
+type: patterns
+timestamp: '2025-12-24T19:58:21.862812+00:00'
+summary: '...module-level global (`_client_instance`) with lazy initialization. This
+  is a common Python pat...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+...module-level global (`_client_instance`) with lazy initialization. This is a common Python pattern that:
+1. **Avoids import-time side effects** - Client isn't created until actually needed
+2....
