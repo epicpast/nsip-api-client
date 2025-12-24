@@ -1320,3 +1320,35 @@ Added comprehensive test coverage for ServerMetrics extended features.
 
 ## Related Files
 - tests/unit/test_metrics.py:351-647
+
+---
+type: progress
+timestamp: '2025-12-24T19:46:23.126421+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Completed MEDIUM Performance fixes
+
+  ## Summary
+
+  F...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Completed MEDIUM Performance fixes
+## Summary
+Fixed multiple medium priority performance items including Counter-based common ancestor detection, module-level imports, knowledge base pre-loading, and documented API limitations.
+
+## Changes Made
+- inbreeding.py: Refactored find_common_ancestors() to use Counter for O(n) duplicate detection
+- loader.py: Added preload_all() function to pre-warm LRU cache at startup
+- server.py: Integrated preload_all() call before startup time measurement
+- flock_resources.py: Documented API limitation for LPN prefix filtering
+- client.py: Added HTTPS limitation note in docstring
+
+## Related Files
+- src/nsip_skills/inbreeding.py:212-222
+- src/nsip_mcp/knowledge_base/loader.py:73-107
+- src/nsip_mcp/server.py:63-66
+- src/nsip_mcp/resources/flock_resources.py:96-100
