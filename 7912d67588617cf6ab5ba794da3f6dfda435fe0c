@@ -800,3 +800,27 @@ Applied three performance optimizations to address HIGH priority findings.
 - src/nsip_client/client.py:11,385-398
 - src/nsip_mcp/metrics.py:11-16,44-63
 - src/nsip_mcp/context.py:53-155
+
+---
+type: progress
+timestamp: '2025-12-24T19:24:56.577919+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Added 17 new tests for extended metrics and thre...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Added 17 new tests for extended metrics and thread safety
+## Summary
+Added comprehensive test coverage for ServerMetrics extended features.
+
+## Changes Made
+- Added TestExtendedMetricsRecording: resource_access, prompt_execution, sampling, kb_access
+- Added TestExtendedMetricsCalculations: avg_resource_latency, total_resource_accesses, prompt_success_rate, total_prompt_executions, sampling_token_ratio, total_kb_accesses
+- Added TestExtendedSuccessCriteria: SC-008, SC-009, SC-010
+- Added TestThreadSafety: concurrent_discovery_time, concurrent_connection_tracking, concurrent_cache_operations, concurrent_validation_recording
+
+## Related Files
+- tests/unit/test_metrics.py:351-647
