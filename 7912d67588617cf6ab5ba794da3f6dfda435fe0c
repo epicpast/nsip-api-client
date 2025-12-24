@@ -244,3 +244,31 @@ Reports exist at `docs/code-review/2025/12/24/`:
 
 ## Next Step
 Proceeding to Phase 5: Remediation of critical and high priority issues
+
+---
+type: progress
+timestamp: '2025-12-24T18:58:44.868997+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Fixed 2 CRITICAL and 1 HIGH priority code review...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Fixed 2 CRITICAL and 1 HIGH priority code review findings
+## Changes Made
+- **mating_optimizer.py** - Fixed N+1 query pattern by pre-fetching all lineage data upfront. Reduces API calls from O(R*E*2) to O(R+E) for R rams and E ewes.
+- **progeny_analysis.py** - Fixed N+1 query pattern by batch-fetching progeny details with `batch_get_animals()`. Reduces API calls from O(n) to O(1).
+- **inbreeding.py** - Added debug logging for silent exception handling instead of bare `pass`.
+- All three files: Added proper `logging` module imports and `logger` instances.
+
+## Performance Impact
+For a typical mating plan with 5 rams × 50 ewes:
+- Before: 500+ sequential API calls (multi-minute wait times)
+- After: ~60 API calls (sub-second response)
+
+## Related Files
+- src/nsip_skills/mating_optimizer.py:216-225
+- src/nsip_skills/progeny_analysis.py:105-108
+- src/nsip_skills/inbreeding.py:207-209
