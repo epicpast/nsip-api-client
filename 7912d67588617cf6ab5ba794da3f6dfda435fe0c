@@ -343,3 +343,17 @@ class TestClientSingleton:
     """Tests for NSIPClient singleton pattern in tools.py.
 
     Verifies that get_nsip_client() returns the same instance across calls,...
+
+---
+type: patterns
+timestamp: '2025-12-24T19:46:23.411900+00:00'
+summary: '...module-level global (`_client_instance`) with lazy initialization. This
+  is a common Python pat...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+...module-level global (`_client_instance`) with lazy initialization. This is a common Python pattern that:
+1. **Avoids import-time side effects** - Client isn't created until actually needed
+2....
