@@ -177,3 +177,17 @@ tags:
         # Pre-fetch lineage for all animals to avoid N+1 query pattern
         # With R rams and E ewes, this reduces API calls from O(R*E*2) to O(R+E)
         import...
+
+---
+type: patterns
+timestamp: '2025-12-24T18:50:28.126911+00:00'
+summary: '# Pre-fetch lineage for all animals to avoid N+1 query pattern'
+tags:
+- auto-captured
+- post-tool-use
+- file:mating_optimizer.py
+---
+
+# Pre-fetch lineage for all animals to avoid N+1 query pattern
+        # With R rams and E ewes, this reduces API calls from O(R*E*2) to O(R+E)
+        all_lpns...
