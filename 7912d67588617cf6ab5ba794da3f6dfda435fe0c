@@ -207,3 +207,15 @@ tags:
         # Pre-fetch all progeny details to avoid N+1 query pattern
         # This reduces API calls from O(n) to O(1) batch call
         progeny_lpns = [p.get("lpn_id"...
+
+---
+type: patterns
+timestamp: '2025-12-24T18:58:45.146047+00:00'
+summary: 'Now let me fix the N+1 pattern by batch-fetching all progeny details before
+  the loop:'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Now let me fix the N+1 pattern by batch-fetching all progeny details before the loop:
