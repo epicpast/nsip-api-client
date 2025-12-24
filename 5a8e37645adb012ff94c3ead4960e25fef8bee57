@@ -123,3 +123,27 @@ tags:
 **CRITICAL (2)**:
 1. N+1 query pattern in `mating_optimizer.py` (R×E×2 API calls)
 2. N+1 query pattern in `progeny_analysis.py` (N...
+
+---
+type: patterns
+timestamp: '2025-12-24T18:12:27.491394+00:00'
+summary: '...Severity
+
+  **CRITICAL (2)**:
+
+  1. N+1 query pattern in `mating_optimizer.py` (R×E×2 API calls)
+
+  2....'
+tags:
+- auto-captured
+- pre-compact
+---
+
+...Severity
+
+**CRITICAL (2)**:
+1. N+1 query pattern in `mating_optimizer.py` (R×E×2 API calls)
+2. N+1 query pattern in `progeny_analysis.py` (N sequential calls for offspring)
+
+**HIGH (14)**:
+1. Sequential API...
