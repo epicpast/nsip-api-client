@@ -1,0 +1,25 @@
+---
+type: decisions
+timestamp: '2025-12-24T20:00:48.005466+00:00'
+summary: Addressed verification feedback from pr-review-toolkit agents
+---
+
+Addressed verification feedback from pr-review-toolkit agents
+## Key Issues Found
+
+### HIGH Priority (addressed now)
+1. **compare_sires silent skip** - No logging when sires fail to analyze
+2. **lineage_cache dead parameter** - Passed but never used (caching happens at CachedNSIPClient level)
+
+### MEDIUM Priority (noted for backlog)
+1. Debug-level logging may be invisible in production
+2. Broad exception catching with fallback to coi=0.0 could mislead users
+
+## Decision
+- Fix the silent skip in compare_sires by adding logging
+- Document the lineage_cache as deprecated but keep for API compatibility (breaking change otherwise)
+- Leave the broader improvements for a follow-up PR
+
+## Related Files
+- src/nsip_skills/progeny_analysis.py:206-211
+- src/nsip_skills/mating_optimizer.py:120-123 (lineage_cache param)
