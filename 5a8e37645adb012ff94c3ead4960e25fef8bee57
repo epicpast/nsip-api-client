@@ -1,0 +1,23 @@
+---
+type: patterns
+timestamp: '2025-12-24T17:09:20.191457+00:00'
+summary: '...docstrings'
+tags:
+- auto-captured
+- post-tool-use
+- file:CODE_REVIEW.md
+---
+
+...docstrings
+   - Skills usage examples
+
+---
+
+## Critical Findings (🔴)
+
+### CRITICAL-001: N+1 Query Pattern in Mating Optimizer
+
+**Location**: `src/nsip_skills/mating_optimizer.py:188-199`
+
+**Description**:
+The...
