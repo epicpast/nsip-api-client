@@ -1153,3 +1153,27 @@ tags:
 ---
 
 All 6 specialist agents have completed their reviews. Let me synthesize the findings and generate the reports.
+
+---
+type: progress
+timestamp: '2025-12-24T19:46:22.746073+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Pushed 2 LSP-related commits after rebase, added...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Pushed 2 LSP-related commits after rebase, added .memory to gitignore
+## Summary
+Successfully pushed the pending commits after resolving remote divergence via rebase. Added `.memory/` to `.gitignore` to prevent future tracking issues.
+
+## Changes Made
+- Rebased local commits onto `origin/main` (resolved divergence)
+- Pushed `feat: add Python LSP hooks` and `perf: add LSP code intelligence section`
+- Added `.memory/` to `.gitignore`
+- Restored stashed WIP changes
+
+## Related Files
+- .gitignore (modified - added .memory/)
