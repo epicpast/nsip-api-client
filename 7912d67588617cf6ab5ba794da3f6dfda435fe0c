@@ -191,3 +191,19 @@ tags:
 # Pre-fetch lineage for all animals to avoid N+1 query pattern
         # With R rams and E ewes, this reduces API calls from O(R*E*2) to O(R+E)
         all_lpns...
+
+---
+type: patterns
+timestamp: '2025-12-24T18:51:16.630268+00:00'
+summary: '...progeny_details: list[dict[str, Any]] = []'
+tags:
+- auto-captured
+- post-tool-use
+- file:progeny_analysis.py
+---
+
+...progeny_details: list[dict[str, Any]] = []
+
+        # Pre-fetch all progeny details to avoid N+1 query pattern
+        # This reduces API calls from O(n) to O(1) batch call
+        progeny_lpns = [p.get("lpn_id"...
