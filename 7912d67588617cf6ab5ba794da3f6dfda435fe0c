@@ -437,3 +437,18 @@ tags:
 ...module-level global (`_client_instance`) with lazy initialization. This is a common Python pattern that:
 1. **Avoids import-time side effects** - Client isn't created until actually needed
 2....
+
+---
+type: patterns
+timestamp: '2025-12-24T19:58:22.025846+00:00'
+summary: '...`NSIP_REGIONS` dict is a defensive fallback if YAML loading fails. This
+  is a reasonable resili...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+...`NSIP_REGIONS` dict is a defensive fallback if YAML loading fails. This is a reasonable resilience pattern - not a duplication issue.
+`─────────────────────────────────────────────────`
+
+The region...
