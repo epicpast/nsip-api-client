@@ -96,3 +96,30 @@ tags:
 ## High Priority (This Sprint)
 
 ### Performance...
+
+---
+type: patterns
+timestamp: '2025-12-24T18:12:27.454375+00:00'
+summary: '...|
+
+  **Overall Health Score: 7.2/10**
+
+  ### Top Findings by Severity
+
+  **CRITICAL (2)**:
+
+  1. N+1 qu...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+...|
+
+**Overall Health Score: 7.2/10**
+
+### Top Findings by Severity
+
+**CRITICAL (2)**:
+1. N+1 query pattern in `mating_optimizer.py` (R×E×2 API calls)
+2. N+1 query pattern in `progeny_analysis.py` (N...
