@@ -219,3 +219,15 @@ tags:
 ---
 
 Now let me fix the N+1 pattern by batch-fetching all progeny details before the loop:
+
+---
+type: patterns
+timestamp: '2025-12-24T19:05:34.680301+00:00'
+summary: 'Now let me fix the N+1 pattern by batch-fetching all progeny details before
+  the loop:'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Now let me fix the N+1 pattern by batch-fetching all progeny details before the loop:
