@@ -265,3 +265,15 @@ tags:
 ---
 
 Let me add the optimization to fix the O(n²) pattern in the inbreeding calculation:
+
+---
+type: patterns
+timestamp: '2025-12-24T19:24:56.863480+00:00'
+summary: 'Now let me fix the N+1 pattern by batch-fetching all progeny details before
+  the loop:'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Now let me fix the N+1 pattern by batch-fetching all progeny details before the loop:
