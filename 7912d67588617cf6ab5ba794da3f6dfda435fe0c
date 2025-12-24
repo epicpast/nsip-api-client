@@ -161,3 +161,19 @@ tags:
 
 ...──────────────────`
 **Parallel Specialist Agent Architecture**: This review demonstrates a powerful pattern where 6 domain specialists (Security, Performance, Architecture, Quality, Testing, Documentation)...
+
+---
+type: patterns
+timestamp: '2025-12-24T18:50:02.903196+00:00'
+summary: '..._extract_ebvs(ewe_lpns, fetched)'
+tags:
+- auto-captured
+- post-tool-use
+- file:mating_optimizer.py
+---
+
+..._extract_ebvs(ewe_lpns, fetched)
+
+        # Pre-fetch lineage for all animals to avoid N+1 query pattern
+        # With R rams and E ewes, this reduces API calls from O(R*E*2) to O(R+E)
+        import...
