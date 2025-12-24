@@ -1717,3 +1717,30 @@ Fixed multiple medium priority performance items including Counter-based common 
 - src/nsip_mcp/knowledge_base/loader.py:73-107
 - src/nsip_mcp/server.py:63-66
 - src/nsip_mcp/resources/flock_resources.py:96-100
+
+---
+type: progress
+timestamp: '2025-12-24T19:58:21.612412+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Fixed silent exception handling patterns
+
+  ## Sum...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Fixed silent exception handling patterns
+## Summary
+Converted bare `except Exception: pass` patterns to proper debug logging across 5 locations in 3 files.
+
+## Changes Made
+- ancestry_builder.py: Added logging import and debug log for ancestor fetch failures
+- skill_prompts.py: Added logging for progeny fetch, animal fetch, and scoring failures
+- economics.py: Added logging for cost template load failures
+
+## Related Files
+- src/nsip_skills/ancestry_builder.py:9,18,122-124
+- src/nsip_mcp/prompts/skill_prompts.py:19,30,86-87,158-160,277-279
+- src/nsip_mcp/shepherd/domains/economics.py:11,18,69-70
