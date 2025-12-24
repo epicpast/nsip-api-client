@@ -1833,3 +1833,40 @@ All CRITICAL, HIGH, and MEDIUM priority items addressed. 1326 tests passing, 91%
 
 ## Related Files
 - README.md:352-359 (env vars table)
+
+---
+type: progress
+timestamp: '2025-12-24T19:58:21.779528+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Completed LOW priority remediation items
+
+  ## Sum...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Completed LOW priority remediation items
+## Summary
+Fixed multiple LOW priority code review findings across security, performance, code quality, test coverage, and documentation categories.
+
+## Changes Made
+- **Performance**: Precompiled regex patterns at module level in `models.py` for faster lineage parsing
+- **Security**: Added security documentation to `transport.py` explaining 0.0.0.0 binding and mitigation strategies
+- **Logging**: Added DEBUG logging for cache write failures in `nsip_wrapper.py`
+- **Documentation**: Updated llms.txt from "14 tools" to "15 tools", added MIT license to README.md, improved exception.py with hierarchy docstring
+- **Code Quality**: Removed empty emoji dict in `formatters.py`, cleaned up unused RiskLevel import
+- **Type Hints**: Added `-> None` return type hints to exception constructors
+- **Test Coverage**: Added tests for single-value std deviation handling and validate_breed_id type checking
+
+## Related Files
+- src/nsip_client/models.py:1-15, 381-421
+- src/nsip_client/exceptions.py:1-57
+- src/nsip_mcp/transport.py:20-44
+- src/nsip_skills/common/nsip_wrapper.py:1-30, 126-132
+- src/nsip_skills/common/formatters.py:12-21, 260-270
+- llms.txt:328-330
+- README.md:622-626
+- tests/unit/test_mcp_tools.py:1549-1579
+- tests/unit/nsip_skills/test_ebv_analysis.py:198-213
