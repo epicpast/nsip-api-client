@@ -62,3 +62,18 @@ tags:
 - File cache write silently ignored
 - Unbounded pagination loop
 - Hardcoded sample...
+
+---
+type: patterns
+timestamp: '2025-12-24T17:10:57.753037+00:00'
+summary: '...Critical (Do Immediately)'
+tags:
+- auto-captured
+- post-tool-use
+- file:REMEDIATION_TASKS.md
+---
+
+...Critical (Do Immediately)
+
+- [ ] `src/nsip_skills/mating_optimizer.py:188-199` - Fix N+1 query pattern by pre-fetching lineage data - PERFORMANCE
+- [ ] `src/nsip_skills/progeny_analysis.py:102-137`...
