@@ -6,6 +6,7 @@ Evaluate sires and dams by their offspring performance.
 
 from __future__ import annotations
 
+import logging
 import statistics
 from dataclasses import dataclass, field
 from typing import Any
@@ -17,6 +18,8 @@ from nsip_skills.common.data_models import (
 )
 from nsip_skills.common.formatters import format_markdown_table, format_progeny_stats
 from nsip_skills.common.nsip_wrapper import CachedNSIPClient
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -99,6 +102,11 @@ def analyze_progeny(
         progeny_scores: list[tuple[str, float]] = []
         progeny_details: list[dict[str, Any]] = []
 
+        # Pre-fetch all progeny details to avoid N+1 query pattern
+        # This reduces API calls from O(n) to O(1) batch call
+        progeny_lpns = [p.get("lpn_id", "") for p in all_progeny if p.get("lpn_id")]
+        fetched_details = client.batch_get_animals(progeny_lpns, on_error="skip")
+
         for progeny in all_progeny:
             lpn = progeny.get("lpn_id", "")
             sex = progeny.get("sex", "")
@@ -108,37 +116,36 @@ def analyze_progeny(
             elif sex and sex.lower().startswith("f"):
                 stats.female_count += 1
 
-            # Get detailed traits for this progeny
-            try:
-                details = client.get_animal_details(lpn)
-                ebvs = {}
+            # Get detailed traits from pre-fetched data
+            fetched_data = fetched_details.get(lpn, {})
+            details = fetched_data.get("details")
+            if not details:
+                logger.debug(f"Could not fetch details for progeny {lpn}")
+                continue
 
-                for trait_name, trait_obj in details.traits.items():
-                    if traits and trait_name not in traits:
-                        continue
+            ebvs = {}
+            for trait_name, trait_obj in details.traits.items():
+                if traits and trait_name not in traits:
+                    continue
 
-                    if trait_name not in trait_values:
-                        trait_values[trait_name] = []
-                    trait_values[trait_name].append(trait_obj.value)
-                    ebvs[trait_name] = trait_obj.value
+                if trait_name not in trait_values:
+                    trait_values[trait_name] = []
+                trait_values[trait_name].append(trait_obj.value)
+                ebvs[trait_name] = trait_obj.value
 
-                # Calculate index score
-                score = index.calculate_score(ebvs)
-                progeny_scores.append((lpn, score))
+            # Calculate index score
+            score = index.calculate_score(ebvs)
+            progeny_scores.append((lpn, score))
 
-                progeny_details.append(
-                    {
-                        "lpn_id": lpn,
-                        "sex": sex,
-                        "date_of_birth": details.date_of_birth,
-                        "ebvs": ebvs,
-                        "index_score": score,
-                    }
-                )
-
-            except Exception:
-                # Skip progeny that can't be fetched
-                pass
+            progeny_details.append(
+                {
+                    "lpn_id": lpn,
+                    "sex": sex,
+                    "date_of_birth": details.date_of_birth,
+                    "ebvs": ebvs,
+                    "index_score": score,
+                }
+            )
 
         # Calculate statistics
         for trait_name, values in trait_values.items():
@@ -199,8 +206,9 @@ def compare_sires(
             try:
                 analysis = analyze_progeny(lpn, traits=traits, index=index, client=client)
                 result.sires.append(analysis)
-            except Exception:
-                # Skip sires that can't be analyzed (not found or no progeny)
+            except Exception as e:
+                # Log warning instead of silently skipping sires
+                logger.warning(f"Could not analyze sire {lpn}: {e}")
                 continue
 
         if not result.sires:

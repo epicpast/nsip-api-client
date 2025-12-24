@@ -369,6 +369,61 @@ Owner contact information.
 
 ---
 
+## MCP Tools
+
+The NSIP MCP Server exposes 15 tools via the Model Context Protocol.
+
+### NSIP API Tools (10)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `nsip_get_last_update` | Get database timestamp | None |
+| `nsip_list_breeds` | List breed groups with breeds | None |
+| `nsip_get_statuses` | Get animal statuses | None |
+| `nsip_get_trait_ranges` | Get trait ranges by breed | `breed_id` (int) |
+| `nsip_search_animals` | Search animals with filters | `breed_id`, `page`, `page_size`, `search_criteria`, `summarize` |
+| `nsip_get_animal` | Get animal details | `search_string`, `summarize` |
+| `nsip_get_lineage` | Get pedigree tree | `lpn_id`, `summarize` |
+| `nsip_get_progeny` | Get offspring list | `lpn_id`, `page`, `page_size`, `summarize` |
+| `nsip_search_by_lpn` | Get complete profile | `lpn_id`, `summarize` |
+| `get_server_health` | Get metrics dashboard | None |
+
+### Shepherd Consultation Tools (5)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `shepherd_consult` | General sheep husbandry advice | `question`, `region` |
+| `shepherd_breeding` | EBV interpretation, mating advice | `question`, `region`, `production_goal` |
+| `shepherd_health` | Disease prevention, nutrition | `question`, `region`, `life_stage` |
+| `shepherd_calendar` | Seasonal planning | `question`, `region`, `task_type` |
+| `shepherd_economics` | Cost analysis, ROI | `question`, `flock_size`, `market_focus` |
+
+### Tool Response Format
+
+All tools return JSON with metadata:
+
+```json
+{
+  "data": { ... },
+  "_summarized": false,
+  "_original_token_count": 1500
+}
+```
+
+When `summarize=True` is passed:
+
+```json
+{
+  "data": { ... },
+  "_summarized": true,
+  "_original_token_count": 5000,
+  "_summary_token_count": 1400,
+  "_reduction_percent": 72.0
+}
+```
+
+---
+
 ## Exceptions
 
 ### NSIPError

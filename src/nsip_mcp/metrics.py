@@ -8,8 +8,12 @@ This module implements ServerMetrics dataclass for tracking:
 - Concurrent connections (SC-005: support 50+)
 """
 
+from collections import deque
 from dataclasses import dataclass, field
 from threading import RLock
+
+# Maximum entries to retain in rolling metric lists to prevent unbounded memory growth
+MAX_METRIC_ENTRIES = 10000
 
 
 @dataclass
@@ -37,8 +41,13 @@ class ServerMetrics:
         kb_accesses: Count of knowledge base accesses by file
     """
 
-    discovery_times: list[float] = field(default_factory=list)
-    summarization_reductions: list[float] = field(default_factory=list)
+    # Use bounded deques to prevent unbounded memory growth in long-running servers
+    discovery_times: deque[float] = field(
+        default_factory=lambda: deque(maxlen=MAX_METRIC_ENTRIES)
+    )
+    summarization_reductions: deque[float] = field(
+        default_factory=lambda: deque(maxlen=MAX_METRIC_ENTRIES)
+    )
     validation_attempts: int = 0
     validation_successes: int = 0
     cache_hits: int = 0
@@ -49,7 +58,9 @@ class ServerMetrics:
 
     # Resource metrics
     resource_accesses: dict[str, int] = field(default_factory=dict)
-    resource_latencies: list[float] = field(default_factory=list)
+    resource_latencies: deque[float] = field(
+        default_factory=lambda: deque(maxlen=MAX_METRIC_ENTRIES)
+    )
 
     # Prompt metrics
     prompt_executions: dict[str, int] = field(default_factory=dict)
