@@ -44,3 +44,21 @@ tags:
 
 **Description**:
 The...
+
+---
+type: patterns
+timestamp: '2025-12-24T17:09:20.227043+00:00'
+summary: '...inbreeding.py'
+tags:
+- auto-captured
+- post-tool-use
+- file:CODE_REVIEW.md
+---
+
+...inbreeding.py
+- Empty risk emojis dict
+- Dict comprehension vs loop inconsistency
+- String building pattern inconsistency
+- File cache write silently ignored
+- Unbounded pagination loop
+- Hardcoded sample...
