@@ -1438,3 +1438,33 @@ Added 31 new tests across 4 test files. Coverage at 91%, 1326 tests passing.
 - tests/unit/test_mcp_tools.py:1899-2134
 - tests/unit/test_mcp_cli.py:1-56
 - tests/unit/test_cache.py:516-555
+
+---
+type: progress
+timestamp: '2025-12-24T19:46:23.316903+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Completed all MEDIUM priority remediation items
+
+  ...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Completed all MEDIUM priority remediation items
+## Summary
+All CRITICAL, HIGH, and MEDIUM priority items addressed. 1326 tests passing, 91% coverage, flake8 clean.
+
+## Session Accomplishments
+- **Tests added**: 31 new tests across 4 files
+- **Documentation**: Added MCP_HOST/MCP_PATH to README env vars table
+- **Code quality**: Verified docstrings, logging in place
+
+## Verified Items (Already Done)
+- Module docstrings: All nsip_skills and nsip_mcp modules have docstrings
+- Class docstrings: All domain handlers documented
+- `except Exception: pass` patterns: Already replaced with logging
+
+## Related Files
+- README.md:352-359 (env vars table)
