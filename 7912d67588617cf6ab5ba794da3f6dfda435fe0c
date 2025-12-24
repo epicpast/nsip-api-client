@@ -21,3 +21,15 @@ summary: '**Status:** 2 commits ready, push blocked by permissions.'
 | Hash | Message |
 |------|---------|
 | `8903618` | feat: add Python LSP hooks...
+
+---
+type: blockers
+timestamp: '2025-12-24T18:27:37.398349+00:00'
+summary: '**Status:** 2 commits ready, push blocked by permissions.'
+---
+
+**Status:** 2 commits ready, push blocked by permissions.
+
+| Hash | Message |
+|------|---------|
+| `8903618` | feat: add Python LSP hooks...
