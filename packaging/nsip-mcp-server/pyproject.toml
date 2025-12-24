@@ -27,7 +27,7 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "nsip-client>=1.4.0,<2.0.0",
+    "nsip-client>=1.4.1,<2.0.0",
     "fastmcp>=2.0",
     "tiktoken>=0.8.0",
 ]
