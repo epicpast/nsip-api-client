@@ -21,3 +21,26 @@ tags:
 
 **Description**:
 The...
+
+---
+type: patterns
+timestamp: '2025-12-24T17:09:20.206176+00:00'
+summary: '...lineage_cache[ram], lineage_cache[ewe]'
+tags:
+- auto-captured
+- post-tool-use
+- file:CODE_REVIEW.md
+---
+
+...lineage_cache[ram], lineage_cache[ewe]
+        )
+```
+
+---
+
+### CRITICAL-002: N+1 Query Pattern in Progeny Analysis
+
+**Location**: `src/nsip_skills/progeny_analysis.py:102-137`
+
+**Description**:
+The...
