@@ -1744,3 +1744,29 @@ Converted bare `except Exception: pass` patterns to proper debug logging across 
 - src/nsip_skills/ancestry_builder.py:9,18,122-124
 - src/nsip_mcp/prompts/skill_prompts.py:19,30,86-87,158-160,277-279
 - src/nsip_mcp/shepherd/domains/economics.py:11,18,69-70
+
+---
+type: progress
+timestamp: '2025-12-24T19:58:21.655568+00:00'
+summary: '▶ progress ─────────────────────────────────────
+
+  Added MEDIUM Test Coverage items: CLI, cache, si...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+Added MEDIUM Test Coverage items: CLI, cache, singleton tests
+## Summary
+Completed 5 of 7 MEDIUM Test Coverage remediation tasks with 22 new tests passing.
+
+## Changes Made
+- Created `tests/unit/test_mcp_cli.py` (5 tests): KeyboardInterrupt, ValueError, RuntimeError, OSError paths
+- Added `TestClientSingleton` class to test_mcp_tools.py (4 tests): singleton pattern verification
+- Added `test_make_key_non_serializable_type_raises` and `test_make_key_serializable_types_succeed` to test_cache.py
+- MCP CLI coverage: 0% → 94%
+
+## Related Files
+- tests/unit/test_mcp_cli.py:1-56 (new file)
+- tests/unit/test_mcp_tools.py:1899-1971
+- tests/unit/test_cache.py:516-555
