@@ -147,3 +147,17 @@ tags:
 
 **HIGH (14)**:
 1. Sequential API...
+
+---
+type: patterns
+timestamp: '2025-12-24T18:12:27.561571+00:00'
+summary: '...──────────────────`
+
+  **Parallel Specialist Agent Architecture**: This review demonstrates a pow...'
+tags:
+- auto-captured
+- pre-compact
+---
+
+...──────────────────`
+**Parallel Specialist Agent Architecture**: This review demonstrates a powerful pattern where 6 domain specialists (Security, Performance, Architecture, Quality, Testing, Documentation)...
