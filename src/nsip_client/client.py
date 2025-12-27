@@ -8,7 +8,7 @@ API Base URL: http://nsipsearch.nsip.org/api
 Authentication: None required (public API)
 """
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from typing import Any
 
 import requests
@@ -406,13 +406,13 @@ class NSIPClient:
         # Reduces latency from ~3x single-call time to ~1x (concurrent execution)
         results: dict[str, Any] = {}
         with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = {
+            futures: dict[Future[Any], str] = {
                 executor.submit(self.get_animal_details, lpn_id): "details",
                 executor.submit(self.get_lineage, lpn_id): "lineage",
                 executor.submit(self.get_progeny, lpn_id): "progeny",
             }
             for future in as_completed(futures):
-                key = futures[future]
+                key: str = futures[future]
                 results[key] = future.result()
 
         return results
