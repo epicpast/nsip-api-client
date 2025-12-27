@@ -125,26 +125,23 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
-      - name: Install dependencies
-        run: uv sync --all-extras
-
       - name: Build nsip-client package
         run: |
           cd packaging/nsip-client
-          uv run python -m build
-          uv run twine check dist/*
+          uvx --from build pyproject-build
+          uvx twine check dist/*
 
       - name: Build nsip-mcp-server package
         run: |
           cd packaging/nsip-mcp-server
-          uv run python -m build
-          uv run twine check dist/*
+          uvx --from build pyproject-build
+          uvx twine check dist/*
 
       - name: Build nsip-skills package
         run: |
           cd packaging/nsip-skills
-          uv run python -m build
-          uv run twine check dist/*
+          uvx --from build pyproject-build
+          uvx twine check dist/*
 
       - name: Upload client artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
