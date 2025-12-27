@@ -5,123 +5,187 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  quality:
-    name: Code Quality
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - name: Install uv
+        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+      - name: Set up Python
+        run: uv python install 3.12
 
-    - name: Check code formatting with Black
-      run: black --check src/ tests/ examples/
+      - name: Install dependencies
+        run: uv sync --all-extras
 
-    - name: Check import sorting with isort
-      run: isort --check-only src/ tests/ examples/
+      - name: Run ruff check (includes security via S rules)
+        run: uv run ruff check --output-format=github .
 
-    - name: Lint with flake8
-      run: |
-        flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 src/ tests/ --count --max-complexity=15 --max-line-length=100 --statistics
+      - name: Run ruff format check
+        run: uv run ruff format --check .
 
-    - name: Type check with mypy
-      run: mypy src/ --ignore-missing-imports
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-    - name: Security check with bandit
-      run: bandit -r src/ -ll
+      - name: Install uv
+        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run pyright
+        run: uv run pyright
 
   test:
-    name: Test Python ${{ matrix.python-version }}
+    name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-
+        python-version: ["3.12", "3.13"]
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
+      - name: Install uv
+        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+      - name: Set up Python
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: uv python install "$PYTHON_VERSION"
 
-    - name: Run tests with pytest
-      run: pytest --cov=nsip_client --cov=nsip_mcp --cov=nsip_skills --cov-report=xml --cov-report=term-missing --cov-fail-under=95 -v
+      - name: Install dependencies
+        run: uv sync --all-extras
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      if: matrix.python-version == '3.11'
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+      - name: Run tests with coverage
+        run: |
+          uv run pytest \
+            --cov=nsip_client \
+            --cov=nsip_mcp \
+            --cov=nsip_skills \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-fail-under=95 \
+            -v
+
+      - name: Upload coverage report
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build:
     name: Build Packages
-    needs: [quality, test]
+    needs: [lint, type-check, test]
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - name: Install uv
+        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build twine hatchling
+      - name: Set up Python
+        run: uv python install 3.12
 
-    - name: Build nsip-client package
-      run: |
-        cd packaging/nsip-client
-        python -m build
-        twine check dist/*
+      - name: Install build dependencies
+        run: uv pip install build twine hatchling --system
 
-    - name: Build nsip-mcp-server package
-      run: |
-        cd packaging/nsip-mcp-server
-        python -m build
-        twine check dist/*
+      - name: Build nsip-client package
+        run: |
+          cd packaging/nsip-client
+          python -m build
+          twine check dist/*
 
-    - name: Upload client artifacts
-      uses: actions/upload-artifact@v6
-      with:
-        name: nsip-client-dist
-        path: packaging/nsip-client/dist/
+      - name: Build nsip-mcp-server package
+        run: |
+          cd packaging/nsip-mcp-server
+          python -m build
+          twine check dist/*
 
-    - name: Upload server artifacts
-      uses: actions/upload-artifact@v6
-      with:
-        name: nsip-mcp-server-dist
-        path: packaging/nsip-mcp-server/dist/
+      - name: Build nsip-skills package
+        run: |
+          cd packaging/nsip-skills
+          python -m build
+          twine check dist/*
+
+      - name: Upload client artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nsip-client-dist
+          path: packaging/nsip-client/dist/
+
+      - name: Upload server artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nsip-mcp-server-dist
+          path: packaging/nsip-mcp-server/dist/
+
+      - name: Upload skills artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nsip-skills-dist
+          path: packaging/nsip-skills/dist/
+
+  all-checks-pass:
+    name: All Checks Pass
+    if: always()
+    needs: [lint, type-check, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs passed
+        env:
+          LINT_RESULT: ${{ needs.lint.result }}
+          TYPE_CHECK_RESULT: ${{ needs.type-check.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          if [[ "$LINT_RESULT" != "success" ]] || \
+             [[ "$TYPE_CHECK_RESULT" != "success" ]] || \
+             [[ "$TEST_RESULT" != "success" ]] || \
+             [[ "$BUILD_RESULT" != "success" ]]; then
+            echo "One or more jobs failed"
+            echo "Lint: $LINT_RESULT"
+            echo "Type Check: $TYPE_CHECK_RESULT"
+            echo "Test: $TEST_RESULT"
+            echo "Build: $BUILD_RESULT"
+            exit 1
+          fi
+          echo "All checks passed!"

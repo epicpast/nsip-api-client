@@ -9,9 +9,12 @@ Python monorepo containing:
 - **nsip-mcp-server**: MCP server layer for LLM integrations (FastMCP 2.12.4+)
 - **nsip-skills**: Breeding decision support tools (pandas-based analysis)
 
-**Python version**: 3.10+
-**Package manager**: uv (preferred) or pip
+**Python version**: 3.12+
+**Package manager**: uv
 **Build backend**: Hatchling
+**Linting/Formatting**: ruff
+**Type Checking**: pyright (strict mode)
+**Testing**: pytest with 95% coverage requirement
 
 ## Architecture
 
@@ -24,33 +27,116 @@ src/
 
 Dependency hierarchy: `nsip_skills` and `nsip_mcp` both depend on `nsip_client`.
 
-## Code Style Guidelines
+## Code Generation Guidelines
 
-- **Line length**: 100 characters
-- **Imports**: isort with black profile
-- **Type hints**: Required for all public functions
-- **Test coverage**: 95% minimum required (CI enforced)
-- **Formatter**: `uv run ruff format`
-- **Linter**: `uv run ruff check`
+### Type Annotations
+
+Always include type annotations for function parameters and return types:
+
+```python
+def process_data(items: list[str], limit: int = 10) -> dict[str, int]:
+    ...
+```
+
+Use `from __future__ import annotations` for forward references.
+
+### Docstrings
+
+Use Google-style docstrings:
+
+```python
+def example_function(param1: str, param2: int) -> bool:
+    """Short description of the function.
+
+    Longer description if needed, explaining the purpose
+    and any important details.
+
+    Args:
+        param1: Description of param1.
+        param2: Description of param2.
+
+    Returns:
+        Description of the return value.
+
+    Raises:
+        ValueError: When validation fails.
+    """
+```
+
+### Imports
+
+Organize imports in this order:
+1. Future imports (`from __future__ import annotations`)
+2. Standard library
+3. Third-party packages
+4. Local imports
+
+Use `TYPE_CHECKING` block for type-only imports:
+
+```python
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+```
+
+### Error Handling
+
+Use descriptive error messages assigned to variables:
+
+```python
+# Good
+msg = f"Invalid value: {value}"
+raise ValueError(msg)
+
+# Avoid
+raise ValueError(f"Invalid value: {value}")
+```
+
+### Data Classes
+
+Prefer dataclasses for data structures:
+
+```python
+from dataclasses import dataclass, field
+
+@dataclass(frozen=True)
+class Config:
+    """Configuration settings."""
+
+    name: str
+    timeout: int = 30
+    tags: list[str] = field(default_factory=list)
+```
+
+### Async Code
+
+Use async/await for I/O operations:
+
+```python
+async def fetch_data(url: str) -> dict[str, Any]:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        return response.json()
+```
 
 ## Development Commands
 
 ```bash
 # Install dependencies
-uv sync --all-extras --group dev
+uv sync --all-extras
 
 # Format and lint
-uv run ruff format src tests
-uv run ruff check src tests --fix
+uv run ruff format .
+uv run ruff check . --fix
 
 # Type check
-uv run mypy src
+uv run pyright
 
 # Run tests with coverage
 uv run pytest --cov-fail-under=95 -v
-
-# Build packages
-uv build
 ```
 
 ## Testing Patterns
@@ -83,6 +169,19 @@ mock_client = MockNSIPClient(
 )
 ```
 
+### Parametrized Tests
+
+```python
+import pytest
+
+@pytest.mark.parametrize("input_val,expected", [
+    ("a", 1),
+    ("b", 2),
+])
+def test_parametrized(input_val: str, expected: int):
+    assert process(input_val) == expected
+```
+
 ## Key Algorithms
 
 **Inbreeding (Wright's Path Coefficient)**:
@@ -111,6 +210,13 @@ Each package in `packaging/` is independently publishable:
 - `packaging/nsip-skills/pyproject.toml`
 
 Versions are in `src/{package}/__init__.py` and read dynamically by hatch.
+
+## File Locations
+
+- Source code: `src/nsip_client/`, `src/nsip_mcp/`, `src/nsip_skills/`
+- Unit tests: `tests/unit/`
+- Integration tests: `tests/integration/`
+- Shared fixtures: `tests/conftest.py`
 
 ## Exception Hierarchy (nsip_client)
 

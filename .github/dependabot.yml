@@ -1,28 +1,66 @@
 version: 2
 updates:
-  # Maintain dependencies for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "github-actions"
-
-  # Maintain dependencies for pip
+  # Python dependencies (pip/uv)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
     labels:
       - "dependencies"
       - "python"
-    # Group all patch updates together
     groups:
-      patch-updates:
+      dev-dependencies:
+        patterns:
+          - "pytest*"
+          - "ruff"
+          - "pyright"
+          - "pre-commit"
+        update-types:
+          - "minor"
+          - "patch"
+      docs-dependencies:
+        patterns:
+          - "mkdocs*"
+          - "mkdocstrings*"
+          - "sphinx*"
+        update-types:
+          - "minor"
+          - "patch"
+      runtime-dependencies:
+        patterns:
+          - "requests"
+          - "fastmcp"
+          - "tiktoken"
+          - "pyyaml"
+          - "pandas"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions:
         patterns:
           - "*"
         update-types:
+          - "minor"
           - "patch"
-    # Auto-merge minor and patch updates
-    open-pull-requests-limit: 10
