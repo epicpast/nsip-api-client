@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.7] - 2025-12-24
+
+### Changed
+- **Performance**: Parallelized API calls in `search_by_lpn()` using ThreadPoolExecutor
+- **Performance**: Bounded metrics lists with `deque(maxlen=10000)` to prevent memory leaks
+- **Performance**: Added JSON serialization caching in context management
+- **Performance**: Added memoization to inbreeding path calculations
+
+### Fixed
+- **N+1 Query Patterns**: Fixed critical performance issue in `mating_optimizer.py` with lineage pre-fetching
+- **N+1 Query Patterns**: Fixed critical performance issue in `progeny_analysis.py` with batch animal fetching
+- **Silent Failures**: Added logging for exception handling in `inbreeding.py` and `progeny_analysis.py`
+
+### Documentation
+- Updated version references in README.md and docs/mcp-server.md to current versions
+
+## [1.3.6] - 2025-12-20
+
+### Added
+- Python LSP hooks for automated code quality checks (black, isort, flake8, mypy)
+- Pre-commit quality gate for git commits
+
+## [1.3.5] - 2025-12-15
+
+### Changed
+- Enhanced client package with improved error handling
+- Updated test infrastructure
+
 ## [1.3.4] - 2025-12-07
 
 ### Added

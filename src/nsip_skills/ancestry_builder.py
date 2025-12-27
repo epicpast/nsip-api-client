@@ -6,6 +6,7 @@ Build and visualize pedigree trees with comprehensive ancestor information.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -13,6 +14,8 @@ from nsip_skills.common.data_models import PedigreeTree
 from nsip_skills.common.formatters import format_pedigree_tree
 from nsip_skills.common.nsip_wrapper import CachedNSIPClient
 from nsip_skills.inbreeding import build_pedigree_tree
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -116,8 +119,9 @@ def identify_notable_ancestors(
                     }
                 )
 
-        except Exception:
-            # Skip ancestors whose details can't be fetched (not found or API error)
+        except Exception as e:
+            # Log and skip ancestors whose details can't be fetched
+            logger.debug(f"Could not fetch details for ancestor {ancestor.lpn_id}: {e}")
             continue
 
     return notable

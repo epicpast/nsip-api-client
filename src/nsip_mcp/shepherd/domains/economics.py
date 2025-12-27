@@ -8,11 +8,14 @@ Provides expert guidance on:
 - Breakeven analysis
 """
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from nsip_mcp.knowledge_base import get_economics_template
 from nsip_mcp.shepherd.persona import ShepherdPersona, format_shepherd_response
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -24,6 +27,26 @@ class EconomicsDomain:
     """
 
     persona: ShepherdPersona = field(default_factory=ShepherdPersona)
+
+    def format_response(
+        self,
+        content: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Format a response using the domain's persona.
+
+        Args:
+            content: The main response content
+            metadata: Optional metadata to include
+
+        Returns:
+            Formatted response dictionary with persona styling
+        """
+        formatted_text = format_shepherd_response(answer=content)
+        response: dict[str, Any] = {"guidance": formatted_text, "domain": "economics"}
+        if metadata:
+            response["metadata"] = metadata
+        return response
 
     def get_cost_breakdown(
         self,
@@ -43,7 +66,8 @@ class EconomicsDomain:
         try:
             cost_data = get_economics_template("cost_templates")
             ewe_costs = cost_data.get("cost_templates", {})
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to load cost templates from KB: {e}")
             ewe_costs = {}
 
         if not ewe_costs:

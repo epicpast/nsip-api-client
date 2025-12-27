@@ -93,7 +93,7 @@ pip install git+https://github.com/epicpast/nsip-api-client.git
 
 **Install specific version:**
 ```bash
-pip install git+https://github.com/epicpast/nsip-api-client.git@v1.1.0
+pip install git+https://github.com/epicpast/nsip-api-client.git@v1.3.7
 ```
 
 ### Method 2: Install via uvx (no installation required)

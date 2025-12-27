@@ -7,6 +7,7 @@ and breeding goals.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -20,6 +21,8 @@ from nsip_skills.common.data_models import (
 from nsip_skills.common.formatters import format_mating_recommendations
 from nsip_skills.common.nsip_wrapper import CachedNSIPClient
 from nsip_skills.inbreeding import calculate_projected_offspring_inbreeding
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -117,23 +120,44 @@ def _score_pairing(
     index: SelectionIndex,
     inbreeding_generations: int,
     client: CachedNSIPClient,
+    lineage_cache: dict[str, Any] | None = None,
 ) -> MatingPair:
-    """Score a single ram-ewe pairing."""
+    """Score a single ram-ewe pairing.
+
+    Args:
+        ram: Ram LPN ID
+        ewe: Ewe LPN ID
+        ram_ebvs: Ram's EBV dictionary
+        ewe_ebvs: Ewe's EBV dictionary
+        index: Selection index for scoring
+        inbreeding_generations: Generations for inbreeding calc
+        client: NSIP client
+        lineage_cache: Optional pre-fetched lineage data to avoid N+1 queries
+    """
     projected = project_offspring_ebvs(ram_ebvs, ewe_ebvs)
+    pair_notes: list[str] = []
 
     try:
+        # Use cached lineage if available (avoids N+1 query pattern)
         inbreeding_result = calculate_projected_offspring_inbreeding(
-            sire_lpn=ram, dam_lpn=ewe, generations=inbreeding_generations, client=client
+            sire_lpn=ram,
+            dam_lpn=ewe,
+            generations=inbreeding_generations,
+            client=client,
+            lineage_cache=lineage_cache,
         )
         coi = inbreeding_result.coefficient
         risk = inbreeding_result.risk_level or RiskLevel.LOW
-    except Exception:
+    except Exception as e:
+        # Log warning for silent failures (HIGH priority fix)
+        logger.warning(f"Inbreeding calculation failed for {ram}x{ewe}: {e}")
         coi = 0.0
         risk = RiskLevel.LOW
+        pair_notes.append(f"Inbreeding could not be calculated: {e}")
 
     composite = score_mating(projected, index, coi)
 
-    return MatingPair(
+    pair = MatingPair(
         ram_lpn=ram,
         ewe_lpn=ewe,
         projected_offspring_ebvs=projected,
@@ -141,6 +165,8 @@ def _score_pairing(
         inbreeding_risk=risk,
         composite_score=composite,
     )
+    pair.notes.extend(pair_notes)
+    return pair
 
 
 def optimize_mating_plan(
@@ -184,12 +210,30 @@ def optimize_mating_plan(
         ram_ebvs = _extract_ebvs(ram_lpns, fetched)
         ewe_ebvs = _extract_ebvs(ewe_lpns, fetched)
 
+        # Pre-fetch lineage for all animals to avoid N+1 query pattern
+        # With R rams and E ewes, this reduces API calls from O(R*E*2) to O(R+E)
+        all_lpns = set(ram_ebvs.keys()) | set(ewe_ebvs.keys())
+        lineage_cache: dict[str, Any] = {}
+        for lpn in all_lpns:
+            try:
+                lineage_cache[lpn] = client.get_lineage(lpn)
+            except Exception as e:
+                logger.debug(f"Could not fetch lineage for {lpn}: {e}")
+                lineage_cache[lpn] = None
+
         # Score all possible pairings
         all_pairs: list[MatingPair] = []
         for ram in ram_ebvs:
             for ewe in ewe_ebvs:
                 pair = _score_pairing(
-                    ram, ewe, ram_ebvs[ram], ewe_ebvs[ewe], index, inbreeding_generations, client
+                    ram,
+                    ewe,
+                    ram_ebvs[ram],
+                    ewe_ebvs[ewe],
+                    index,
+                    inbreeding_generations,
+                    client,
+                    lineage_cache,
                 )
                 if pair.projected_inbreeding > max_inbreeding:
                     pair.notes.append(

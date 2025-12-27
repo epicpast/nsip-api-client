@@ -325,9 +325,9 @@ Convenience method: get details + lineage + progeny in one call.
 
 ## Package: nsip-mcp-server
 
-MCP (Model Context Protocol) server for LLM integration with 14 tools, 26 resources, and 11 prompts.
+MCP (Model Context Protocol) server for LLM integration with 15 tools, 26 resources, and 11 prompts.
 
-### MCP Tools (14 Total)
+### MCP Tools (15 Total)
 
 All tools support optional `summarize=True` to reduce token usage.
 By default, full data is preserved (`summarize=False`).

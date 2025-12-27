@@ -70,6 +70,43 @@ def clear_cache() -> None:
     _load_yaml_file.cache_clear()
 
 
+# List of all YAML files to pre-load
+_PRELOAD_FILES = [
+    "heritabilities.yaml",
+    "diseases.yaml",
+    "nutrition.yaml",
+    "selection_indexes.yaml",
+    "trait_glossary.yaml",
+    "regions.yaml",
+    "calendar_templates.yaml",
+    "economics.yaml",
+]
+
+
+def preload_all() -> dict[str, bool]:
+    """Pre-load all knowledge base files into cache.
+
+    Call this at server startup to eliminate first-request latency.
+    Files are loaded synchronously since YAML parsing is fast (<100ms total).
+
+    Returns:
+        Dict mapping filename to success status
+
+    Example:
+        >>> preload_all()
+        {"heritabilities.yaml": True, "diseases.yaml": True, ...}
+    """
+    results = {}
+    for filename in _PRELOAD_FILES:
+        try:
+            _load_yaml_file(filename)
+            results[filename] = True
+        except KnowledgeBaseError:
+            results[filename] = False
+            logger.warning(f"Failed to preload {filename}")
+    return results
+
+
 # =============================================================================
 # Heritabilities
 # =============================================================================
