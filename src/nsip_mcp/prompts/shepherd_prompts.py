@@ -107,15 +107,15 @@ async def shepherd_breeding_prompt(
 ## Heritability Reference
 
 Key trait heritabilities for selection:
-- Birth Weight (BWT): {heritabilities.get('BWT', 0.35)} - Moderate, responds well to selection
-- Weaning Weight (WWT): {heritabilities.get('WWT', 0.20)} - Lower, maternal effects important
-- Post-Weaning Weight (PWWT): {heritabilities.get('PWWT', 0.25)} - Moderate
-- Number Lambs Weaned (NLW): {heritabilities.get('NLW', 0.10)} - Low, slow progress
+- Birth Weight (BWT): {heritabilities.get("BWT", 0.35)} - Moderate, responds well to selection
+- Weaning Weight (WWT): {heritabilities.get("WWT", 0.20)} - Lower, maternal effects important
+- Post-Weaning Weight (PWWT): {heritabilities.get("PWWT", 0.25)} - Moderate
+- Number Lambs Weaned (NLW): {heritabilities.get("NLW", 0.10)} - Low, slow progress
 
-## Selection Index: {index_info.get('name', production_goal) if index_info else production_goal}
+## Selection Index: {index_info.get("name", production_goal) if index_info else production_goal}
 
-{index_info.get('description', '') if index_info else ''}
-{index_info.get('use_case', '') if index_info else ''}
+{index_info.get("description", "") if index_info else ""}
+{index_info.get("use_case", "") if index_info else ""}
 
 ## User Question
 
@@ -174,13 +174,13 @@ async def shepherd_health_prompt(
 
 ## Context
 
-**Region**: {region_info.get('name', region) if region_info else region}
+**Region**: {region_info.get("name", region) if region_info else region}
 **Life Stage**: {life_stage}
-**Parasite Season**: {region_info.get('parasite_season', 'varies') if region_info else 'varies'}
+**Parasite Season**: {region_info.get("parasite_season", "varies") if region_info else "varies"}
 
 ## Regional Health Challenges
 
-{chr(10).join(region_info.get('challenges', [])) if region_info else 'Consult local extension'}
+{chr(10).join(region_info.get("challenges", [])) if region_info else "Consult local extension"}
 
 ## Common Diseases for Region
 
@@ -265,9 +265,9 @@ async def shepherd_calendar_prompt(
 
 ## Context
 
-**Region**: {region_info.get('name', region) if region_info else region}
+**Region**: {region_info.get("name", region) if region_info else region}
 **Task Focus**: {task_type}
-**Typical Lambing**: {region_info.get('typical_lambing', 'Varies') if region_info else 'Varies'}
+**Typical Lambing**: {region_info.get("typical_lambing", "Varies") if region_info else "Varies"}
 
 ## Seasonal Tasks: {task_type.title()}
 
@@ -471,11 +471,11 @@ I can help with questions about:
 """
         if region_info:
             context += f"""
-## Your Region: {region_info.get('name', region)}
+## Your Region: {region_info.get("name", region)}
 
-- Primary Breeds: {', '.join(region_info.get('primary_breeds', []))}
-- Challenges: {', '.join(region_info.get('challenges', [])[:3])}
-- Typical Lambing: {region_info.get('typical_lambing', 'Varies')}
+- Primary Breeds: {", ".join(region_info.get("primary_breeds", []))}
+- Challenges: {", ".join(region_info.get("challenges", [])[:3])}
+- Typical Lambing: {region_info.get("typical_lambing", "Varies")}
 """
 
         context += f"""

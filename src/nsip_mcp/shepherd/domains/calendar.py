@@ -121,8 +121,7 @@ class CalendarDomain:
             if task_type == "breeding":
                 # Calculate breeding from lambing (5 months earlier)
                 result["regional_adjustments"].append(
-                    f"For {typical_lambing} lambing, breeding occurs approximately "
-                    "5 months earlier"
+                    f"For {typical_lambing} lambing, breeding occurs approximately 5 months earlier"
                 )
             elif task_type == "lambing":
                 result["regional_adjustments"].append(f"Typical lambing season: {typical_lambing}")

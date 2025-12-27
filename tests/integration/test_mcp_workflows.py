@@ -430,9 +430,9 @@ class TestUS2Summarization:
         assert "_original_token_count" in result
         assert "_summary_token_count" in result
         assert result["_original_token_count"] > 2000, "Original should exceed threshold"
-        assert (
-            result["_summary_token_count"] < result["_original_token_count"]
-        ), "Summary should be smaller"
+        assert result["_summary_token_count"] < result["_original_token_count"], (
+            "Summary should be smaller"
+        )
 
     @pytest.mark.integration
     @patch("nsip_mcp.tools.NSIPClient")
@@ -1132,9 +1132,9 @@ class TestEndToEndWorkflow:
         assert "breed" in result_large, "FR-005a: breed (identity) should be preserved"
         assert "sire" in result_large, "FR-005a: sire (pedigree) should be preserved"
         assert "dam" in result_large, "FR-005a: dam (pedigree) should be preserved"
-        assert (
-            "total_progeny" in result_large
-        ), "FR-005a: total_progeny (offspring) should be preserved"
+        assert "total_progeny" in result_large, (
+            "FR-005a: total_progeny (offspring) should be preserved"
+        )
         assert "top_traits" in result_large, "FR-005a: top_traits should be preserved"
 
         # Verify FR-005b fields omitted
@@ -1157,9 +1157,9 @@ class TestEndToEndWorkflow:
         assert "suggestion" in error_response["data"], "Error should include suggestion"
 
         # Verify validation was tracked
-        assert (
-            server_metrics.validation_attempts > initial_validation_attempts
-        ), "Validation should be tracked"
+        assert server_metrics.validation_attempts > initial_validation_attempts, (
+            "Validation should be tracked"
+        )
 
         # Test LLM retry with correction (SC-004: 80% success)
         corrected_response = mcp_tools.nsip_get_animal.fn(search_string="6####92020###249")

@@ -412,7 +412,7 @@ class TestGetAllProgeny:
             # Second page - 50 animals
             animals_page2 = [MagicMock() for _ in range(50)]
             for i, a in enumerate(animals_page2):
-                a.to_dict.return_value = {"lpn_id": f"PROG{100+i}"}
+                a.to_dict.return_value = {"lpn_id": f"PROG{100 + i}"}
             result2 = MagicMock()
             result2.total_count = 150
             result2.animals = animals_page2

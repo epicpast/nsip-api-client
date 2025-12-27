@@ -496,7 +496,7 @@ class TestSummarizeResponse:
                 {
                     "field": f"value{i}",
                     "description": (
-                        f"This is a detailed description for item number {i} " "with extra text"
+                        f"This is a detailed description for item number {i} with extra text"
                     ),
                     "metadata": {"id": i, "category": "test", "tags": ["tag1", "tag2", "tag3"]},
                 }

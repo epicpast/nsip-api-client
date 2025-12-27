@@ -104,9 +104,7 @@ async def get_flock_summary(flock_id: str) -> dict[str, Any]:
                     for a in search_result.results
                     if isinstance(a, dict)
                     and (a.get("lpn_id") or a.get("LpnId") or "").startswith(flock_id)
-                ][
-                    :100
-                ]  # Limit to 100 for performance
+                ][:100]  # Limit to 100 for performance
             else:
                 animals = []
             response_cache.set(cache_key, animals)

@@ -351,9 +351,9 @@ class TestStateToRegionMapping:
         for region_id, region in NSIP_REGIONS.items():
             for state in region["states"]:
                 detected = detect_region(state=state)
-                assert (
-                    detected == region_id
-                ), f"State {state} should map to {region_id}, got {detected}"
+                assert detected == region_id, (
+                    f"State {state} should map to {region_id}, got {detected}"
+                )
 
     def test_midwest_states(self) -> None:
         """Test all midwest states are mapped correctly."""

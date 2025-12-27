@@ -38,9 +38,7 @@ class TransportConfig:
 
     transport_type: TransportType
     port: int | None = None
-    host: str = (
-        "0.0.0.0"  # noqa: S104  # nosec B104 - MCP server intentionally binds to all interfaces
-    )
+    host: str = "0.0.0.0"  # noqa: S104  # nosec B104 - MCP server intentionally binds to all interfaces
     path: str = "/mcp"
 
     @classmethod

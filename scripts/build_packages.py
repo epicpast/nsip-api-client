@@ -28,9 +28,9 @@ PACKAGES = {
 
 def build_package(name: str, package_dir: Path) -> bool:
     """Build a single package."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Building {name}...")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Clean any existing dist in package dir
     pkg_dist = package_dir / "dist"
@@ -100,7 +100,7 @@ def main() -> int:
             success = False
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     if success:
         print("BUILD SUCCESSFUL")
         print(f"\nArtifacts in {DIST_DIR}:")

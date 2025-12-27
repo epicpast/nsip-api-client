@@ -137,9 +137,7 @@ I have all the information needed. Shall I proceed with the mating optimization?
 - Will consider inbreeding avoidance and EBV complementarity
 
 Reply "proceed" to run the analysis or provide corrections.
-""".format(
-                ram_count=len(rams.split(",")), ewe_count=len(ewes.split(",")), goal=goal
-            )
+""".format(ram_count=len(rams.split(",")), ewe_count=len(ewes.split(",")), goal=goal)
 
         _record_prompt_execution("guided_mating_plan", True)
         return [

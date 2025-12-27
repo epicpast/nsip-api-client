@@ -149,7 +149,9 @@ def read_google_sheets(url: str, sheet_name: str | None = None) -> SpreadsheetDa
     try:
         import gspread
     except ImportError as err:
-        raise ImportError("gspread required for Google Sheets support: pip install gspread") from err
+        raise ImportError(
+            "gspread required for Google Sheets support: pip install gspread"
+        ) from err
 
     # Extract sheet ID from URL
     match = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", url)

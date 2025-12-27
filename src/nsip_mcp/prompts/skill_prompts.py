@@ -319,7 +319,7 @@ async def selection_index_prompt(
         result += f"""
 ### Use Case
 
-{index_def.get('use_case', 'General purpose selection.')}
+{index_def.get("use_case", "General purpose selection.")}
 """
 
         _record_prompt_execution("selection_index", True)
@@ -395,10 +395,10 @@ async def ancestry_prompt(lpn_id: str) -> list[dict[str, Any]]:
 
         result = f"""## Pedigree Report: {lpn_id}
 
-**LPN ID**: {animal_data.get('lpn_id', lpn_id)}
-**Breed**: {animal_data.get('breed', 'Unknown')}
-**Birth Date**: {animal_data.get('date_of_birth', 'Unknown')}
-**Sex**: {animal_data.get('gender', 'Unknown')}
+**LPN ID**: {animal_data.get("lpn_id", lpn_id)}
+**Breed**: {animal_data.get("breed", "Unknown")}
+**Birth Date**: {animal_data.get("date_of_birth", "Unknown")}
+**Sex**: {animal_data.get("gender", "Unknown")}
 
 ### Pedigree Tree
 
@@ -520,7 +520,7 @@ async def inbreeding_prompt(
 
 ### Results
 
-- **Inbreeding Coefficient (F)**: {f_coef:.4f} ({f_coef*100:.2f}%)
+- **Inbreeding Coefficient (F)**: {f_coef:.4f} ({f_coef * 100:.2f}%)
 - **Risk Level**: {risk}
 - **Common Ancestors Found**: {len(common)}
 
@@ -615,7 +615,7 @@ async def progeny_report_prompt(sire_lpn: str) -> list[dict[str, Any]]:
         result = f"""## Progeny Report: {sire_lpn}
 
 **Sire LPN**: {sire_lpn}
-**Breed**: {sire_data.get('breed', 'Unknown')}
+**Breed**: {sire_data.get("breed", "Unknown")}
 **Total Progeny**: {total_count}
 **Ram Lambs**: {males} | **Ewe Lambs**: {females}
 
@@ -665,7 +665,9 @@ async def flock_dashboard_prompt(flock_prefix: str) -> list[dict[str, Any]]:
 
         search_criteria = SearchCriteria(flock_id=flock_prefix)
         search_result = client.search_animals(
-            page=0, page_size=100, search_criteria=search_criteria  # Max allowed by API
+            page=0,
+            page_size=100,
+            search_criteria=search_criteria,  # Max allowed by API
         )
         if not search_result or not search_result.results:
             _record_prompt_execution("flock_dashboard", False)

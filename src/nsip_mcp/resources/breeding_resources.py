@@ -82,9 +82,9 @@ def _analyze_trait_concerns(projected_ebvs: dict, f_coefficient: float) -> list[
     if bwt > 1.5:
         concerns.append("Higher birth weight may increase dystocia risk")
     if f_coefficient > 0.0625:
-        concerns.append(f"High inbreeding ({f_coefficient*100:.1f}%) - consider alternatives")
+        concerns.append(f"High inbreeding ({f_coefficient * 100:.1f}%) - consider alternatives")
     elif f_coefficient > 0.03:
-        concerns.append(f"Moderate inbreeding ({f_coefficient*100:.1f}%) - monitor carefully")
+        concerns.append(f"Moderate inbreeding ({f_coefficient * 100:.1f}%) - monitor carefully")
     return concerns
 
 
