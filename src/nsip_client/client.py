@@ -8,10 +8,13 @@ API Base URL: http://nsipsearch.nsip.org/api
 Authentication: None required (public API)
 """
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import requests
+from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException, Timeout
+from urllib3.util.retry import Retry
 
 from .exceptions import (
     NSIPAPIError,
@@ -31,7 +34,11 @@ from .models import (
 
 
 class NSIPClient:
-    """Client for interacting with the NSIP Search API"""
+    """Client for interacting with the NSIP Search API
+
+    Note: The NSIP API only supports HTTP (not HTTPS). The upstream server
+    does not have a valid SSL certificate for nsipsearch.nsip.org.
+    """
 
     BASE_URL = "http://nsipsearch.nsip.org/api"
 
@@ -49,6 +56,20 @@ class NSIPClient:
         self.session.headers.update(
             {"Accept": "application/json, text/plain, */*", "User-Agent": "NSIP-Python-Client/1.0"}
         )
+
+        # Configure connection pooling with retry logic
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504],
+        )
+        adapter = HTTPAdapter(
+            pool_connections=10,
+            pool_maxsize=20,
+            max_retries=retry_strategy,
+        )
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
 
     def _make_request(
         self,
@@ -381,11 +402,20 @@ class NSIPClient:
             >>> print(profile['progeny'].total_count)
             6
         """
-        return {
-            "details": self.get_animal_details(lpn_id),
-            "lineage": self.get_lineage(lpn_id),
-            "progeny": self.get_progeny(lpn_id),
-        }
+        # Parallelize 3 independent API calls for better performance
+        # Reduces latency from ~3x single-call time to ~1x (concurrent execution)
+        results: dict[str, Any] = {}
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(self.get_animal_details, lpn_id): "details",
+                executor.submit(self.get_lineage, lpn_id): "lineage",
+                executor.submit(self.get_progeny, lpn_id): "progeny",
+            }
+            for future in as_completed(futures):
+                key = futures[future]
+                results[key] = future.result()
+
+        return results
 
     def close(self) -> None:
         """Close the session"""

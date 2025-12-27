@@ -26,6 +26,14 @@ class TransportConfig:
         port: Port number for Streamable HTTP and WebSocket transports (required for non-stdio)
         host: Host address to bind to (default: 0.0.0.0)
         path: Path for HTTP endpoints (default: /mcp)
+
+    Security Note:
+        The default host "0.0.0.0" binds to all network interfaces, which is intentional
+        for MCP servers that need to be accessible from Docker containers, remote Claude
+        Desktop instances, or other networked clients. For production deployments:
+        - Use a firewall to restrict access to trusted IP ranges
+        - Consider TLS termination via a reverse proxy (nginx, Caddy)
+        - Set MCP_HOST=127.0.0.1 for local-only access if external access isn't needed
     """
 
     transport_type: TransportType

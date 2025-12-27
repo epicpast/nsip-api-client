@@ -1553,6 +1553,31 @@ class TestValidateBreedId:
         result = validate_breed_id(486)
         assert result is None
 
+    def test_string_breed_id_returns_error(self):
+        """Test string breed ID returns validation error (type check)."""
+        from nsip_mcp.mcp_tools import validate_breed_id
+
+        # Even a numeric string should fail - we want int type
+        result = validate_breed_id("486")  # type: ignore[arg-type]
+        assert result is not None
+        assert "code" in result
+
+    def test_float_breed_id_returns_error(self):
+        """Test float breed ID returns validation error (type check)."""
+        from nsip_mcp.mcp_tools import validate_breed_id
+
+        result = validate_breed_id(486.5)  # type: ignore[arg-type]
+        assert result is not None
+        assert "code" in result
+
+    def test_none_breed_id_returns_error(self):
+        """Test None breed ID returns validation error (type check)."""
+        from nsip_mcp.mcp_tools import validate_breed_id
+
+        result = validate_breed_id(None)  # type: ignore[arg-type]
+        assert result is not None
+        assert "code" in result
+
 
 class TestValidatePagination:
     """Tests for validate_pagination function."""
@@ -1894,3 +1919,241 @@ class TestShepherdToolsExceptionHandling:
 
             assert isinstance(result, dict)
             assert "error" in result
+
+
+class TestClientSingleton:
+    """Tests for NSIPClient singleton pattern in tools.py.
+
+    Verifies that get_nsip_client() returns the same instance across calls,
+    and that reset_client() properly clears the singleton for re-initialization.
+    """
+
+    def test_get_nsip_client_returns_same_instance(self):
+        """Verify singleton returns the same instance on repeated calls."""
+        from nsip_mcp.tools import get_nsip_client, reset_client
+
+        # Start fresh
+        reset_client()
+
+        # Get instance twice
+        instance1 = get_nsip_client()
+        instance2 = get_nsip_client()
+
+        # Should be the exact same object
+        assert instance1 is instance2
+
+        # Cleanup
+        reset_client()
+
+    def test_reset_client_clears_instance(self):
+        """Verify reset_client forces new instance creation."""
+        from nsip_mcp.tools import get_nsip_client, reset_client
+
+        # Start fresh
+        reset_client()
+
+        # Get initial instance
+        instance1 = get_nsip_client()
+
+        # Reset should clear it
+        reset_client()
+
+        # Next call should create a new instance
+        instance2 = get_nsip_client()
+
+        # Should be different objects
+        assert instance1 is not instance2
+
+        # Cleanup
+        reset_client()
+
+    def test_reset_client_is_idempotent(self):
+        """Verify reset_client can be called multiple times safely."""
+        from nsip_mcp.tools import get_nsip_client, reset_client
+
+        # Multiple resets should not raise
+        reset_client()
+        reset_client()
+        reset_client()
+
+        # Should still work after multiple resets
+        instance = get_nsip_client()
+        assert instance is not None
+
+        # Cleanup
+        reset_client()
+
+    def test_singleton_type_is_nsip_client(self):
+        """Verify singleton returns correct type."""
+        from nsip_client.client import NSIPClient
+        from nsip_mcp.tools import get_nsip_client, reset_client
+
+        reset_client()
+        instance = get_nsip_client()
+
+        assert isinstance(instance, NSIPClient)
+
+        reset_client()
+
+
+class TestShepherdEmptyMessagesEdgeCases:
+    """Tests for Shepherd tool edge cases with empty or malformed messages.
+
+    These tests verify the "No guidance generated" error path when:
+    - Messages list is empty
+    - Messages list has no "user" role
+    - Messages have unexpected content structure
+
+    Note: The prompt functions are async, so we use AsyncMock for proper awaiting.
+    """
+
+    def test_shepherd_consult_empty_messages(self):
+        """Test shepherd_consult returns error for empty messages."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_consult_prompt") as mock_prompt:
+            mock_prompt.fn = AsyncMock(return_value=[])  # Empty messages list
+
+            result = asyncio.run(
+                mcp_tools.shepherd_consult_tool.fn(question="test", region="midwest")
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+            assert "No guidance generated" in result["error"]
+
+    def test_shepherd_consult_none_messages(self):
+        """Test shepherd_consult returns error when messages is None."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_consult_prompt") as mock_prompt:
+            mock_prompt.fn = AsyncMock(return_value=None)  # None instead of list
+
+            result = asyncio.run(
+                mcp_tools.shepherd_consult_tool.fn(question="test", region="midwest")
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+            assert "No guidance generated" in result["error"]
+
+    def test_shepherd_consult_no_user_role(self):
+        """Test shepherd_consult returns error when no user role in messages."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_consult_prompt") as mock_prompt:
+            # Messages with only assistant role, no user
+            mock_prompt.fn = AsyncMock(
+                return_value=[{"role": "assistant", "content": "I am the assistant"}]
+            )
+
+            result = asyncio.run(
+                mcp_tools.shepherd_consult_tool.fn(question="test", region="midwest")
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+            assert "No guidance generated" in result["error"]
+
+    def test_shepherd_consult_string_content(self):
+        """Test shepherd_consult handles string content (non-dict)."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_consult_prompt") as mock_prompt:
+            # Content is a string, not a dict with "text" key
+            mock_prompt.fn = AsyncMock(
+                return_value=[{"role": "user", "content": "Plain string guidance"}]
+            )
+
+            result = asyncio.run(
+                mcp_tools.shepherd_consult_tool.fn(question="test", region="midwest")
+            )
+
+            assert isinstance(result, dict)
+            assert "guidance" in result
+            assert result["guidance"] == "Plain string guidance"
+
+    def test_shepherd_consult_dict_content_with_text(self):
+        """Test shepherd_consult extracts text from dict content."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_consult_prompt") as mock_prompt:
+            mock_prompt.fn = AsyncMock(
+                return_value=[{"role": "user", "content": {"text": "Dict-based guidance"}}]
+            )
+
+            result = asyncio.run(
+                mcp_tools.shepherd_consult_tool.fn(question="test", region="midwest")
+            )
+
+            assert isinstance(result, dict)
+            assert "guidance" in result
+            assert result["guidance"] == "Dict-based guidance"
+
+    def test_shepherd_breeding_empty_messages(self):
+        """Test shepherd_breeding returns error for empty messages."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_breeding_prompt") as mock_prompt:
+            mock_prompt.fn = AsyncMock(return_value=[])
+
+            result = asyncio.run(
+                mcp_tools.shepherd_breeding_tool.fn(
+                    question="test", region="midwest", production_goal="terminal"
+                )
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+            assert "No guidance generated" in result["error"]
+
+    def test_shepherd_health_empty_messages(self):
+        """Test shepherd_health returns error for empty messages."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_health_prompt") as mock_prompt:
+            mock_prompt.fn = AsyncMock(return_value=[])
+
+            result = asyncio.run(
+                mcp_tools.shepherd_health_tool.fn(
+                    question="test", region="midwest", life_stage="maintenance"
+                )
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+            assert "No guidance generated" in result["error"]
+
+    def test_shepherd_calendar_empty_messages(self):
+        """Test shepherd_calendar returns error for empty messages."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_calendar_prompt") as mock_prompt:
+            mock_prompt.fn = AsyncMock(return_value=[])
+
+            result = asyncio.run(
+                mcp_tools.shepherd_calendar_tool.fn(
+                    question="test", region="midwest", task_type="breeding"
+                )
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+            assert "No guidance generated" in result["error"]
+
+    def test_shepherd_economics_empty_messages(self):
+        """Test shepherd_economics returns error for empty messages."""
+        from unittest.mock import AsyncMock
+
+        with patch("nsip_mcp.prompts.shepherd_prompts.shepherd_economics_prompt") as mock_prompt:
+            mock_prompt.fn = AsyncMock(return_value=[])
+
+            result = asyncio.run(
+                mcp_tools.shepherd_economics_tool.fn(
+                    question="test", flock_size="medium", market_focus="direct"
+                )
+            )
+
+            assert isinstance(result, dict)
+            assert "error" in result
+            assert "No guidance generated" in result["error"]

@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Other
+.memory/
 # C extensions
 *.so
 
@@ -161,3 +163,4 @@ enriched_*.csv
 
 # Copied READMEs in packaging directories (created during CI build)
 packaging/*/README.md
+.memory/

@@ -512,3 +512,44 @@ class TestCacheEdgeCases:
         cache._cache = original_cache
         assert cache.get("key1") == "value1"
         assert cache.get("key2") == "value2"
+
+    def test_make_key_non_serializable_type_raises(self):
+        """Verify make_key raises TypeError for non-JSON-serializable types.
+
+        This tests that non-serializable types (lambdas, custom objects, etc.)
+        are caught at key generation time rather than silently failing.
+        """
+        import pytest
+
+        cache = TtlCache()
+
+        # Lambda functions are not JSON serializable
+        with pytest.raises(TypeError):
+            cache.make_key("method", callback=lambda x: x)
+
+        # Custom objects without __dict__ serialization are not JSON serializable
+        class CustomObject:
+            pass
+
+        with pytest.raises(TypeError):
+            cache.make_key("method", obj=CustomObject())
+
+        # Sets are not JSON serializable
+        with pytest.raises(TypeError):
+            cache.make_key("method", items={1, 2, 3})
+
+    def test_make_key_serializable_types_succeed(self):
+        """Verify make_key handles all JSON-serializable types correctly."""
+        cache = TtlCache()
+
+        # All these should succeed without raising
+        key1 = cache.make_key("method", string="hello")
+        key2 = cache.make_key("method", integer=42)
+        key3 = cache.make_key("method", floating=3.14)
+        key4 = cache.make_key("method", boolean=True)
+        key5 = cache.make_key("method", null=None)
+        key6 = cache.make_key("method", array=[1, 2, 3])
+        key7 = cache.make_key("method", nested={"a": {"b": [1, 2]}})
+
+        # All keys should be valid strings
+        assert all(isinstance(k, str) for k in [key1, key2, key3, key4, key5, key6, key7])

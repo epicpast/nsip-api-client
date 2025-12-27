@@ -30,10 +30,10 @@ Download the latest release from the [releases page](https://github.com/epicpast
 
 ```bash
 # Install from wheel (recommended)
-pip install https://github.com/epicpast/nsip-api-client/releases/latest/download/nsip_client-1.0.0-py3-none-any.whl
+pip install https://github.com/epicpast/nsip-api-client/releases/latest/download/nsip_client-1.3.5-py3-none-any.whl
 
 # Or install from source distribution
-pip install https://github.com/epicpast/nsip-api-client/releases/download/v1.0.0/nsip-client-1.0.0.tar.gz
+pip install https://github.com/epicpast/nsip-api-client/releases/download/v1.3.5/nsip-client-1.3.5.tar.gz
 ```
 
 ### From Git
@@ -43,7 +43,7 @@ pip install https://github.com/epicpast/nsip-api-client/releases/download/v1.0.0
 pip install git+https://github.com/epicpast/nsip-api-client.git
 
 # Install specific version tag
-pip install git+https://github.com/epicpast/nsip-api-client.git@v1.0.0
+pip install git+https://github.com/epicpast/nsip-api-client.git@v1.3.5
 ```
 
 ### From Source
@@ -351,8 +351,10 @@ MCP_TRANSPORT=websocket MCP_PORT=9000 nsip-mcp-server
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
-| `MCP_TRANSPORT` | Transport mechanism | `stdio` | `http-sse`, `websocket` |
-| `MCP_PORT` | Port for HTTP SSE/WebSocket | None (required for non-stdio) | `8000`, `9000` |
+| `MCP_TRANSPORT` | Transport mechanism | `stdio` | `streamable-http`, `websocket` |
+| `MCP_PORT` | Port for HTTP/WebSocket | None (required for non-stdio) | `8000`, `9000` |
+| `MCP_HOST` | Host address to bind to | `0.0.0.0` | `127.0.0.1`, `localhost` |
+| `MCP_PATH` | Path for HTTP endpoints | `/mcp` | `/api/mcp` |
 | `TIKTOKEN_CACHE_DIR` | Token cache directory | OS default | `/tmp/tiktoken` |
 | `LOG_LEVEL` | Logging verbosity | `INFO` | `DEBUG`, `WARNING` |
 
@@ -619,4 +621,6 @@ print(f"US Hair Index: {my_sheep['details']['Traits']['USHairIndex']['Value']}")
 
 ## License
 
-This client is provided as-is for educational and research purposes. The NSIP data remains property of the National Sheep Improvement Program.
+MIT License - see [LICENSE](LICENSE) for details.
+
+Note: The NSIP data accessed through this client remains property of the National Sheep Improvement Program.

@@ -898,3 +898,172 @@ class TestModuleConstants:
     def test_encoding_name(self):
         """Verify encoding uses cl100k_base."""
         assert encoding.name == "cl100k_base"
+
+
+class TestAccuracyNormalization:
+    """Tests for accuracy normalization (percentage → decimal conversion)."""
+
+    def test_accuracy_as_decimal_preserved(self):
+        """Verify accuracy already in 0-1 range is preserved as-is."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "traits": {
+                "BWT": {"value": 0.5, "accuracy": 0.89},  # Already decimal
+                "WWT": {"value": 1.2, "accuracy": 0.65},  # Already decimal
+            },
+        }
+
+        summary = summarize_response(response)
+
+        # Accuracies should be preserved as-is (not divided by 100)
+        bwt = next((t for t in summary["top_traits"] if t["trait"] == "BWT"), None)
+        assert bwt is not None
+        assert bwt["accuracy"] == 0.89
+
+    def test_accuracy_as_percentage_normalized(self):
+        """Verify accuracy in 0-100 range is normalized to 0-1 (dataclass format)."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "traits": {
+                "BWT": {"value": 0.5, "accuracy": 89},  # Percentage (0-100)
+                "WWT": {"value": 1.2, "accuracy": 65},  # Percentage (0-100)
+            },
+        }
+
+        summary = summarize_response(response)
+
+        # Accuracies should be normalized to decimal (89 → 0.89)
+        bwt = next((t for t in summary["top_traits"] if t["trait"] == "BWT"), None)
+        assert bwt is not None
+        assert bwt["accuracy"] == 0.89
+
+    def test_accuracy_exactly_1_preserved(self):
+        """Verify accuracy of exactly 1.0 is preserved (boundary case)."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "traits": {
+                "BWT": {"value": 0.5, "accuracy": 1.0},  # Exactly 1.0 - already decimal
+            },
+        }
+
+        summary = summarize_response(response)
+
+        bwt = next((t for t in summary["top_traits"] if t["trait"] == "BWT"), None)
+        assert bwt is not None
+        assert bwt["accuracy"] == 1.0  # Not divided (still 1.0)
+
+    def test_accuracy_just_over_1_normalized(self):
+        """Verify accuracy just over 1.0 is normalized (1.01 → 0.0101)."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "traits": {
+                "BWT": {"value": 0.5, "accuracy": 1.01},  # Just over 1, treat as percentage
+            },
+        }
+
+        summary = summarize_response(response)
+
+        # 1.01 > 1, so normalized to 0.0101 (which is < 0.5 min_accuracy, filtered out)
+        # With default min_accuracy=0.5, this trait should be filtered
+        assert len(summary["top_traits"]) == 0
+
+    def test_accuracy_100_normalized_to_1(self):
+        """Verify accuracy of 100 normalizes to 1.0."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "traits": {
+                "BWT": {"value": 0.5, "accuracy": 100},  # 100% → 1.0
+            },
+        }
+
+        summary = summarize_response(response)
+
+        bwt = next((t for t in summary["top_traits"] if t["trait"] == "BWT"), None)
+        assert bwt is not None
+        assert bwt["accuracy"] == 1.0
+
+
+class TestNonDictProgenyHandling:
+    """Tests for non-dict progeny field handling."""
+
+    def test_progeny_as_dict_extracts_count(self):
+        """Verify dict progeny extracts total_count correctly."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "progeny": {
+                "total_count": 15,
+                "animals": [{"id": "p1"}, {"id": "p2"}],
+            },
+        }
+
+        summary = summarize_response(response)
+
+        assert summary["total_progeny"] == 15
+
+    def test_progeny_as_list_returns_zero(self):
+        """Verify list progeny returns 0 (not a dict)."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "progeny": [{"id": "p1"}, {"id": "p2"}, {"id": "p3"}],  # List, not dict
+        }
+
+        summary = summarize_response(response)
+
+        # Non-dict progeny should result in total_progeny = 0
+        assert summary["total_progeny"] == 0
+
+    def test_progeny_as_none_returns_zero(self):
+        """Verify None progeny returns 0."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "progeny": None,
+        }
+
+        summary = summarize_response(response)
+
+        assert summary["total_progeny"] == 0
+
+    def test_progeny_as_integer_returns_zero(self):
+        """Verify integer progeny returns 0 (treated as non-dict)."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "progeny": 42,  # Integer, not dict
+        }
+
+        summary = summarize_response(response)
+
+        # Non-dict progeny should result in total_progeny = 0
+        assert summary["total_progeny"] == 0
+
+    def test_progeny_missing_returns_zero(self):
+        """Verify missing progeny field returns 0."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            # No progeny field
+        }
+
+        summary = summarize_response(response)
+
+        assert summary["total_progeny"] == 0
+
+    def test_progeny_dict_without_total_count_returns_zero(self):
+        """Verify dict progeny without total_count returns 0."""
+        response = {
+            "lpn_id": "123",
+            "breed": "Test",
+            "progeny": {"animals": [{"id": "p1"}]},  # Dict but no total_count
+        }
+
+        summary = summarize_response(response)
+
+        assert summary["total_progeny"] == 0

@@ -29,6 +29,26 @@ class CalendarDomain:
 
     persona: ShepherdPersona = field(default_factory=ShepherdPersona)
 
+    def format_response(
+        self,
+        content: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Format a response using the domain's persona.
+
+        Args:
+            content: The main response content
+            metadata: Optional metadata to include
+
+        Returns:
+            Formatted response dictionary with persona styling
+        """
+        formatted_text = format_shepherd_response(answer=content)
+        response: dict[str, Any] = {"guidance": formatted_text, "domain": "calendar"}
+        if metadata:
+            response["metadata"] = metadata
+        return response
+
     def get_seasonal_tasks(
         self,
         task_type: str,

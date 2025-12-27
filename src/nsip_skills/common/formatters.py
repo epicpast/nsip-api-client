@@ -17,7 +17,6 @@ from nsip_skills.common.data_models import (
     PedigreeNode,
     PedigreeTree,
     ProgenyStats,
-    RiskLevel,
     TraitProfile,
 )
 
@@ -259,20 +258,13 @@ def _format_pedigree_markdown(tree: PedigreeTree) -> str:
 
 def format_inbreeding_result(result: InbreedingResult) -> str:
     """Format inbreeding calculation result."""
-    risk_emoji = {
-        RiskLevel.LOW: "",
-        RiskLevel.MODERATE: "",
-        RiskLevel.HIGH: "",
-    }
-
     risk_value = result.risk_level.value.upper() if result.risk_level else "UNKNOWN"
-    risk_icon = risk_emoji.get(result.risk_level, "") if result.risk_level else ""
 
     lines = [
         f"## Inbreeding Analysis: {result.lpn_id}",
         "",
         f"**Coefficient**: {result.percentage:.2f}%",
-        f"**Risk Level**: {risk_value} {risk_icon}",
+        f"**Risk Level**: {risk_value}",
         f"**Generations Analyzed**: {result.generations_analyzed}",
     ]
 

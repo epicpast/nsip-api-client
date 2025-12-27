@@ -195,6 +195,23 @@ class TestAnalyzeTraits:
             assert "max" in stats
             assert "count" in stats
 
+    def test_single_value_std_deviation_returns_zero(self, mock_animals):
+        """Verify standard deviation is 0 for single-value trait analysis.
+
+        When only one animal has a trait value, std deviation should be 0
+        (not an error), since statistics.stdev() requires at least 2 values.
+        """
+        # Get exactly one animal
+        client = MockNSIPClient(animals=mock_animals)
+        lpn_ids = list(mock_animals.keys())[:1]
+
+        result = analyze_traits(lpn_ids, client=client)
+
+        # Verify std is 0 for traits with only one value
+        for trait_name, stats in result.trait_stats.items():
+            if stats.get("count", 0) == 1:
+                assert stats["std"] == 0, f"std should be 0 for single-value trait {trait_name}"
+
     def test_calculates_rankings(self, mock_animals):
         """Verify animals are ranked by trait."""
         client = MockNSIPClient(animals=mock_animals)

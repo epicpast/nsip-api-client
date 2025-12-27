@@ -16,6 +16,7 @@ Prompts:
     breeding_recs       - AI-powered recommendations (guided)
 """
 
+import logging
 from typing import Any
 
 from nsip_mcp.knowledge_base import (
@@ -25,6 +26,8 @@ from nsip_mcp.knowledge_base import (
 from nsip_mcp.metrics import server_metrics
 from nsip_mcp.server import mcp
 from nsip_mcp.tools import get_nsip_client
+
+logger = logging.getLogger(__name__)
 
 
 def _record_prompt_execution(prompt_name: str, success: bool) -> None:
@@ -80,8 +83,8 @@ def _collect_progeny_trait_stats(
                     if trait_obj and trait_obj.value is not None:
                         trait_stats.setdefault(name, []).append(trait_obj.value)
                 fetched += 1
-        except Exception:
-            pass  # Skip animals that fail to fetch
+        except Exception as e:
+            logger.debug(f"Failed to fetch progeny {prog.lpn_id}: {e}")
 
     return trait_stats
 
@@ -152,7 +155,8 @@ async def ebv_analyzer_prompt(
                 animal = client.get_animal_details(search_string=lpn)
                 if animal:
                     animals_data.append(animal.to_dict())
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to fetch animal {lpn}: {e}")
                 continue
 
         if not animals_data:
@@ -270,7 +274,8 @@ async def selection_index_prompt(
                     }
                 )
 
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to score animal: {e}")
                 continue
 
         if not scored_animals:

@@ -2,8 +2,17 @@
 Data models for NSIP API responses
 """
 
-from dataclasses import dataclass, field
+import re
+from dataclasses import asdict, dataclass, field
 from typing import Any
+
+# Precompiled regex patterns for _parse_lineage_content (performance optimization)
+_RE_FARM_NAME = re.compile(r"<div>([^<]+)</div>")
+_RE_US_INDEX = re.compile(r"US (?:Hair )?Index: ([\d.]+)")
+_RE_SRC_INDEX = re.compile(r"SRC\$ Index: ([\d.]+)")
+_RE_DOB = re.compile(r"DOB: ([^<]+)")
+_RE_SEX = re.compile(r"Sex: ([^<]+)")
+_RE_STATUS = re.compile(r"Status: ([^<]+)")
 
 
 @dataclass
@@ -91,8 +100,6 @@ class AnimalDetails:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
-        from dataclasses import asdict
-
         return asdict(self)
 
     @classmethod
@@ -323,8 +330,6 @@ class ProgenyAnimal:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
-        from dataclasses import asdict
-
         return asdict(self)
 
 
@@ -378,38 +383,38 @@ def _parse_lineage_content(content: str) -> dict[str, Any]:
 
     The NSIP lineage API returns data embedded in HTML divs like:
     <div>Farm Name</div><div>US Hair Index: 102.03</div><div>DOB: 2/13/2024</div>...
-    """
-    import re
 
+    Uses precompiled regex patterns (_RE_*) for performance in batch operations.
+    """
     result: dict[str, Any] = {}
 
     # Farm name (first div content)
-    farm_match = re.search(r"<div>([^<]+)</div>", content)
+    farm_match = _RE_FARM_NAME.search(content)
     if farm_match:
         result["farm_name"] = farm_match.group(1)
 
     # US Hair Index or US Index
-    us_match = re.search(r"US (?:Hair )?Index: ([\d.]+)", content)
+    us_match = _RE_US_INDEX.search(content)
     if us_match:
         result["us_index"] = float(us_match.group(1))
 
     # SRC$ Index
-    src_match = re.search(r"SRC\$ Index: ([\d.]+)", content)
+    src_match = _RE_SRC_INDEX.search(content)
     if src_match:
         result["src_index"] = float(src_match.group(1))
 
     # Date of Birth
-    dob_match = re.search(r"DOB: ([^<]+)", content)
+    dob_match = _RE_DOB.search(content)
     if dob_match:
         result["date_of_birth"] = dob_match.group(1).strip()
 
     # Sex
-    sex_match = re.search(r"Sex: ([^<]+)", content)
+    sex_match = _RE_SEX.search(content)
     if sex_match:
         result["sex"] = sex_match.group(1).strip()
 
     # Status
-    status_match = re.search(r"Status: ([^<]+)", content)
+    status_match = _RE_STATUS.search(content)
     if status_match:
         result["status"] = status_match.group(1).strip()
 
@@ -441,8 +446,6 @@ class Lineage:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
-        from dataclasses import asdict
-
         return asdict(self)
 
     @classmethod

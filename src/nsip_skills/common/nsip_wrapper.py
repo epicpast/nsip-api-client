@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,11 +26,16 @@ from nsip_client.models import (
     SearchResults,
 )
 
+logger = logging.getLogger(__name__)
+
 # Cache version - increment when model schemas change to auto-invalidate old entries
 # History:
 #   v2: Fixed Lineage.from_api_response() to parse nested HTML format (2025-12-06)
 #   v1: Initial cache format
 CACHE_VERSION = 2
+
+# Safety limit for pagination loops to prevent infinite loops or excessive API calls
+MAX_PAGES = 100
 
 
 @dataclass
@@ -121,8 +127,9 @@ class CachedNSIPClient:
         try:
             with open(path, "w") as f:
                 json.dump({"data": data, "timestamp": timestamp, "ttl": self.ttl}, f)
-        except OSError:
-            pass  # Cache write failure is non-fatal
+        except OSError as e:
+            # Cache write failure is non-fatal, log at DEBUG for troubleshooting
+            logger.debug(f"Cache write failed for {key}: {e}")
 
     def clear_cache(self) -> int:
         """Clear all cached data. Returns count of entries cleared."""
@@ -231,12 +238,15 @@ class CachedNSIPClient:
 
         Returns:
             List of all progeny animals
+
+        Note:
+            Limited to MAX_PAGES iterations to prevent runaway loops.
         """
         all_progeny: list[dict[str, Any]] = []
         page = 0
         page_size = 100
 
-        while True:
+        while page < MAX_PAGES:
             progeny = self.get_progeny(
                 lpn_id, page=page, page_size=page_size, force_refresh=force_refresh
             )

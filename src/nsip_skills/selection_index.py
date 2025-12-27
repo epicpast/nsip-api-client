@@ -6,6 +6,7 @@ Build and apply custom breeding indexes to rank animals.
 
 from __future__ import annotations
 
+import statistics
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -220,8 +221,6 @@ def rank_by_index(
         rankings = IndexRankings(index=index, results=results)
 
         if scores:
-            import statistics
-
             rankings.mean_score = statistics.mean(scores)
             rankings.std_score = statistics.stdev(scores) if len(scores) > 1 else 0
 

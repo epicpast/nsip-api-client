@@ -60,6 +60,11 @@ def start_server():
     """
     transport_config = get_transport()
 
+    # Pre-load knowledge base YAML files to eliminate first-request latency
+    from nsip_mcp.knowledge_base.loader import preload_all
+
+    preload_all()
+
     # Record startup time (SC-007)
     startup_duration = time.time() - _startup_start
     server_metrics.set_startup_time(startup_duration)

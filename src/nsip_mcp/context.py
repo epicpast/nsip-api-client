@@ -50,11 +50,12 @@ def count_tokens(text: str) -> int:
     return len(encoding.encode(text))
 
 
-def should_summarize(response: dict) -> bool:
+def should_summarize(response: dict, response_json: str | None = None) -> bool:
     """Determine if API response exceeds token threshold and needs summarization.
 
     Args:
         response: API response dictionary
+        response_json: Pre-serialized JSON string (optional, to avoid redundant serialization)
 
     Returns:
         True if response exceeds 2000 tokens, False otherwise
@@ -63,7 +64,7 @@ def should_summarize(response: dict) -> bool:
         - Responses ≤2000 tokens: pass through unmodified (FR-015)
         - Responses >2000 tokens: summarize (FR-005)
     """
-    response_text = json.dumps(response)
+    response_text = response_json if response_json is not None else json.dumps(response)
     token_count = count_tokens(response_text)
     return token_count > TOKEN_THRESHOLD
 
@@ -87,11 +88,14 @@ class ContextManagedResponse:
     reduction_percent: float = 0.0
 
     @classmethod
-    def create_passthrough(cls, response: dict[str, Any]) -> "ContextManagedResponse":
+    def create_passthrough(
+        cls, response: dict[str, Any], response_json: str | None = None
+    ) -> "ContextManagedResponse":
         """Create a pass-through response (≤2000 tokens, no summarization).
 
         Args:
             response: Original API response
+            response_json: Pre-serialized JSON string (optional, to avoid redundant serialization)
 
         Returns:
             ContextManagedResponse with was_summarized=False
@@ -102,7 +106,8 @@ class ContextManagedResponse:
             >>> managed.was_summarized
             False
         """
-        response_text = json.dumps(response)
+        # Reuse pre-serialized JSON if available to avoid redundant serialization
+        response_text = response_json if response_json is not None else json.dumps(response)
         token_count = count_tokens(response_text)
 
         # Add metadata to final response
@@ -122,13 +127,17 @@ class ContextManagedResponse:
 
     @classmethod
     def create_summarized(
-        cls, original_response: dict[str, Any], summarized_response: dict[str, Any]
+        cls,
+        original_response: dict[str, Any],
+        summarized_response: dict[str, Any],
+        original_json: str | None = None,
     ) -> "ContextManagedResponse":
         """Create a summarized response (>2000 tokens).
 
         Args:
             original_response: Original API response
             summarized_response: Summarized version of response
+            original_json: Pre-serialized JSON string (optional, to avoid redundant serialization)
 
         Returns:
             ContextManagedResponse with was_summarized=True
@@ -142,7 +151,11 @@ class ContextManagedResponse:
             >>> managed.reduction_percent
             70.0
         """
-        original_text = json.dumps(original_response)
+        # Reuse pre-serialized JSON if available to avoid redundant serialization
+        if original_json is not None:
+            original_text = original_json
+        else:
+            original_text = json.dumps(original_response)
         original_tokens = count_tokens(original_text)
 
         summary_text = json.dumps(summarized_response)
