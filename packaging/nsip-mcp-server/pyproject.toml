@@ -47,8 +47,12 @@ path = "src/nsip_mcp/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nsip_mcp"]
+include = [
+    "src/nsip_mcp/knowledge_base/data/*.yaml",
+]
 
 [tool.hatch.build.targets.sdist]
 include = [
     "src/nsip_mcp/**/*.py",
+    "src/nsip_mcp/knowledge_base/data/*.yaml",
 ]
