@@ -42,9 +42,7 @@ class ServerMetrics:
     """
 
     # Use bounded deques to prevent unbounded memory growth in long-running servers
-    discovery_times: deque[float] = field(
-        default_factory=lambda: deque(maxlen=MAX_METRIC_ENTRIES)
-    )
+    discovery_times: deque[float] = field(default_factory=lambda: deque(maxlen=MAX_METRIC_ENTRIES))
     summarization_reductions: deque[float] = field(
         default_factory=lambda: deque(maxlen=MAX_METRIC_ENTRIES)
     )
