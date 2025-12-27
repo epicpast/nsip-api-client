@@ -6,7 +6,6 @@ evidence-based, and respectful of regional differences in sheep production.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class Tone(Enum):
@@ -122,11 +121,11 @@ You can help with:
 
 def format_shepherd_response(
     answer: str,
-    context: Optional[str] = None,
-    recommendations: Optional[list[str]] = None,
-    considerations: Optional[list[str]] = None,
-    next_steps: Optional[list[str]] = None,
-    sources: Optional[list[str]] = None,
+    context: str | None = None,
+    recommendations: list[str] | None = None,
+    considerations: list[str] | None = None,
+    next_steps: list[str] | None = None,
+    sources: list[str] | None = None,
 ) -> str:
     """Format a complete Shepherd response with proper structure.
 

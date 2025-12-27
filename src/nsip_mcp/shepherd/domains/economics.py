@@ -10,7 +10,7 @@ Provides expert guidance on:
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from nsip_mcp.knowledge_base import get_economics_template
 from nsip_mcp.shepherd.persona import ShepherdPersona, format_shepherd_response
@@ -472,7 +472,7 @@ class EconomicsDomain:
         self,
         question: str,
         answer: str,
-        data: Optional[dict] = None,
+        data: dict | None = None,
     ) -> str:
         """Format economics advice in Shepherd style."""
         recommendations = []

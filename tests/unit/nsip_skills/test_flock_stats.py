@@ -58,7 +58,7 @@ class TestCalculateFlockStats:
         assert len(dashboard.summary.trait_summary) > 0
 
         # Each trait should have mean, std, etc.
-        for trait, stats in dashboard.summary.trait_summary.items():
+        for _trait, stats in dashboard.summary.trait_summary.items():
             assert "mean" in stats
             assert "std" in stats
             assert "min" in stats
@@ -86,7 +86,7 @@ class TestCalculateFlockStats:
         # Should have rankings for preset indexes
         assert len(dashboard.index_rankings) > 0
 
-        for index_name, rankings in dashboard.index_rankings.items():
+        for _index_name, rankings in dashboard.index_rankings.items():
             # Rankings should be tuples of (lpn_id, score)
             for lpn_id, score in rankings:
                 assert isinstance(lpn_id, str)
@@ -251,7 +251,7 @@ class TestCompareToBreedAverage:
         assert "WWT" in comparisons
 
         # Percentiles should be 0-100
-        for trait, percentile in comparisons.items():
+        for _trait, percentile in comparisons.items():
             assert 0 <= percentile <= 100
 
     def test_missing_traits_skipped(self, mock_animals):
@@ -403,7 +403,7 @@ class TestCalculateFlockStatsEdgeCases:
     def test_missing_animals_skipped(self, mock_animals, sample_lpn_ids):
         """Verify missing animals are skipped gracefully."""
         # Only include partial mock animals
-        partial_animals = {k: v for k, v in list(mock_animals.items())[:1]}
+        partial_animals = dict(list(mock_animals.items())[:1])
         client = MockNSIPClient(animals=partial_animals)
 
         # Pass more LPNs than exist in mock

@@ -229,7 +229,7 @@ class TestAnalyzeFlockTraits:
         result = analyze_flock_traits(sample_lpn_ids, client=client)
 
         assert len(result) > 0
-        for trait, stats in result.items():
+        for _trait, stats in result.items():
             assert "mean" in stats
             assert "std" in stats
             assert "min" in stats

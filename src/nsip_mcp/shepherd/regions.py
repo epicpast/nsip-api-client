@@ -4,7 +4,7 @@ This module provides region detection and context for adapting
 Shepherd advice to specific NSIP member regions.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from nsip_mcp.knowledge_base import get_region_info, list_regions
 
@@ -68,10 +68,10 @@ for region_id, data in NSIP_REGIONS.items():
 
 
 def detect_region(
-    state: Optional[str] = None,
-    zip_code: Optional[str] = None,
-    flock_prefix: Optional[str] = None,
-) -> Optional[str]:
+    state: str | None = None,
+    zip_code: str | None = None,
+    flock_prefix: str | None = None,
+) -> str | None:
     """Detect NSIP region from available information.
 
     Args:

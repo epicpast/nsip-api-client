@@ -9,7 +9,7 @@ Provides expert guidance on:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from nsip_mcp.knowledge_base import (
     get_disease_guide,
@@ -52,8 +52,8 @@ class HealthDomain:
     def get_disease_prevention(
         self,
         region: str,
-        season: Optional[str] = None,
-        age_group: Optional[str] = None,
+        season: str | None = None,
+        age_group: str | None = None,
     ) -> dict[str, Any]:
         """Get disease prevention recommendations for a region.
 
@@ -131,8 +131,8 @@ class HealthDomain:
     def get_nutrition_recommendations(
         self,
         life_stage: str,
-        region: Optional[str] = None,
-        body_condition: Optional[float] = None,
+        region: str | None = None,
+        body_condition: float | None = None,
     ) -> dict[str, Any]:
         """Get nutrition recommendations for a life stage.
 
@@ -281,8 +281,8 @@ class HealthDomain:
         self,
         region: str,
         season: str,
-        pasture_type: Optional[str] = None,
-        stocking_rate: Optional[str] = None,
+        pasture_type: str | None = None,
+        stocking_rate: str | None = None,
     ) -> dict[str, Any]:
         """Assess parasite risk and provide management recommendations.
 
@@ -355,7 +355,7 @@ class HealthDomain:
         self,
         season: str,
         parasite_season: str,
-        stocking_rate: Optional[str],
+        stocking_rate: str | None,
     ) -> str:
         """Calculate overall parasite risk level."""
         # Season-based risk
@@ -395,7 +395,7 @@ class HealthDomain:
     def get_vaccination_schedule(
         self,
         flock_type: str = "commercial",
-        region: Optional[str] = None,
+        region: str | None = None,
     ) -> dict[str, Any]:
         """Get recommended vaccination schedule.
 
@@ -479,7 +479,7 @@ class HealthDomain:
         self,
         question: str,
         answer: str,
-        data: Optional[dict] = None,
+        data: dict | None = None,
     ) -> str:
         """Format health advice in Shepherd style.
 

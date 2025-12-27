@@ -77,7 +77,7 @@ def calculate_genetic_diversity(tree: PedigreeTree) -> float:
     if not ancestors:
         return 1.0
 
-    unique_ids = set(a.lpn_id for a in ancestors)
+    unique_ids = {a.lpn_id for a in ancestors}
     total_positions = len(ancestors)
 
     return len(unique_ids) / total_positions

@@ -20,7 +20,7 @@ class RiskLevel(Enum):
     HIGH = "high"
 
     @classmethod
-    def from_coefficient(cls, coi: float) -> "RiskLevel":
+    def from_coefficient(cls, coi: float) -> RiskLevel:
         """Classify risk from inbreeding coefficient (0-1 scale)."""
         if coi < 0.0625:  # <6.25%
             return cls.LOW
@@ -237,7 +237,7 @@ class InbreedingResult:
     common_ancestors: list[str] = field(default_factory=list)  # LPN IDs of common ancestors
     paths: list[dict[str, Any]] = field(default_factory=list)  # Paths through pedigree
     generations_analyzed: int = 4
-    pedigree: "PedigreeTree | None" = None  # Optional pedigree tree
+    pedigree: PedigreeTree | None = None  # Optional pedigree tree
 
     def __post_init__(self):
         """Auto-compute risk_level from coefficient if not provided."""

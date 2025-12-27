@@ -7,7 +7,7 @@ comprehensive guidance for sheep operations.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from nsip_mcp.metrics import server_metrics
 from nsip_mcp.shepherd.domains.breeding import BreedingDomain
@@ -43,7 +43,7 @@ class ShepherdAgent:
     """
 
     persona: ShepherdPersona = field(default_factory=ShepherdPersona)
-    region: Optional[str] = None
+    region: str | None = None
     production_goal: str = "balanced"
 
     # Domain handlers
@@ -61,10 +61,10 @@ class ShepherdAgent:
 
     def set_region(
         self,
-        region: Optional[str] = None,
-        state: Optional[str] = None,
-        zip_code: Optional[str] = None,
-    ) -> Optional[str]:
+        region: str | None = None,
+        state: str | None = None,
+        zip_code: str | None = None,
+    ) -> str | None:
         """Set or detect the user's region.
 
         Args:
@@ -185,8 +185,8 @@ class ShepherdAgent:
     def consult(
         self,
         question: str,
-        domain: Optional[Domain] = None,
-        context: Optional[dict[str, Any]] = None,
+        domain: Domain | None = None,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Main consultation entry point.
 
@@ -248,7 +248,7 @@ class ShepherdAgent:
     def _handle_breeding(
         self,
         question: str,
-        context: Optional[dict],
+        context: dict | None,
     ) -> dict[str, Any]:
         """Handle breeding domain questions."""
         # Check for specific question types
@@ -322,7 +322,7 @@ class ShepherdAgent:
     def _handle_health(
         self,
         question: str,
-        context: Optional[dict],
+        context: dict | None,
     ) -> dict[str, Any]:
         """Handle health domain questions."""
         question_lower = question.lower()
@@ -397,7 +397,7 @@ class ShepherdAgent:
     def _handle_calendar(
         self,
         question: str,
-        context: Optional[dict],
+        context: dict | None,
     ) -> dict[str, Any]:
         """Handle calendar domain questions."""
         question_lower = question.lower()
@@ -471,7 +471,7 @@ class ShepherdAgent:
     def _handle_economics(
         self,
         question: str,
-        context: Optional[dict],
+        context: dict | None,
     ) -> dict[str, Any]:
         """Handle economics domain questions."""
         question_lower = question.lower()
@@ -551,7 +551,7 @@ class ShepherdAgent:
     def _handle_general(
         self,
         question: str,
-        context: Optional[dict],
+        context: dict | None,
     ) -> dict[str, Any]:
         """Handle general questions that don't fit a specific domain."""
         return {
@@ -576,7 +576,7 @@ class ShepherdAgent:
     def get_quick_answer(
         self,
         topic: str,
-        subtopic: Optional[str] = None,
+        subtopic: str | None = None,
     ) -> dict[str, Any]:
         """Get a quick reference answer for common topics.
 

@@ -245,7 +245,7 @@ def optimize_mating_plan(
         # Greedy assignment by score
         all_pairs.sort(key=lambda p: p.composite_score, reverse=True)
         assigned_ewes: set[str] = set()
-        ram_assignments: dict[str, int] = {ram: 0 for ram in ram_ebvs}
+        ram_assignments: dict[str, int] = dict.fromkeys(ram_ebvs, 0)
 
         for pair in all_pairs:
             if pair.ewe_lpn in assigned_ewes:

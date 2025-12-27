@@ -53,7 +53,7 @@ class MockAnimalDetails:
         sire: str | None = None,
         dam: str | None = None,
         trait_values: dict[str, float] | None = None,
-    ) -> "MockAnimalDetails":
+    ) -> MockAnimalDetails:
         """Create a sample mock animal with realistic EBVs."""
         default_traits = {
             "BWT": 0.5,

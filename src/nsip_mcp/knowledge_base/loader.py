@@ -56,10 +56,10 @@ def _load_yaml_file(filename: str) -> dict[str, Any]:
             return data
     except FileNotFoundError:
         logger.error(f"Knowledge base file not found: {filepath}")
-        raise KnowledgeBaseError(f"Knowledge base file not found: {filename}")
+        raise KnowledgeBaseError(f"Knowledge base file not found: {filename}") from None
     except yaml.YAMLError as e:
         logger.error(f"Invalid YAML in {filepath}: {e}")
-        raise KnowledgeBaseError(f"Invalid YAML in {filename}: {e}")
+        raise KnowledgeBaseError(f"Invalid YAML in {filename}: {e}") from e
 
 
 def clear_cache() -> None:

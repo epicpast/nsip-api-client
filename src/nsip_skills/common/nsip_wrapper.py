@@ -437,7 +437,7 @@ class CachedNSIPClient:
         """Close the underlying client session."""
         self._client.close()
 
-    def __enter__(self) -> "CachedNSIPClient":
+    def __enter__(self) -> CachedNSIPClient:
         return self
 
     def __exit__(self, *args: Any) -> None:

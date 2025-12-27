@@ -18,9 +18,11 @@ decisions and flock management tasks. Prompts are divided into:
 
 # Import prompt modules to register them with the MCP server
 # These are imported after server.py imports this module
-from nsip_mcp.prompts import interview_prompts  # noqa: F401
-from nsip_mcp.prompts import shepherd_prompts  # noqa: F401
-from nsip_mcp.prompts import skill_prompts  # noqa: F401
+from nsip_mcp.prompts import (
+    interview_prompts,  # noqa: F401
+    shepherd_prompts,  # noqa: F401
+    skill_prompts,  # noqa: F401
+)
 
 __all__ = [
     "skill_prompts",

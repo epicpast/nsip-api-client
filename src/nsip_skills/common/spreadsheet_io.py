@@ -114,10 +114,10 @@ def read_excel(path: str | Path, sheet_name: str | int = 0) -> SpreadsheetData:
     """
     try:
         import pandas as pd
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "pandas and openpyxl required for Excel support: pip install pandas openpyxl"
-        )
+        ) from err
 
     path = Path(path)
     if not path.exists():
@@ -148,8 +148,8 @@ def read_google_sheets(url: str, sheet_name: str | None = None) -> SpreadsheetDa
     """
     try:
         import gspread
-    except ImportError:
-        raise ImportError("gspread required for Google Sheets support: pip install gspread")
+    except ImportError as err:
+        raise ImportError("gspread required for Google Sheets support: pip install gspread") from err
 
     # Extract sheet ID from URL
     match = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", url)
@@ -322,10 +322,10 @@ def write_excel(
     """
     try:
         import pandas as pd
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "pandas and openpyxl required for Excel support: pip install pandas openpyxl"
-        )
+        ) from err
 
     if not records:
         return

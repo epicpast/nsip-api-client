@@ -9,7 +9,7 @@ Provides expert guidance on:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from nsip_mcp.knowledge_base import (
     get_heritabilities,
@@ -53,8 +53,8 @@ class BreedingDomain:
         self,
         trait: str,
         value: float,
-        accuracy: Optional[float] = None,
-        breed_average: Optional[float] = None,
+        accuracy: float | None = None,
+        breed_average: float | None = None,
     ) -> dict[str, Any]:
         """Interpret an EBV value in context.
 
@@ -103,7 +103,7 @@ class BreedingDomain:
         self,
         value: float,
         trait: str,
-        breed_average: Optional[float],
+        breed_average: float | None,
     ) -> str:
         """Generate interpretation text for an EBV value."""
         if breed_average is not None:
@@ -164,8 +164,8 @@ class BreedingDomain:
     def recommend_selection_strategy(
         self,
         goal: str,
-        current_strengths: Optional[list[str]] = None,
-        current_weaknesses: Optional[list[str]] = None,
+        current_strengths: list[str] | None = None,
+        current_weaknesses: list[str] | None = None,
         flock_size: str = "medium",
     ) -> dict[str, Any]:
         """Recommend a selection strategy based on goals.
@@ -297,7 +297,7 @@ class BreedingDomain:
     def assess_inbreeding_risk(
         self,
         coefficient: float,
-        trend: Optional[str] = None,
+        trend: str | None = None,
     ) -> dict[str, Any]:
         """Assess inbreeding coefficient and provide guidance.
 
@@ -369,7 +369,7 @@ class BreedingDomain:
         self,
         question: str,
         answer: str,
-        data: Optional[dict] = None,
+        data: dict | None = None,
     ) -> str:
         """Format breeding advice in Shepherd style.
 

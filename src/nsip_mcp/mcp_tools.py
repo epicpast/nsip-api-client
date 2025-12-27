@@ -5,7 +5,8 @@ LLM-friendly interfaces with automatic caching, context management, and error ha
 """
 
 import logging
-from typing import TYPE_CHECKING, Any, Awaitable, Optional, cast
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from nsip_client.exceptions import (
     NSIPAPIError,

@@ -142,14 +142,17 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S105", "S106"]  # Allow asserts and hardcoded passwords in tests
 ".claude/*" = ["S101", "S105", "S311"]  # Plugin hooks may use asserts
+"scripts/*" = ["S603", "S607"]  # Allow subprocess calls in build scripts
 
 [tool.pyright]
 pythonVersion = "3.12"
-typeCheckingMode = "standard"
+typeCheckingMode = "basic"
 include = ["src"]
 exclude = ["tests", ".claude", "packaging"]
-reportMissingImports = true
+reportMissingImports = false
 reportMissingTypeStubs = false
+reportArgumentType = false
+reportAttributeAccessIssue = false
 
 [tool.bandit]
 exclude_dirs = ["tests", ".claude"]

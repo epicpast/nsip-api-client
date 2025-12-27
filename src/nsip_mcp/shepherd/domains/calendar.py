@@ -10,7 +10,7 @@ Provides expert guidance on:
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from nsip_mcp.knowledge_base import (
     get_calendar_template,
@@ -52,8 +52,8 @@ class CalendarDomain:
     def get_seasonal_tasks(
         self,
         task_type: str,
-        region: Optional[str] = None,
-        month: Optional[int] = None,
+        region: str | None = None,
+        month: int | None = None,
     ) -> dict[str, Any]:
         """Get seasonal tasks for a specific activity type.
 
@@ -412,7 +412,7 @@ class CalendarDomain:
 
     def get_marketing_windows(
         self,
-        region: Optional[str] = None,
+        region: str | None = None,
         product_type: str = "market_lambs",
     ) -> dict[str, Any]:
         """Get optimal marketing windows.
@@ -496,7 +496,7 @@ class CalendarDomain:
     def create_annual_calendar(
         self,
         lambing_month: int,
-        region: Optional[str] = None,
+        region: str | None = None,
     ) -> dict[str, Any]:
         """Create a complete annual calendar based on lambing timing.
 
@@ -610,7 +610,7 @@ class CalendarDomain:
         self,
         question: str,
         answer: str,
-        data: Optional[dict] = None,
+        data: dict | None = None,
     ) -> str:
         """Format calendar advice in Shepherd style."""
         recommendations = []
