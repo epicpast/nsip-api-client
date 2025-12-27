@@ -5,7 +5,7 @@
 # ============================================================================
 # Stage 1: Builder - Install dependencies and compile wheels
 # ============================================================================
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 # Set build arguments
 ARG DEBIAN_FRONTEND=noninteractive
@@ -53,7 +53,7 @@ RUN pip install --no-cache-dir dist/*.whl
 # ============================================================================
 # Stage 2: Runtime - Minimal production image
 # ============================================================================
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Metadata labels
 LABEL maintainer="Allen R <allenr1@example.com>" \
